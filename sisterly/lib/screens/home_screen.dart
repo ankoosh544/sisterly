@@ -1,4 +1,5 @@
 import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:sisterly/screens/product_screen.dart';
 import 'package:sisterly/screens/reset_screen.dart';
 import 'package:sisterly/screens/signup_screen.dart';
 import 'package:sisterly/screens/signup_success_screen.dart';
@@ -36,48 +37,56 @@ class HomeScreenState extends State<HomeScreen>  {
   }
 
   Widget productCell() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Stack(
-          children: [
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Color(0xfff5f5f5),
-                borderRadius: BorderRadius.circular(15)
+    return InkWell(
+      onTap: () {
+        Navigator.of(context).push(
+            MaterialPageRoute(builder: (BuildContext context) => ProductScreen()));
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
+            children: [
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Color(0xfff5f5f5),
+                  borderRadius: BorderRadius.circular(15)
+                ),
+                child: Image.asset("assets/images/product.png", height: 169,),
               ),
-              child: Image.asset("assets/images/product.png", height: 169,),
+              Positioned(
+                top: 16,
+                right: 16,
+                  child: InkWell(
+                    child: SizedBox(width: 16, height: 16, child: SvgPicture.asset("assets/images/save.svg")),
+                  )
+              )
+            ],
+          ),
+          SizedBox(height: 16,),
+          Text(
+            "Chain-Cassette Bottega Veneta",
+            textAlign: TextAlign.left,
+            style: TextStyle(
+              color: Constants.TEXT_COLOR,
+              fontFamily: Constants.FONT,
+              fontSize: 16,
             ),
-            Positioned(
-              top: 16,
-              right: 16,
-                child: InkWell(
-                  child: SizedBox(width: 16, height: 16, child: SvgPicture.asset("assets/images/save.svg")),
-                )
-            )
-          ],
-        ),
-        SizedBox(height: 16,),
-        Text(
-          "Chain-Cassette Bottega Veneta",
-          textAlign: TextAlign.left,
-          style: TextStyle(
-            color: Constants.TEXT_COLOR,
-            fontSize: 16,
           ),
-        ),
-        SizedBox(height: 8,),
-        Text(
-          "€30 per day",
-          textAlign: TextAlign.left,
-          style: TextStyle(
-            color: Constants.PRIMARY_COLOR,
-            fontSize: 18,
-            fontWeight: FontWeight.bold
+          SizedBox(height: 8,),
+          Text(
+            "€30 per day",
+            textAlign: TextAlign.left,
+            style: TextStyle(
+              color: Constants.PRIMARY_COLOR,
+              fontSize: 18,
+                fontFamily: Constants.FONT,
+              fontWeight: FontWeight.bold
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -94,6 +103,7 @@ class HomeScreenState extends State<HomeScreen>  {
                 alignment: Alignment.topRight,
               ),
               SafeArea(
+                bottom: false,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
                   child: Row(
@@ -147,6 +157,7 @@ class HomeScreenState extends State<HomeScreen>  {
               ),
             ],
           ),
+          SizedBox(height: 16,),
           Expanded(
             child: Container(
               width: MediaQuery.of(context).size.width,
@@ -160,6 +171,8 @@ class HomeScreenState extends State<HomeScreen>  {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
+                    SizedBox(height: 16),
+                    productCell(),
                     SizedBox(height: 16),
                     productCell(),
                   ],

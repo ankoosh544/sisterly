@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:sisterly/screens/home_screen.dart';
 import 'package:sisterly/screens/login_screen.dart';
+import 'package:sisterly/screens/tab_screen.dart';
 import 'package:sisterly/screens/welcome_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
@@ -141,7 +142,7 @@ class SplashScreenState extends State<SplashScreen> {
 
   goToTutorial() {
     setState(() {
-      Navigator.of(context).pushAndRemoveUntil(new MaterialPageRoute(builder: (BuildContext context) => HomeScreen()), (_) => false); //welcomescreen
+      Navigator.of(context).pushAndRemoveUntil(new MaterialPageRoute(builder: (BuildContext context) => WelcomeScreen()), (_) => false); //welcomescreen
       //Navigator.of(context).pushAndRemoveUntil(new MaterialPageRoute(builder: (BuildContext context) => WelcomeScreen()), (_) => false);
     });
   }

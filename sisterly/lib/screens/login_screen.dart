@@ -1,5 +1,6 @@
 import 'package:sisterly/screens/home_screen.dart';
 import 'package:sisterly/screens/signup_screen.dart';
+import 'package:sisterly/screens/tab_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:sisterly/utils/localization/app_localizations.dart';
@@ -80,7 +81,7 @@ class LoginScreenState extends State<LoginScreen>
     });*/
 
     Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (BuildContext context) => HomeScreen()),
+        MaterialPageRoute(builder: (BuildContext context) => TabScreen()),
             (_) => false);
   }
 
