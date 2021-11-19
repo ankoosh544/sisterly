@@ -184,14 +184,36 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ]
                       ),
                       SizedBox(height: 15),
-                      if (_hasAddress) SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            _renderAddress(true),
-                            _renderAddress(false)
-                          ]
-                        ),
+                      if (_hasAddress) Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                _renderAddress(true),
+                                _renderAddress(false)
+                              ]
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                                primary: Constants.LIGHT_GREY_COLOR2,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
+                            ),
+                            child: Text('+ Add New',
+                              style: TextStyle(
+                                color: Constants.TEXT_COLOR,
+                                fontSize: 16,
+                                fontFamily: Constants.FONT,
+                              )
+                            ),
+                            onPressed: () {
+
+                            },
+                          ),
+                        ]
                       ),
 
                       SizedBox(height: 25),
