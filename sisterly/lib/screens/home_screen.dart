@@ -168,14 +168,16 @@ class HomeScreenState extends State<HomeScreen>  {
                       topRight: Radius.circular(30))),
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    SizedBox(height: 16),
-                    productCell(),
-                    SizedBox(height: 16),
-                    productCell(),
-                  ],
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      SizedBox(height: 16),
+                      productCell(),
+                      SizedBox(height: 16),
+                      productCell(),
+                    ],
+                  ),
                 ),
               ),
             ),

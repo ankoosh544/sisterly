@@ -69,7 +69,7 @@ class Welcome2ScreenState extends State<Welcome2Screen> {
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 23.0, vertical: 18),
-            child: SvgPicture.asset(iconName, height: 29,),
+            child: SvgPicture.asset('assets/images/${iconName}.svg', height: 29,),
           ),
         ),
         const SizedBox(height: 14,),

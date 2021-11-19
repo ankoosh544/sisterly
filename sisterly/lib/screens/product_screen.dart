@@ -1,4 +1,5 @@
 import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:sisterly/screens/checkout_screen.dart';
 import 'package:sisterly/screens/profile_screen.dart';
 import 'package:sisterly/screens/reset_screen.dart';
 import 'package:sisterly/screens/signup_screen.dart';
@@ -69,7 +70,7 @@ class ProductScreenState extends State<ProductScreen>  {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              Container(
+              SizedBox(
                 width: double.infinity,
                 child: Stack(
                   children: [
@@ -286,7 +287,8 @@ class ProductScreenState extends State<ProductScreen>  {
                               ),
                               child: Text('Book'),
                               onPressed: () {
-
+                                Navigator.of(context).push(
+                                    MaterialPageRoute(builder: (BuildContext context) => CheckoutScreen()));
                               },
                             ),
                           ),
