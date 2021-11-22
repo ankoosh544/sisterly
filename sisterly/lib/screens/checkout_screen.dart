@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:sisterly/screens/choose_payment_screen.dart';
 import 'package:sisterly/utils/constants.dart';
+import 'package:sisterly/widgets/checkout/checkout_product_card.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({Key? key}) : super(key: key);
@@ -86,7 +88,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      checkoutProductCard(),
+                      CheckoutProductCard(),
 
                       SizedBox(height: 25),
                       profileBanner(),
@@ -107,6 +109,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           Expanded(
                             child: ListTile(
                               horizontalTitleGap: 0,
+                              contentPadding: EdgeInsets.all(0),
                               title: Text(
                                 'Shipment',
                                 style: Theme.of(context)
@@ -125,6 +128,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                           Flexible(
                             child: ListTile(
+                              contentPadding: EdgeInsets.all(0),
                               horizontalTitleGap: 0,
                               title: Text(
                                 'Withdraw',
@@ -241,7 +245,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               ),
                               child: Text('Yes (+ € 6.00)',
                                   style: TextStyle(
-                                    color: Constants.TEXT_COLOR,
+                                    color: _insurance ? Colors.black : Constants.TEXT_COLOR,
                                     fontSize: 16,
                                     fontFamily: Constants.FONT,
                                   )
@@ -261,7 +265,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               ),
                               child: Text('No',
                                   style: TextStyle(
-                                    color: Constants.TEXT_COLOR,
+                                    color: !_insurance ? Colors.black : Constants.TEXT_COLOR,
                                     fontSize: 16,
                                     fontFamily: Constants.FONT,
                                   )
@@ -284,7 +288,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                           child: Text('Next'),
                           onPressed: () {
-
+                            Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChoosePaymentScreen()));
                           },
                         ),
                       ),
@@ -304,67 +308,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     setState(() {
       _shipping = value!;
     });
-  }
-
-  Widget checkoutProductCard() {
-    return Container(
-      padding: EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            spreadRadius: 0,
-            blurRadius: 6,
-            offset: Offset(0, 0), // changes position of shadow
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-                color: Color(0xfff5f5f5),
-                borderRadius: BorderRadius.circular(15)
-            ),
-            child: Image.asset("assets/images/product.png", height: 76,),
-          ),
-          Flexible(
-            child: Padding(
-              padding: EdgeInsets.all(10),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    "Chain-Cassette Bottega",
-                    textAlign: TextAlign.left,
-                    style: TextStyle(
-                      color: Constants.TEXT_COLOR,
-                      fontFamily: Constants.FONT,
-                      fontSize: 16,
-                    ),
-                  ),
-                  SizedBox(height: 12),
-                  Text(
-                    "€30 per day",
-                    textAlign: TextAlign.left,
-                    style: TextStyle(
-                        color: Constants.PRIMARY_COLOR,
-                        fontSize: 18,
-                        fontFamily: Constants.FONT,
-                        fontWeight: FontWeight.bold
-                    ),
-                  )
-                ]
-              ),
-            ),
-          )
-        ]
-      )
-    );
   }
 
   Widget profileBanner() {
