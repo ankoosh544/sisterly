@@ -53,83 +53,34 @@ class SplashScreenState extends State<SplashScreen> {
   }
 
   autologin() async {
-
-    /*if(!SessionData().needRefreshToken) {
-      goToLogin();
-      return;
-    }*/
-
     var preferences = await SharedPreferences.getInstance();
     var refreshToken = preferences.getString(Constants.PREFS_REFRESH_TOKEN);
-    var tutorialCompleted = preferences.getBool(Constants.PREFS_TUTORIAL_COMPLETED) ?? false;
-    debugPrint("tutorialCompleted: "+tutorialCompleted.toString()+" and"+preferences.getBool(Constants.PREFS_TUTORIAL_COMPLETED).toString());
-    SessionData().userId = preferences.getString(Constants.PREFS_USERID);
 
-    debugPrint("autheSharedPreferences.getInntication autologin. tutorialCompleted: "+tutorialCompleted.toString());
+    if(refreshToken != null) {
+      debugPrint("authentication refreshToken: " + refreshToken);
 
-    if(!tutorialCompleted) {
-      //ApiManager.showFreeToast(context, "refresh 2");
-      goToTutorial();
-      return;
-    }
-
-    if(refreshToken != null && SessionData().userId != null) {
-      debugPrint("authentication refreshToken userId: " + SessionData().userId.toString() + " - refreshToken: " + refreshToken);
-
-      ApiManager(context).refreshToken(refreshToken, SessionData().userId, (response) async {
+      ApiManager(context).refreshToken(refreshToken, (response) async {
         debugPrint("authentication refreshToken success");
 
-        if(response["data"] != null) {
-          //ApiManager.showFreeToast(context, "refresh 3");
-          preferences.setString(Constants.PREFS_TOKEN, response["data"].toString());
-          SessionData().token = response["data"].toString();
-
-          /*ApiManager(context).getUser(SessionData().userId, (response) async {
-            debugPrint("authentication getUser success");
-            Map<String, dynamic> rawItem = new Map<String, dynamic>.from(response["data"]);
-
-            //ApiManager.showFreeToast(context, "refresh 4");
-
-            SessionData().userId = preferences.getString(Constants.PREFS_USERID);
-
-            setState(() {
-              SessionData().user = User(rawItem);
-            });
-            await ApiManager(context).loadEconomy();
-            await ApiManager(context).loadLanguage();
-
-            await preferences.setString(Constants.PREFS_USER, jsonEncode(SessionData().user));
-
-            ApiManager(context).subscribePushNotifications(SessionData().user);
-            goToHome();
-          }, (error) async {
-            //ApiManager.showFreeToast(context, "refresh 5");
-            debugPrint("authentication getUser failure");
-            SessionData().token = null;
-            SessionData().userId = null;
-            await SessionData().clearStorageData();
-            goToLogin();
-          });*/
+        if(response["access"] != null) {
+          preferences.setString(Constants.PREFS_TOKEN, response["access"]);
+          preferences.setString(Constants.PREFS_REFRESH_TOKEN, response["refresh"]);
+          SessionData().token = response["access"];
+          access();
         } else {
-          //ApiManager.showFreeToast(context, "refresh 6 "+refreshToken.toString());
           debugPrint("authentication refreshToken not valid");
           SessionData().token = null;
-          SessionData().userId = null;
           await SessionData().clearStorageData();
           goToLogin();
         }
       }, (error) async {
-        //ApiManager.showFreeToast(context, "refresh 7");
         debugPrint("authentication refreshToken failure");
         SessionData().token = null;
-        SessionData().userId = null;
         await SessionData().clearStorageData();
         goToLogin();
       });
     } else {
-      //ApiManager.showFreeToast(context, "refresh 8");
       SessionData().token = null;
-      SessionData().userId = null;
       await SessionData().clearStorageData();
       goToLogin();
     }
@@ -142,15 +93,19 @@ class SplashScreenState extends State<SplashScreen> {
 
   goToTutorial() {
     setState(() {
-      Navigator.of(context).pushAndRemoveUntil(new MaterialPageRoute(builder: (BuildContext context) => WelcomeScreen()), (_) => false); //welcomescreen
+      Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => WelcomeScreen()), (_) => false); //welcomescreen
       //Navigator.of(context).pushAndRemoveUntil(new MaterialPageRoute(builder: (BuildContext context) => WelcomeScreen()), (_) => false);
     });
   }
 
   goToLogin() {
     setState(() {
-      Navigator.of(context).pushAndRemoveUntil(new MaterialPageRoute(builder: (BuildContext context) => LoginScreen()), (_) => false);
+      Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => LoginScreen()), (_) => false);
     });
+  }
+
+  access() {
+    Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => TabScreen()), (_) => false);
   }
   
   @override

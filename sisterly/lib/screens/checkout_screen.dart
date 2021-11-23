@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:sisterly/models/address.dart';
 import 'package:sisterly/screens/choose_payment_screen.dart';
+import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:sisterly/widgets/checkout/checkout_product_card.dart';
 
@@ -24,7 +26,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final TextEditingController _phone = TextEditingController();
   bool _saveAddress = true;
   bool _insurance = true;
-  bool _hasAddress = true;
+  bool _hasAddress = false;
+  List<Address> _addresses = [];
+  Address? _activeAddress;
+  bool _addNewAddress = false;
+
+  @override
+  void initState() {
+    super.initState();
+    getAddresses();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -158,7 +169,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             fontWeight: FontWeight.bold
                         ),
                       ),
-                      if (!_hasAddress) Column(
+                      if (!_hasAddress || _addNewAddress) Column(
                         children: [
                           inputField("First name", _firstName),
                           inputField("Last name", _lastName),
@@ -188,15 +199,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ]
                       ),
                       SizedBox(height: 15),
-                      if (_hasAddress) Column(
+                      if (_hasAddress && !_addNewAddress) Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: Row(
                               children: [
-                                _renderAddress(true),
-                                _renderAddress(false)
+                                for (var a in _addresses) _renderAddress(a)
                               ]
                             ),
                           ),
@@ -214,7 +224,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               )
                             ),
                             onPressed: () {
-
+                              setState(() {
+                                _addNewAddress = true;
+                              });
                             },
                           ),
                         ]
@@ -417,13 +429,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  Widget _renderAddress(bool active) {
+  Widget _renderAddress(Address address) {
     return Container(
       padding: EdgeInsets.all(25),
       margin: EdgeInsets.only(right: 20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(25),
-        color: active ? Constants.SECONDARY_COLOR_LIGHT : Constants.LIGHT_GREY_COLOR2
+        color: address.active ? Constants.SECONDARY_COLOR_LIGHT : Constants.LIGHT_GREY_COLOR2
       ),
       child: IntrinsicHeight(
         child: Row(
@@ -431,40 +443,40 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           children: [
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text('Nome cognome',
+              children: [
+                Text(address.name,
                     style: TextStyle(
                       fontSize: 16,
                       fontFamily: Constants.FONT,
                       fontWeight: FontWeight.bold
                     )
                 ),
-                Text('31110 Via Cxdqwdqw',
+                Text(address.address1,
                     style: TextStyle(
                         fontSize: 16,
                         fontFamily: Constants.FONT
                     )
                 ),
-                Text('Treviso, TV',
+                Text(address.province,
                     style: TextStyle(
                         fontSize: 16,
                         fontFamily: Constants.FONT
                     )
                 ),
-                Text('Veneto, Italia',
+                Text(address.country,
                     style: TextStyle(
                         fontSize: 16,
                         fontFamily: Constants.FONT
                     )
                 ),
                 SizedBox(height: 10),
-                Text('email@email.email',
+                if (address.email != null) Text(address.email ?? '',
                     style: TextStyle(
                         fontSize: 16,
                         fontFamily: Constants.FONT
                     )
                 ),
-                Text('+39 3023920192',
+                if (address.phone != null) Text(address.phone ?? '',
                     style: TextStyle(
                         fontSize: 16,
                         fontFamily: Constants.FONT
@@ -482,7 +494,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   },
                 ),
                 Visibility(
-                  visible: active,
+                  visible: address.active,
                   child: InkWell(
                     child: Container(
                       width: 20,
@@ -501,5 +513,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
       ),
     );
+  }
+  
+  getAddresses() {
+    ApiManager(context).makeGetRequest('/client/address', {}, (response) {
+      if (response["data"] != null) {
+        for (var address in response["data"]) {
+          if (address["active"]) {
+            _activeAddress = Address.fromJson(address);
+          } else {
+            _addresses.add(Address.fromJson(address));
+          }
+        }
+        if (_addresses.isNotEmpty || _activeAddress != null) {
+          setState(() => _hasAddress = true);
+        }
+      }
+    }, (response) {});
   }
 }

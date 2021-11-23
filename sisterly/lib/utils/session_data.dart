@@ -13,7 +13,6 @@ class SessionData {
   factory SessionData() => _instance;
 
   String? token;
-  String? userId;
   String? language;
 
   var currencyFormat = NumberFormat.currency(symbol: "€", locale: "it_IT");
@@ -26,7 +25,6 @@ class SessionData {
 
   logout(context) async {
     token = null;
-    userId = null;
 
     var preferences = await SharedPreferences.getInstance();
     preferences.remove(Constants.PREFS_REFRESH_TOKEN);

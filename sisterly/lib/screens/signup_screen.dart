@@ -73,10 +73,6 @@ class SignupScreenState extends State<SignupScreen>  {
           var data = response["data"];
           var preferences = await SharedPreferences.getInstance();
 
-          // preferences.setString(Constants.PREFS_EMAIL, _emailController.text);
-          // preferences.setString(Constants.PREFS_TOKEN, data["access"]);
-          // preferences.setString(Constants.PREFS_REFRESH_TOKEN, data["refresh"]);
-
           signupSuccess();
         } else {
           ApiManager.showErrorMessage(context, response["code"]);

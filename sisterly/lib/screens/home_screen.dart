@@ -1,19 +1,9 @@
-import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:sisterly/screens/product_screen.dart';
-import 'package:sisterly/screens/reset_screen.dart';
-import 'package:sisterly/screens/signup_screen.dart';
-import 'package:sisterly/screens/signup_success_screen.dart';
-import 'package:sisterly/screens/verify_screen.dart';
-import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
-import 'package:sisterly/utils/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sisterly/widgets/custom_app_bar.dart';
 
 import '../utils/constants.dart';
-import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
 
