@@ -18,7 +18,7 @@ class SessionData {
 
   var currencyFormat = NumberFormat.currency(symbol: "€", locale: "it_IT");
 
-  var serverUrl = "https://api.centsdonations.com:8443";
+  var serverUrl = "https://api.v1.sisterly.it";
 
   SessionData._internal() {
     // init things inside this

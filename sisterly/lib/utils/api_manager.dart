@@ -27,7 +27,19 @@ class ApiManager {
       "password": password,
     };
 
-    //makePublicPostRequest("/public-api/login", params, success, failure);
+    makePostRequest("/client/token", params, success, failure);
+  }
+
+  signup(email, password, firstName, lastName, phone, success, failure) async {
+    var params = {
+      "email": email,
+      "password": password,
+      "first_name": firstName,
+      "last_name": lastName,
+      "phone": phone,
+    };
+
+    makePostRequest("/client/register", params, success, failure);
   }
 
   createUser(success, failure){
@@ -46,7 +58,7 @@ class ApiManager {
   }
 
   makePostRequest(endpoint, params, success, failure) async {
-    await internalMakePostRequest(endpoint, params, SessionData().token, success, failure, true);
+    await internalMakePostRequest(endpoint, params, SessionData().token ?? '', success, failure, true);
   }
 
   internalMakePostRequest(endpoint, params, token, success, failure, retry) async {
@@ -55,7 +67,7 @@ class ApiManager {
     Map<String, String> headers = {
       "Content-type": "application/json",
       "Authorization": token,
-      "Accept-Language": await getLocale(context)
+      "Accept-Language": await getLocale(context) ?? ''
     };
     String json = jsonEncode(params);
 
@@ -525,23 +537,6 @@ class ApiManager {
         textColor: Colors.white,
         fontSize: 16.0
     );
-  }
-
-  finalizeLogin(loginResponse) async {
-    debugPrint("finalizeLogin refreshToken: "+loginResponse["refreshToken"]);
-
-    Map<String, dynamic> rawResponse = new Map<String, dynamic>.from(loginResponse);
-    //var user = new User(rawResponse["user"]);
-
-    //SessionData().user = user;
-    SessionData().token = loginResponse["accessToken"];
-    //SessionData().userId = SessionData().user.id;
-
-    var preferences = await SharedPreferences.getInstance();
-    preferences.setString(Constants.PREFS_REFRESH_TOKEN, loginResponse["refreshToken"]);
-    //preferences.setString(Constants.PREFS_TOKEN, SessionData().token);
-    //preferences.setString(Constants.PREFS_USERID, SessionData().userId);
-    //preferences.setString(Constants.PREFS_USER, jsonEncode(SessionData().user));
   }
 
   loadLanguage() async {

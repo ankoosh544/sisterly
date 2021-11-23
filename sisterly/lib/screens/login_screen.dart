@@ -1,28 +1,22 @@
-import 'package:sisterly/screens/home_screen.dart';
-import 'package:sisterly/screens/signup_screen.dart';
 import 'package:sisterly/screens/tab_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
-import 'package:sisterly/utils/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sisterly/widgets/custom_app_bar.dart';
+import 'package:sisterly/utils/session_data.dart';
 
 import '../utils/constants.dart';
 import 'forgot_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  final Function? loginCompletedCallback;
-
-  const LoginScreen({Key? key, this.loginCompletedCallback}) : super(key: key);
+  const LoginScreen({Key? key}) : super(key: key);
 
   @override
   LoginScreenState createState() => LoginScreenState();
 }
 
-class LoginScreenState extends State<LoginScreen>
-    with TickerProviderStateMixin {
+class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin {
   final TextEditingController _emailFilter = TextEditingController();
   final TextEditingController _passwordFilter = TextEditingController();
 
@@ -63,40 +57,30 @@ class LoginScreenState extends State<LoginScreen>
 
     _emailFilter.text = _emailFilter.text.toLowerCase().trim();
 
-    /*ApiManager(context).login(_emailFilter.text.trim(), _passwordFilter.text,
+    ApiManager(context).login(_emailFilter.text.trim(), _passwordFilter.text,
         (response) async {
-      if (response["success"] == true) {
+      if (response["access"] != null) {
         debugPrint("login success");
 
         var preferences = await SharedPreferences.getInstance();
         preferences.setString(Constants.PREFS_EMAIL, _emailFilter.text);
+        preferences.setString(Constants.PREFS_TOKEN, response["access"]);
+        preferences.setString(Constants.PREFS_REFRESH_TOKEN, response["refresh"]);
+        SessionData().token = response["access"];
 
-        loginSuccess(response["data"]);
+        loginSuccess();
       } else {
         ApiManager.showErrorMessage(context, response["code"]);
       }
     }, (statusCode) {
       ApiManager.showErrorMessage(context, "generic_error");
       debugPrint("login failure");
-    });*/
-
-    Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (BuildContext context) => TabScreen()),
-            (_) => false);
+    });
   }
 
-  loginSuccess(response) async {
-    ApiManager(context).finalizeLogin(response);
+  loginSuccess() async {
     await ApiManager(context).loadLanguage();
-
-    if (widget.loginCompletedCallback != null) {
-      Navigator.of(context).pop();
-      widget.loginCompletedCallback!();
-    } else {
-      Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (BuildContext context) => LoginScreen()),
-          (_) => false);
-    }
+    Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => TabScreen()), (_) => false);
   }
 
   forgot() {

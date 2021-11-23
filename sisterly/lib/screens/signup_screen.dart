@@ -1,19 +1,14 @@
 import 'package:flutter/gestures.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
-import 'package:sisterly/screens/signup_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sisterly/screens/verify_phone_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
-import 'package:sisterly/utils/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sisterly/widgets/custom_app_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../utils/constants.dart';
-import 'forgot_screen.dart';
-import 'login_screen.dart';
 
 class SignupScreen extends StatefulWidget {
 
@@ -43,51 +38,54 @@ class SignupScreenState extends State<SignupScreen>  {
   }
 
   signup() async {
-    if (ApiManager.isEmpty(_emailController.text.trim())) {
-      ApiManager.showErrorToast(context, "login_email_mandatory");
+    if (ApiManager.isEmpty(_firstNameController.text.trim())) {
+      ApiManager.showErrorToast(context, "signup_first_name_mandatory");
+      return;
+    }
+
+    if (ApiManager.isEmpty(_lastNameController.text.trim())) {
+      ApiManager.showErrorToast(context, "signup_last_name_mandatory");
+      return;
+    }
+
+    if (ApiManager.isEmpty(_phoneController.text.trim())) {
+      ApiManager.showErrorToast(context, "signup_phome_mandatory");
       return;
     }
 
     if (ApiManager.isEmpty(_emailController.text.trim())) {
-      ApiManager.showErrorToast(context, "login_email_mandatory");
-      return;
-    }
-
-    if (ApiManager.isEmpty(_emailController.text.trim())) {
-      ApiManager.showErrorToast(context, "login_email_mandatory");
-      return;
-    }
-
-    if (ApiManager.isEmpty(_emailController.text.trim())) {
-      ApiManager.showErrorToast(context, "login_email_mandatory");
+      ApiManager.showErrorToast(context, "signup_email_mandatory");
       return;
     }
 
     if (ApiManager.isEmpty(_passwordController.text.trim())) {
-      ApiManager.showErrorToast(context, "login_password_mandatory");
+      ApiManager.showErrorToast(context, "signup_password_mandatory");
       return;
     }
 
     _emailController.text = _emailController.text.toLowerCase().trim();
 
-    /*ApiManager(context).login(_emailController.text.trim(), _passwordController.text,
-        (response) async {
-      if (response["success"] == true) {
-        debugPrint("login success");
+    ApiManager(context).signup(_emailController.text.trim(), _passwordController.text, _firstNameController.text, _lastNameController.text, _phoneController.text.trim(),
+      (response) async {
+        if (response["data"] != null) {
+          debugPrint("signup success");
 
-        var preferences = await SharedPreferences.getInstance();
-        preferences.setString(Constants.PREFS_EMAIL, _emailController.text);
+          var data = response["data"];
+          var preferences = await SharedPreferences.getInstance();
 
-        signupSuccess(response["data"]);
-      } else {
-        ApiManager.showErrorMessage(context, response["code"]);
-      }
-    }, (statusCode) {
-      ApiManager.showErrorMessage(context, "generic_error");
-      debugPrint("login failure");
-    });*/
+          // preferences.setString(Constants.PREFS_EMAIL, _emailController.text);
+          // preferences.setString(Constants.PREFS_TOKEN, data["access"]);
+          // preferences.setString(Constants.PREFS_REFRESH_TOKEN, data["refresh"]);
 
-    signupSuccess();
+          signupSuccess();
+        } else {
+          ApiManager.showErrorMessage(context, response["code"]);
+        }
+      }, (statusCode) {
+        ApiManager.showErrorMessage(context, "generic_error");
+        debugPrint("login failure");
+     }
+    );
   }
 
   signupSuccess() async {
