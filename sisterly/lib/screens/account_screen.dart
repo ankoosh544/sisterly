@@ -6,6 +6,7 @@ import 'package:sisterly/screens/reviews_screen.dart';
 import 'package:sisterly/screens/signup_screen.dart';
 import 'package:sisterly/screens/signup_success_screen.dart';
 import 'package:sisterly/screens/sister_advice_screen.dart';
+import 'package:sisterly/screens/splash_screen.dart';
 import 'package:sisterly/screens/verify_screen.dart';
 import 'package:sisterly/screens/wishlist_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
@@ -14,6 +15,7 @@ import 'package:sisterly/utils/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sisterly/utils/session_data.dart';
 import 'package:sisterly/widgets/custom_app_bar.dart';
 
 import '../utils/constants.dart';
@@ -218,6 +220,13 @@ class AccountScreenState extends State<AccountScreen>  {
                               MaterialPageRoute(builder: (BuildContext context) => ReviewsScreen()));
                         },
                           child: getItem("assets/images/review.svg", "Your Reviews")
+                      ),
+                      InkWell(
+                        onTap: () {
+                          SessionData().clearStorageData();
+                          Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => SplashScreen()), (_) => false);
+                        },
+                          child: getItem("assets/images/review.svg", "Log out")
                       )
                     ],
                   ),

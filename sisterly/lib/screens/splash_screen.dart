@@ -80,9 +80,7 @@ class SplashScreenState extends State<SplashScreen> {
         goToLogin();
       });
     } else {
-      SessionData().token = null;
-      await SessionData().clearStorageData();
-      goToLogin();
+      goToTutorial();
     }
   }
 

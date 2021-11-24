@@ -164,13 +164,8 @@ class ApiManager {
             internalMakeGetRequest(endpoint, params, SessionData().token, success, failure, false);
           }, failure);
         } else {
-          // if(bodyResponse["success"] == true) {
           debugPrint("makeGetRequest "+endpoint+" success");
           success(bodyResponse);
-          // } else {
-          //   debugPrint("makeGetRequest "+endpoint+" success FALSE");
-          //   failure();
-          // }
         }
       } catch(ex) {
         debugPrint("makeGetRequest "+endpoint+" catch failure "+ex.toString());
@@ -250,7 +245,7 @@ class ApiManager {
 
     Map<String, String> headers = {
       "Content-type": "application/json",
-      "Authorization": token,
+      "Authorization": "Bearer $token",
       "Accept-Language": await getLocale(context) ?? ''
     };
     String json = jsonEncode(params);
@@ -264,30 +259,27 @@ class ApiManager {
 
       debugPrint("Status: " + statusCode.toString() + "  body: " + body);
 
-      if (statusCode == 200 || statusCode == 201) {
-        var bodyResponse = jsonDecode(body);
+      var bodyResponse = jsonDecode(body);
 
-        if (!bodyResponse["success"] && bodyResponse["status"].toString() == "500") {
-          debugPrint("internalMakePutRequest " + url + " invalid token");
-          manageFailure(failure, context, 401, json);
-        } else if(bodyResponse["status"] != null && bodyResponse["status"].toString() == "401" && retry){
-          debugPrint("makeGetRequest: refreshToken");
-          retry = false;
+      if ((bodyResponse["status"] != null && bodyResponse["status"].toString() == "401" && retry) || bodyResponse["code"] == "token_not_valid"){
+        debugPrint("makePutRequest: refreshToken");
+        retry = false;
+        var preferences = await SharedPreferences.getInstance();
+        var token = preferences.getString(Constants.PREFS_REFRESH_TOKEN);
+        refreshToken(token, (response) async {
           var preferences = await SharedPreferences.getInstance();
-          var token = preferences.getString(Constants.PREFS_REFRESH_TOKEN);
-          refreshToken(token, (response) async {
-            var preferences = await SharedPreferences.getInstance();
-            preferences.setString(Constants.PREFS_TOKEN, response["data"].toString());
-            SessionData().token = response["data"].toString();
-            internalMakePutRequest(endpoint, params, SessionData().token, success, failure, false);
-          }, failure);
-        } else {
-          debugPrint("internalMakePutRequest " + url + " success. Body: " + body);
-          success(bodyResponse);
-        }
+          preferences.setString(Constants.PREFS_TOKEN, response["access"]);
+          preferences.setString(Constants.PREFS_REFRESH_TOKEN, response["refresh"]);
+          SessionData().token = response["access"];
+          internalMakeGetRequest(endpoint, params, SessionData().token, success, failure, false);
+        }, failure);
+      } else if (bodyResponse["errors"] != null) {
+        debugPrint("internalMakePutRequest " + url + " errors: ");
+        // debugPrint(bodyResponse["errors"]);
+        failure(bodyResponse);
       } else {
-        debugPrint("internalMakePutRequest " + url + " failure");
-        manageFailure(failure, context, statusCode, json);
+        debugPrint("internalMakePutRequest " + url + " success. Body: " + body);
+        success(bodyResponse);
       }
     } catch(ex) {
       debugPrint("errorTryCatch");

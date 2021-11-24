@@ -1,7 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sisterly/screens/verify_phone_screen.dart';
+import 'package:sisterly/screens/signup_success_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:flutter/material.dart';
@@ -85,8 +85,7 @@ class SignupScreenState extends State<SignupScreen>  {
   }
 
   signupSuccess() async {
-    Navigator.of(context).push(
-        MaterialPageRoute(builder: (BuildContext context) => VerifyPhoneScreen(phone: _phoneController.text, email: _emailController.text,)));
+    Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => SignupSuccessScreen()), (_) => false);
   }
 
   @override

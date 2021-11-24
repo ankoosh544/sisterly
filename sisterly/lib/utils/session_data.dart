@@ -37,7 +37,6 @@ class SessionData {
 
   clearStorageData() async {
     var preferences = await SharedPreferences.getInstance();
-    preferences.remove(Constants.PREFS_TOKEN);
+    preferences.clear();
   }
-
 }

@@ -16,12 +16,13 @@ class CheckoutScreen extends StatefulWidget {
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
   String _shipping = 'shipment';
-  final TextEditingController _firstName = TextEditingController();
-  final TextEditingController _lastName = TextEditingController();
+  final TextEditingController _name = TextEditingController();
   final TextEditingController _address = TextEditingController();
+  final TextEditingController _address2 = TextEditingController();
   final TextEditingController _city = TextEditingController();
   final TextEditingController _zip = TextEditingController();
   final TextEditingController _state = TextEditingController();
+  final TextEditingController _country = TextEditingController();
   final TextEditingController _email = TextEditingController();
   final TextEditingController _phone = TextEditingController();
   bool _saveAddress = true;
@@ -171,12 +172,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                       if (!_hasAddress || _addNewAddress) Column(
                         children: [
-                          inputField("First name", _firstName),
-                          inputField("Last name", _lastName),
+                          inputField("Name", _name),
                           inputField("Address", _address),
+                          inputField("Address 2", _address2),
                           inputField("City", _city),
                           inputField("Zip code", _zip),
-                          inputField("State", _state),
+                          inputField("State/Province", _state),
+                          inputField("Country", _country),
                           inputField("Email", _email),
                           inputField("Phone number", _phone),
                           const SizedBox(height: 25),
@@ -206,6 +208,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             scrollDirection: Axis.horizontal,
                             child: Row(
                               children: [
+                                if (_activeAddress != null) _renderAddress(_activeAddress!),
                                 for (var a in _addresses) _renderAddress(a)
                               ]
                             ),
@@ -300,7 +303,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                           child: Text('Next'),
                           onPressed: () {
-                            Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChoosePaymentScreen()));
+                            if (!_hasAddress || (_saveAddress && _addNewAddress)) {
+                              saveAddress();
+                            }
+                            Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChoosePaymentScreen())).then((value) => setState(() {
+                              getAddresses();
+                            }));
                           },
                         ),
                       ),
@@ -517,6 +525,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   
   getAddresses() {
     ApiManager(context).makeGetRequest('/client/address', {}, (response) {
+      _activeAddress = null;
+      _addresses = [];
       if (response["data"] != null) {
         for (var address in response["data"]) {
           if (address["active"]) {
@@ -526,9 +536,31 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           }
         }
         if (_addresses.isNotEmpty || _activeAddress != null) {
-          setState(() => _hasAddress = true);
+          setState(() {
+            _hasAddress = true;
+            _addNewAddress = false;
+          });
         }
       }
     }, (response) {});
+  }
+
+  saveAddress() {
+    if (_name.text.isNotEmpty && _address.text.isNotEmpty && _country.text.isNotEmpty && _state.text.isNotEmpty && _zip.text.isNotEmpty && _city.text.isNotEmpty) {
+      ApiManager(context).makePutRequest('/client/address', {
+        "name": _name.text,
+        "address1": _address.text,
+        "country": _country.text,
+        "province": _state.text,
+        "zip": _zip.text,
+        "city": _city.text,
+        "latitude": -5,
+        "longitude": -9,
+        "address2": _address2.text,
+        "note": "",
+        "default": false,
+        "active": _activeAddress == null
+      }, (res) {}, (res) {});
+    }
   }
 }

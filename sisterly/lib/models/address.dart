@@ -15,6 +15,6 @@ class Address {
   Address(this.id, this.name, this.address1, this.address2, this.country, this.province, this.zip, this.note, this.city, this.active, this.email, this.phone);
 
   factory Address.fromJson(Map<String, dynamic> json) {
-    return Address(json["id"], json["name"], json["address1"], json["address2"], json["country"], json["province"], json["zip"], json["note"], json["city"], json["active"] == "true" ? true : false, json["email"], json["phone"]);
+    return Address(json["id"], json["name"], json["address1"], json["address2"], json["country"], json["province"], json["zip"], json["note"], json["city"], json["active"], json["email"], json["phone"]);
   }
 }
