@@ -1,4 +1,6 @@
+import 'package:sisterly/models/product.dart';
 import 'package:sisterly/screens/product_screen.dart';
+import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -14,11 +16,12 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen>  {
+  List<Product> _products = [];
 
   @override
   void initState() {
     super.initState();
-
+    getProducts();
   }
 
   @override
@@ -175,5 +178,19 @@ class HomeScreenState extends State<HomeScreen>  {
         ],
       ),
     );
+  }
+
+  getProducts() {
+    ApiManager(context).makeGetRequest('/product', {}, (res) {
+      // print(res);
+      var data = res["data"];
+      if (data != null) {
+        for (var prod in data) {
+          _products.add(Product.fromJson(prod));
+        }
+      }
+    }, (res) {
+
+    });
   }
 }

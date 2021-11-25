@@ -496,9 +496,31 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                InkWell(
-                  child: SizedBox(width: 17, height: 19, child: SvgPicture.asset("assets/images/menu.svg", width: 17, height: 19, fit: BoxFit.scaleDown, color: Colors.black)),
-                  onTap: () {
+                if (!address.active) PopupMenuButton<String>(
+                  child: Container(
+                    alignment: Alignment.centerRight,
+                    child: Icon(
+                      Icons.more_vert,
+                    ),
+                  ),
+                  padding: EdgeInsets.all(0),
+                  onSelected: (val) {
+                    switch (val) {
+                      case 'Delete':
+                        _deleteAddress(address);
+                        break;
+                      case 'Set active':
+                        _setActiveAddress(address);
+                        break;
+                    }
+                  },
+                  itemBuilder: (BuildContext context) {
+                    return ['Delete', 'Set active'].map((String choice) {
+                      return PopupMenuItem<String>(
+                        value: choice,
+                        child: Text(choice),
+                      );
+                    }).toList();
                   },
                 ),
                 Visibility(
@@ -561,6 +583,44 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         "default": false,
         "active": _activeAddress == null
       }, (res) {}, (res) {});
+    }
+  }
+
+  _deleteAddress(Address address) async {
+    try {
+      await ApiManager(context).internalMakeDeleteRequest('/client/address/${address.id}', (res) {}, (res) {});
+      _removeAddress(address);
+    } catch(e) {
+      //
+    }
+  }
+
+  _removeAddress(Address address) {
+    setState(() {
+      int i = _addresses.indexWhere((a) => address.id == a.id);
+      if (i >= 0) {
+        _addresses.removeAt(i);
+      } else {
+        _activeAddress = null;
+      }
+    });
+  }
+
+  _setActiveAddress(Address address) async {
+    try {
+      address.active = true;
+      await ApiManager(context).makePostRequest('/client/address/${address.id}', address, (res) {}, (res) {});
+
+      if (_activeAddress != null) {
+        _activeAddress!.active = false;
+        await ApiManager(context).makePostRequest('/client/address/${_activeAddress!.id}', _activeAddress!, (res) {}, (res) {});
+
+        _addresses.add(_activeAddress!);
+      }
+      _activeAddress = address;
+      _removeAddress(address);
+    } catch(e) {
+      //
     }
   }
 }

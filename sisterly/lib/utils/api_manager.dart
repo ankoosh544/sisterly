@@ -65,7 +65,7 @@ class ApiManager {
 
     Map<String, String> headers = {
       "Content-type": "application/json",
-      "Authorization": token,
+      "Authorization": "Bearer $token",
       "Accept-Language": await getLocale(context) ?? ''
     };
     String json = jsonEncode(params);
@@ -274,8 +274,7 @@ class ApiManager {
           internalMakeGetRequest(endpoint, params, SessionData().token, success, failure, false);
         }, failure);
       } else if (bodyResponse["errors"] != null) {
-        debugPrint("internalMakePutRequest " + url + " errors: ");
-        // debugPrint(bodyResponse["errors"]);
+        debugPrint("internalMakePutRequest " + url + " error");
         failure(bodyResponse);
       } else {
         debugPrint("internalMakePutRequest " + url + " success. Body: " + body);
@@ -292,7 +291,7 @@ class ApiManager {
 
     Map<String, String> headers = {
       "Content-type": "application/json",
-      "Authorization": SessionData().token!,
+      "Authorization": "Bearer ${SessionData().token!}",
       "Accept-Language": await getLocale(context) ?? ''
     };
 
@@ -305,20 +304,14 @@ class ApiManager {
 
       debugPrint("Status: " + statusCode.toString() + "  body: " + body);
 
-      if (statusCode == 200 || statusCode == 201) {
-        var bodyResponse = jsonDecode(body);
+      var bodyResponse = jsonDecode(body);
 
-        if (bodyResponse["status"].toString() == "500") {
-          debugPrint("internalMakeDeleteRequest " + url + " invalid token");
-          manageFailure(failure, context, 401, null);
-        } else {
-          debugPrint(
-              "internalMakeDeleteRequest " + url + " success. Body: " + body);
-          success(bodyResponse);
-        }
+     if (bodyResponse["errors"] != null || bodyResponse["code"] != null) {
+        debugPrint("internalMakeDeleteRequest " + url + " error");
+        failure(bodyResponse);
       } else {
-        debugPrint("internalMakeDeleteRequest " + url + " failure");
-        manageFailure(failure, context, statusCode, null);
+        debugPrint("internalMakeDeleteRequest " + url + " success. Body: " + body);
+        success(bodyResponse);
       }
     } catch(ex) {
       debugPrint("internalMakeDeleteRequest " + url + " failure ex "+ex.toString());
