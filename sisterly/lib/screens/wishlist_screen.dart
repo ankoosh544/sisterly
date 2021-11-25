@@ -39,8 +39,8 @@ class WishlistScreenState extends State<WishlistScreen>  {
   Widget productCell() {
     return InkWell(
       onTap: () {
-        Navigator.of(context).push(
-            MaterialPageRoute(builder: (BuildContext context) => ProductScreen()));
+        // Navigator.of(context).push(
+        //     MaterialPageRoute(builder: (BuildContext context) => ProductScreen()));
       },
       child: Container(
         margin: const EdgeInsets.all(8),

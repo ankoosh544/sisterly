@@ -1,4 +1,5 @@
 import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:sisterly/models/product.dart';
 import 'package:sisterly/screens/checkout_screen.dart';
 import 'package:sisterly/screens/profile_screen.dart';
 import 'package:sisterly/screens/reset_screen.dart';
@@ -11,14 +12,16 @@ import 'package:sisterly/utils/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sisterly/utils/session_data.dart';
 import 'package:sisterly/widgets/custom_app_bar.dart';
 
 import '../utils/constants.dart';
 import 'login_screen.dart';
 
 class ProductScreen extends StatefulWidget {
+  final Product product;
 
-  const ProductScreen({Key? key}) : super(key: key);
+  const ProductScreen(this.product, {Key? key}) : super(key: key);
 
   @override
   ProductScreenState createState() => ProductScreenState();
@@ -77,7 +80,7 @@ class ProductScreenState extends State<ProductScreen>  {
                     Center(
                       child: Padding(
                         padding: const EdgeInsets.all(20.0),
-                        child: Image.asset("assets/images/product.png", height: 180, fit: BoxFit.fitHeight,),
+                        child: Image.network(SessionData().serverUrl + widget.product.images[0], height: 180, fit: BoxFit.fitHeight),
                       ),
                     ),
                     Positioned(
@@ -112,9 +115,9 @@ class ProductScreenState extends State<ProductScreen>  {
                         children: [
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
+                            children: [
                               Text(
-                                "Bottega Veneta",
+                                widget.product.brandName,
                                 style: TextStyle(
                                     color: Constants.DARK_TEXT_COLOR,
                                     fontSize: 16,
@@ -122,9 +125,9 @@ class ProductScreenState extends State<ProductScreen>  {
                                     fontWeight: FontWeight.bold
                                 ),
                               ),
-                              SizedBox(height: 8,),
+                              SizedBox(height: 8),
                               Text(
-                                "Chain Cassette Seagrass",
+                                widget.product.model,
                                 style: TextStyle(
                                     color: Constants.DARK_TEXT_COLOR,
                                     fontSize: 20,
@@ -135,7 +138,7 @@ class ProductScreenState extends State<ProductScreen>  {
                             ],
                           ),
                           Text(
-                            "€30",
+                            "€${widget.product.sellingPrice}",
                             style: TextStyle(
                                 color: Constants.PRIMARY_COLOR,
                                 fontSize: 25,
@@ -259,9 +262,9 @@ class ProductScreenState extends State<ProductScreen>  {
                       SizedBox(height: 8,),
                       Divider(height: 30,),
                       SizedBox(height: 8,),
-                      getInfoRow("Material", "100% Lambskin"),
+                      getInfoRow("Material", widget.product.materialName),
                       SizedBox(height: 8,),
-                      getInfoRow("Color", "Seagrass"),
+                      getInfoRow("Color", widget.product.colorName),
                       SizedBox(height: 8,),
                       getInfoRow("Metal Accessories", "Gold Finish"),
                       SizedBox(height: 8,),

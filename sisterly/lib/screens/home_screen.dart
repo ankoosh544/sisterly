@@ -4,6 +4,7 @@ import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:sisterly/utils/session_data.dart';
 
 import '../utils/constants.dart';
 
@@ -29,57 +30,63 @@ class HomeScreenState extends State<HomeScreen>  {
     super.dispose();
   }
 
-  Widget productCell() {
-    return InkWell(
-      onTap: () {
-        Navigator.of(context).push(
-            MaterialPageRoute(builder: (BuildContext context) => ProductScreen()));
-      },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
+  Widget productCell(Product product) {
+    return Column(
+      children: [
+        SizedBox(height: 20),
+        InkWell(
+          onTap: () {
+            Navigator.of(context).push(
+                MaterialPageRoute(builder: (BuildContext context) => ProductScreen(product)));
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Color(0xfff5f5f5),
-                  borderRadius: BorderRadius.circular(15)
-                ),
-                child: Image.asset("assets/images/product.png", height: 169,),
-              ),
-              Positioned(
-                top: 16,
-                right: 16,
-                  child: InkWell(
-                    child: SizedBox(width: 16, height: 16, child: SvgPicture.asset("assets/images/save.svg")),
+              Stack(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Color(0xfff5f5f5),
+                      borderRadius: BorderRadius.circular(15)
+                    ),
+                    // child: Image.asset("assets/images/product.png", height: 169,),
+                    child: Image.network(SessionData().serverUrl + product.images[0], height: 169),
+                  ),
+                  Positioned(
+                    top: 16,
+                    right: 16,
+                      child: InkWell(
+                        child: SizedBox(width: 16, height: 16, child: SvgPicture.asset("assets/images/save.svg")),
+                      )
                   )
-              )
+                ],
+              ),
+              SizedBox(height: 16,),
+              Text(
+                product.model,
+                textAlign: TextAlign.left,
+                style: TextStyle(
+                  color: Constants.TEXT_COLOR,
+                  fontFamily: Constants.FONT,
+                  fontSize: 16,
+                ),
+              ),
+              SizedBox(height: 8,),
+              Text(
+                "€${product.sellingPrice} per day",
+                textAlign: TextAlign.left,
+                style: TextStyle(
+                  color: Constants.PRIMARY_COLOR,
+                  fontSize: 18,
+                    fontFamily: Constants.FONT,
+                  fontWeight: FontWeight.bold
+                ),
+              ),
             ],
           ),
-          SizedBox(height: 16,),
-          Text(
-            "Chain-Cassette Bottega Veneta",
-            textAlign: TextAlign.left,
-            style: TextStyle(
-              color: Constants.TEXT_COLOR,
-              fontFamily: Constants.FONT,
-              fontSize: 16,
-            ),
-          ),
-          SizedBox(height: 8,),
-          Text(
-            "€30 per day",
-            textAlign: TextAlign.left,
-            style: TextStyle(
-              color: Constants.PRIMARY_COLOR,
-              fontSize: 18,
-                fontFamily: Constants.FONT,
-              fontWeight: FontWeight.bold
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -165,10 +172,7 @@ class HomeScreenState extends State<HomeScreen>  {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      SizedBox(height: 16),
-                      productCell(),
-                      SizedBox(height: 16),
-                      productCell(),
+                      for (var prod in _products) productCell(prod)
                     ],
                   ),
                 ),
@@ -188,6 +192,8 @@ class HomeScreenState extends State<HomeScreen>  {
         for (var prod in data) {
           _products.add(Product.fromJson(prod));
         }
+        setState(() {
+        });
       }
     }, (res) {
 
