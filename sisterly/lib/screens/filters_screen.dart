@@ -285,9 +285,9 @@ class _FiltersScreenState extends State<FiltersScreen> {
                           SizedBox(height: 8,),
                           Wrap(
                             children: [
-                              getTag(1, "Excellent", _filters.conditions),
-                              getTag(2, "Good", _filters.conditions),
-                              getTag(3, "Scarce", _filters.conditions)
+                              getTag(1, "Eccellente", _filters.conditions),
+                              getTag(2, "Buone", _filters.conditions),
+                              getTag(3, "Scarse", _filters.conditions)
                             ],
                           ),
                           SizedBox(height: 24,),

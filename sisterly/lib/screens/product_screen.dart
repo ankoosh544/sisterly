@@ -181,7 +181,7 @@ class ProductScreenState extends State<ProductScreen>  {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  "Offered by Beatrice P.",
+                                  "Pubblicata da Beatrice P.",
                                   style: TextStyle(
                                       color: Constants.DARK_TEXT_COLOR,
                                       fontSize: 16,
@@ -190,7 +190,7 @@ class ProductScreenState extends State<ProductScreen>  {
                                 ),
                                 SizedBox(height: 4,),
                                 Text(
-                                  "Milan",
+                                  "Milano",
                                   style: TextStyle(
                                       color: Constants.LIGHT_TEXT_COLOR,
                                       fontSize: 14,
@@ -226,7 +226,7 @@ class ProductScreenState extends State<ProductScreen>  {
                       SizedBox(height: 8,),
                       getInfoRow("Condizioni", widget.product.conditions.toString()),
                       SizedBox(height: 8,),
-                      getInfoRow("Year", widget.product.year.toString()),
+                      getInfoRow("Anno", widget.product.year.toString()),
                       SizedBox(height: 8,),
                       getInfoRow("Taglia", widget.product.size.toString()),
                       SizedBox(height: 8,),
@@ -269,9 +269,9 @@ class ProductScreenState extends State<ProductScreen>  {
                       SizedBox(height: 8,),
                       Divider(height: 30,),
                       SizedBox(height: 8,),
-                      getInfoRow("Material", widget.product.materialName),
+                      getInfoRow("Materiale", widget.product.materialName),
                       SizedBox(height: 8,),
-                      getInfoRow("Color", widget.product.colorName),
+                      getInfoRow("Colore", widget.product.colorName),
                       /*SizedBox(height: 8,),
                       getInfoRow("Metal Accessories", "Gold Finish"),
                       SizedBox(height: 8,),
@@ -295,7 +295,7 @@ class ProductScreenState extends State<ProductScreen>  {
                                     borderRadius: BorderRadius.circular(50),
                                   )
                               ),
-                              child: Text('Book'),
+                              child: Text('Prenota'),
                               onPressed: () {
                                 Navigator.of(context).push(
                                     MaterialPageRoute(builder: (BuildContext context) => CheckoutScreen()));

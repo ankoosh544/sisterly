@@ -107,8 +107,8 @@ class ProfileScreenState extends State<ProfileScreen>  {
   Widget productCell(Product product) {
     return InkWell(
       onTap: () {
-        // Navigator.of(context).push(
-        //     MaterialPageRoute(builder: (BuildContext context) => ProductScreen()));
+         Navigator.of(context).push(
+             MaterialPageRoute(builder: (BuildContext context) => ProductScreen(product)));
       },
       child: Container(
         margin: const EdgeInsets.all(8),
@@ -167,7 +167,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
                       fontSize: 16,
                     ),
                   ),
-                  SizedBox(height: 12,),
+                  SizedBox(height: 10,),
                   Text(
                     "${SessionData().currencyFormat.format(product.sellingPrice)} al giorno",
                     textAlign: TextAlign.left,
@@ -287,7 +287,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
                                 ),
                                 SizedBox(height: 6,),
                                 Text(
-                                  "Milan",
+                                  "Milano",
                                   style: TextStyle(
                                       color: Constants.LIGHT_TEXT_COLOR,
                                       fontSize: 15,
@@ -327,7 +327,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
                                 SvgPicture.asset("assets/images/italy.svg", width: 22, height: 22,),
                                 SizedBox(width: 8,),
                                 Text(
-                                  "Italian since 1996",
+                                  "Italiano dal 1996",
                                   style: TextStyle(
                                       color: Constants.LIGHT_TEXT_COLOR,
                                       fontSize: 14,
@@ -342,7 +342,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
                                 SvgPicture.asset("assets/images/italy.svg", width: 22, height: 22,),
                                 SizedBox(width: 8,),
                                 Text(
-                                  "Italian since 1996",
+                                  "Italiano dal 1996",
                                   style: TextStyle(
                                       color: Constants.LIGHT_TEXT_COLOR,
                                       fontSize: 14,
