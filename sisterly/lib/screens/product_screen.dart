@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/screens/checkout_screen.dart';
@@ -80,7 +81,12 @@ class ProductScreenState extends State<ProductScreen>  {
                     Center(
                       child: Padding(
                         padding: const EdgeInsets.all(20.0),
-                        child: Image.network(SessionData().serverUrl + widget.product.images[0], height: 180, fit: BoxFit.fitHeight),
+                        child: CachedNetworkImage(
+                          height: 180, fit: BoxFit.fitHeight,
+                          imageUrl: SessionData().serverUrl + widget.product.images[0],
+                          placeholder: (context, url) => CircularProgressIndicator(),
+                          errorWidget: (context, url, error) => Icon(Icons.error),
+                        ),
                       ),
                     ),
                     Positioned(
@@ -138,7 +144,7 @@ class ProductScreenState extends State<ProductScreen>  {
                             ],
                           ),
                           Text(
-                            "€${widget.product.sellingPrice}",
+                            "${SessionData().currencyFormat.format(widget.product.sellingPrice)} al giorno",
                             style: TextStyle(
                                 color: Constants.PRIMARY_COLOR,
                                 fontSize: 25,
@@ -149,7 +155,7 @@ class ProductScreenState extends State<ProductScreen>  {
                         ],
                       ),
                       SizedBox(height: 12),
-                      Text(
+                      /*Text(
                         "Mandatory Insurance",
                         style: TextStyle(
                             color: Constants.TEXT_COLOR,
@@ -157,11 +163,12 @@ class ProductScreenState extends State<ProductScreen>  {
                             fontFamily: Constants.FONT
                         ),
                       ),
-                      SizedBox(height: 12),
+                      SizedBox(height: 12),*/
                       InkWell(
                         onTap: () {
+                          //TODO set user id
                           Navigator.of(context).push(
-                              MaterialPageRoute(builder: (BuildContext context) => ProfileScreen()));
+                              MaterialPageRoute(builder: (BuildContext context) => ProfileScreen(id: 1,)));
                         },
                         child: Row(
                           children: [
@@ -217,11 +224,11 @@ class ProductScreenState extends State<ProductScreen>  {
                       SizedBox(height: 8,),
                       Divider(height: 30,),
                       SizedBox(height: 8,),
-                      getInfoRow("Conditions", "Excellent"),
+                      getInfoRow("Condizioni", widget.product.conditions.toString()),
                       SizedBox(height: 8,),
-                      getInfoRow("Year", "2021"),
+                      getInfoRow("Year", widget.product.year.toString()),
                       SizedBox(height: 8,),
-                      getInfoRow("Category", "Day Bags"),
+                      getInfoRow("Taglia", widget.product.size.toString()),
                       SizedBox(height: 8,),
                       Divider(height: 30,),
                       SizedBox(height: 8,),
@@ -265,12 +272,12 @@ class ProductScreenState extends State<ProductScreen>  {
                       getInfoRow("Material", widget.product.materialName),
                       SizedBox(height: 8,),
                       getInfoRow("Color", widget.product.colorName),
-                      SizedBox(height: 8,),
+                      /*SizedBox(height: 8,),
                       getInfoRow("Metal Accessories", "Gold Finish"),
                       SizedBox(height: 8,),
                       getInfoRow("Height", "18cm"),
                       SizedBox(height: 8,),
-                      getInfoRow("Width", "26cm"),
+                      getInfoRow("Width", "26cm"),*/
                       SizedBox(height: 24,),
                       Row(
                         children: [

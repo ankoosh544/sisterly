@@ -24,17 +24,22 @@ class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin 
   final _formKey = GlobalKey<FormState>(debugLabel: '_loginFormKey');
 
   bool _showPassword = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
 
-    precompileEmail();
+    Future.delayed(Duration.zero, () {
+      precompileEmail();
+    });
   }
 
   precompileEmail() async {
     var preferences = await SharedPreferences.getInstance();
     final email = preferences.getString(Constants.PREFS_EMAIL);
+
+    debugPrint("precompileEmail " + email.toString());
 
     if (email != null) {
       setState(() {
@@ -55,6 +60,10 @@ class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin 
       return;
     }
 
+    setState(() {
+      _isLoading = true;
+    });
+
     _emailFilter.text = _emailFilter.text.toLowerCase().trim();
 
     ApiManager(context).login(_emailFilter.text.trim(), _passwordFilter.text,
@@ -70,15 +79,24 @@ class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin 
 
         loginSuccess();
       } else {
+        setState(() {
+          _isLoading = false;
+        });
         ApiManager.showErrorMessage(context, response["code"]);
       }
     }, (statusCode) {
+      setState(() {
+        _isLoading = false;
+      });
       ApiManager.showErrorMessage(context, "generic_error");
       debugPrint("login failure");
     });
   }
 
   loginSuccess() async {
+    setState(() {
+      _isLoading = false;
+    });
     await ApiManager(context).loadLanguage();
     Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => TabScreen()), (_) => false);
   }
@@ -293,7 +311,7 @@ class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin 
                       ),
                       SafeArea(
                         child: Center(
-                          child: ElevatedButton(
+                          child: _isLoading ? CircularProgressIndicator() : ElevatedButton(
                             style: ElevatedButton.styleFrom(
                                 primary: Constants.SECONDARY_COLOR,
                                 textStyle: const TextStyle(

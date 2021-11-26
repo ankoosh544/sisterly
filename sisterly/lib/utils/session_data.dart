@@ -30,8 +30,6 @@ class SessionData {
     preferences.remove(Constants.PREFS_REFRESH_TOKEN);
     preferences.remove(Constants.PREFS_USERID);
 
-    await clearStorageData();
-
     Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => LoginScreen()), (_) => false);
   }
 

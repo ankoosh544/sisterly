@@ -1,6 +1,9 @@
 import 'dart:ui';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:sisterly/models/account.dart';
+import 'package:sisterly/models/product.dart';
 import 'package:sisterly/screens/product_screen.dart';
 import 'package:sisterly/screens/reset_screen.dart';
 import 'package:sisterly/screens/signup_screen.dart';
@@ -11,16 +14,17 @@ import 'package:sisterly/utils/constants.dart';
 import 'package:sisterly/utils/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sisterly/widgets/custom_app_bar.dart';
+import 'package:sisterly/utils/session_data.dart';
 
 import '../utils/constants.dart';
 import 'filters_screen.dart';
-import 'login_screen.dart';
+import "package:sisterly/utils/utils.dart";
 
 class ProfileScreen extends StatefulWidget {
 
-  const ProfileScreen({Key? key}) : super(key: key);
+  final int? id;
+
+  const ProfileScreen({Key? key, this.id}) : super(key: key);
 
   @override
   ProfileScreenState createState() => ProfileScreenState();
@@ -28,10 +32,18 @@ class ProfileScreen extends StatefulWidget {
 
 class ProfileScreenState extends State<ProfileScreen>  {
 
+  bool _isLoading = false;
+  List<Product> _products = [];
+  Account? _profile;
+
   @override
   void initState() {
     super.initState();
 
+    Future.delayed(Duration.zero, () {
+      getUser();
+      getProducts();
+    });
   }
 
   @override
@@ -39,7 +51,60 @@ class ProfileScreenState extends State<ProfileScreen>  {
     super.dispose();
   }
 
-  Widget productCell() {
+  getUser() {
+    setState(() {
+      _isLoading = true;
+    });
+    ApiManager(context).makeGetRequest('/client/properties', {}, (res) {
+      // print(res);
+      setState(() {
+        _isLoading = false;
+        _profile = Account.fromJson(res["data"]);
+      });
+    }, (res) {
+      setState(() {
+        _isLoading = false;
+      });
+    });
+  }
+
+  getProducts() {
+    setState(() {
+      _isLoading = true;
+    });
+
+    ApiManager(context).makeGetRequest(widget.id != null ? '/product/byUser/' + widget.id.toString() + '/' : '/product/my/', {}, (res) {
+      // print(res);
+      setState(() {
+        _isLoading = false;
+      });
+
+      _products = [];
+
+      var data = res["data"];
+      if (data != null) {
+        for (var prod in data) {
+          _products.add(Product.fromJson(prod));
+        }
+      }
+    }, (res) {
+      setState(() {
+        _isLoading = false;
+      });
+    });
+  }
+
+  String getFullName() {
+    if(_profile == null) return "";
+    return _profile!.firstName!.capitalize() + " " + _profile!.lastName!.capitalize();
+  }
+
+  String getFirstName() {
+    if(_profile == null) return "";
+    return _profile!.firstName!.capitalize();
+  }
+
+  Widget productCell(Product product) {
     return InkWell(
       onTap: () {
         // Navigator.of(context).push(
@@ -72,7 +137,12 @@ class ProfileScreenState extends State<ProfileScreen>  {
                     color: Color(0xfff5f5f5),
                     borderRadius: BorderRadius.circular(15)
                   ),
-                  child: Image.asset("assets/images/product.png", height: 76,),
+                  child: CachedNetworkImage(
+                    height: 76,
+                    imageUrl: SessionData().serverUrl + product.images[0],
+                    placeholder: (context, url) => CircularProgressIndicator(),
+                    errorWidget: (context, url, error) => Icon(Icons.error),
+                  )
                 ),
                 Positioned(
                   top: 16,
@@ -87,9 +157,9 @@ class ProfileScreenState extends State<ProfileScreen>  {
               padding: const EdgeInsets.all(8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
-                    "Chain-Cassette Bottega Veneta",
+                    product.model,
                     textAlign: TextAlign.left,
                     style: TextStyle(
                       color: Constants.TEXT_COLOR,
@@ -99,7 +169,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
                   ),
                   SizedBox(height: 12,),
                   Text(
-                    "€30 per day",
+                    "${SessionData().currencyFormat.format(product.sellingPrice)} al giorno",
                     textAlign: TextAlign.left,
                     style: TextStyle(
                         color: Constants.PRIMARY_COLOR,
@@ -145,7 +215,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
                       const Padding(
                         padding: EdgeInsets.only(top: 24),
                         child: Text(
-                          "Profile Details",
+                          "Dettagli Profilo",
                           style: TextStyle(
                               color: Colors.white,
                               fontSize: 28,
@@ -154,7 +224,8 @@ class ProfileScreenState extends State<ProfileScreen>  {
                           textAlign: TextAlign.center,
                         ),
                       ),
-                      InkWell(
+                      SizedBox(width: 20,)
+                      /*InkWell(
                         child: SizedBox(width: 17, height: 19, child: SvgPicture.asset("assets/images/menu.svg", width: 17, height: 19, fit: BoxFit.scaleDown,)),
                         onTap: () {
                           showModalBottomSheet(
@@ -167,7 +238,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
                             )
                           );
                         },
-                      ),
+                      ),*/
                     ],
                   ),
                 ),
@@ -176,169 +247,179 @@ class ProfileScreenState extends State<ProfileScreen>  {
           ),
           SizedBox(height: 16,),
           Expanded(
-            child: SingleChildScrollView(
-              child: Container(
-                width: MediaQuery.of(context).size.width,
-                decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(30),
-                        topRight: Radius.circular(30))),
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      SizedBox(height: 8),
-                      Row(
-                        children: [
-                          ClipRRect(
+            child: Container(
+              decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30))),
+              child: SingleChildScrollView(
+                child: Container(
+                  width: MediaQuery.of(context).size.width,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        SizedBox(height: 8),
+                        _isLoading ? CircularProgressIndicator() : Row(
+                          children: [
+                            if(_profile != null && _profile!.image != null) ClipRRect(
                               borderRadius: BorderRadius.circular(68.0),
-                              child: Image.asset("assets/images/product.png", width: 68, height: 68, fit: BoxFit.cover,)
-                          ),
-                          SizedBox(width: 12,),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Beatrice Pedrali",
-                                style: TextStyle(
-                                    color: Constants.DARK_TEXT_COLOR,
-                                    fontSize: 20,
-                                    fontFamily: Constants.FONT
-                                ),
+                              child: CachedNetworkImage(
+                                width: 68, height: 68, fit: BoxFit.cover,
+                                imageUrl: _profile!.image!,
+                                placeholder: (context, url) => CircularProgressIndicator(),
+                                errorWidget: (context, url, error) => Icon(Icons.error),
                               ),
-                              SizedBox(height: 6,),
-                              Text(
-                                "Milan",
-                                style: TextStyle(
-                                    color: Constants.LIGHT_TEXT_COLOR,
-                                    fontSize: 15,
-                                    fontFamily: Constants.FONT
-                                ),
-                              ),
-                              SizedBox(height: 6,),
-                              Wrap(
-                                spacing: 3,
-                                children: [
-                                  SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                                  SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                                  SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                                  SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                                  SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                                  Text(
-                                    "5.0",
-                                    style: TextStyle(
-                                        color: Constants.DARK_TEXT_COLOR,
-                                        fontSize: 14,
-                                        fontFamily: Constants.FONT
-                                    ),
+                            ),
+                            if(_profile != null && _profile!.image != null) SizedBox(width: 12,),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  getFullName(),
+                                  style: TextStyle(
+                                      color: Constants.DARK_TEXT_COLOR,
+                                      fontSize: 20,
+                                      fontFamily: Constants.FONT
                                   ),
-                                ],
-                              )
-                            ],
-                          )
-                        ],
-                      ),
-                      SizedBox(height: 24,),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              SvgPicture.asset("assets/images/italy.svg", width: 22, height: 22,),
-                              SizedBox(width: 8,),
-                              Text(
-                                "Italian since 1996",
-                                style: TextStyle(
-                                    color: Constants.LIGHT_TEXT_COLOR,
-                                    fontSize: 14,
-                                    fontFamily: Constants.FONT
                                 ),
-                              ),
-                            ],
-                          ),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              SvgPicture.asset("assets/images/italy.svg", width: 22, height: 22,),
-                              SizedBox(width: 8,),
-                              Text(
-                                "Italian since 1996",
-                                style: TextStyle(
-                                    color: Constants.LIGHT_TEXT_COLOR,
-                                    fontSize: 14,
-                                    fontFamily: Constants.FONT
+                                SizedBox(height: 6,),
+                                Text(
+                                  "Milan",
+                                  style: TextStyle(
+                                      color: Constants.LIGHT_TEXT_COLOR,
+                                      fontSize: 15,
+                                      fontFamily: Constants.FONT
+                                  ),
                                 ),
-                              ),
-                            ],
-                          )
-                        ],
-                      ),
-                      SizedBox(height: 12,),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              SvgPicture.asset("assets/images/italy.svg", width: 22, height: 22,),
-                              SizedBox(width: 8,),
-                              Text(
-                                "SDA Bocconi School of Management",
-                                style: TextStyle(
-                                    color: Constants.LIGHT_TEXT_COLOR,
-                                    fontSize: 14,
-                                    fontFamily: Constants.FONT
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 40,),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: const [
-                          Text(
-                            "Offered by Beatrice",
-                            style: TextStyle(
-                                color: Constants.DARK_TEXT_COLOR,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: Constants.FONT
-                            ),
-                          ),
-                          Text(
-                            "See All",
-                            style: TextStyle(
-                                color: Constants.SECONDARY_COLOR,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: Constants.FONT,
-                              decoration: TextDecoration.underline
-                            ),
-                          ),
-                        ],
-                      ),
-                      MediaQuery.removePadding(
-                        context: context,
-                        removeTop: true,
-                        child: GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            childAspectRatio: 0.8 / 1,
-                            crossAxisCount: 2,
-                          ),
-                          itemCount: 6,
-                          itemBuilder: (BuildContext context, int index) {
-                            return productCell();
-                          }
+                                SizedBox(height: 6,),
+                                Wrap(
+                                  spacing: 3,
+                                  children: [
+                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
+                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
+                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
+                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
+                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
+                                    Text(
+                                      "5.0",
+                                      style: TextStyle(
+                                          color: Constants.DARK_TEXT_COLOR,
+                                          fontSize: 14,
+                                          fontFamily: Constants.FONT
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              ],
+                            )
+                          ],
                         ),
-                      )
-                    ],
+                        SizedBox(height: 24,),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                SvgPicture.asset("assets/images/italy.svg", width: 22, height: 22,),
+                                SizedBox(width: 8,),
+                                Text(
+                                  "Italian since 1996",
+                                  style: TextStyle(
+                                      color: Constants.LIGHT_TEXT_COLOR,
+                                      fontSize: 14,
+                                      fontFamily: Constants.FONT
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                SvgPicture.asset("assets/images/italy.svg", width: 22, height: 22,),
+                                SizedBox(width: 8,),
+                                Text(
+                                  "Italian since 1996",
+                                  style: TextStyle(
+                                      color: Constants.LIGHT_TEXT_COLOR,
+                                      fontSize: 14,
+                                      fontFamily: Constants.FONT
+                                  ),
+                                ),
+                              ],
+                            )
+                          ],
+                        ),
+                        SizedBox(height: 12,),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                SvgPicture.asset("assets/images/italy.svg", width: 22, height: 22,),
+                                SizedBox(width: 8,),
+                                Text(
+                                  "SDA Bocconi School of Management",
+                                  style: TextStyle(
+                                      color: Constants.LIGHT_TEXT_COLOR,
+                                      fontSize: 14,
+                                      fontFamily: Constants.FONT
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 40,),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Pubblicati da " + getFirstName(),
+                              style: TextStyle(
+                                  color: Constants.DARK_TEXT_COLOR,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: Constants.FONT
+                              ),
+                            ),
+                            if(_products.isNotEmpty) Text(
+                              "Vedi tutti",
+                              style: TextStyle(
+                                  color: Constants.SECONDARY_COLOR,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: Constants.FONT,
+                                decoration: TextDecoration.underline
+                              ),
+                            ),
+                          ],
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: _isLoading ? Center(child: CircularProgressIndicator()) : _products.isNotEmpty ? MediaQuery.removePadding(
+                            context: context,
+                            removeTop: true,
+                            child: GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                childAspectRatio: 0.8 / 1,
+                                crossAxisCount: 2,
+                              ),
+                              itemCount: _products.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                return productCell(_products[index]);
+                              }
+                            ),
+                          ) : Text("Non ci sono prodotti pubblicati da questo utente"),
+                        )
+                      ],
+                    ),
                   ),
                 ),
               ),

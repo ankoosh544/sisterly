@@ -54,25 +54,11 @@ class Welcome2ScreenState extends State<Welcome2Screen> {
   Widget getIconTextWidget(String iconName, String text) {
     return Column(
       children: [
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.2),
-                spreadRadius: 0,
-                blurRadius: 6,
-                offset: Offset(0, 0), // changes position of shadow
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 23.0, vertical: 18),
-            child: SvgPicture.asset('assets/images/${iconName}.svg', height: 29,),
-          ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 23.0, vertical: 0),
+          child: SvgPicture.asset('assets/images/${iconName}.svg', height: 80,),
         ),
-        const SizedBox(height: 14,),
+        const SizedBox(height: 8,),
         Text(
           text,
           style: const TextStyle(

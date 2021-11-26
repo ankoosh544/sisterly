@@ -3,7 +3,10 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:sisterly/models/product_color.dart';
+import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
+import 'package:sisterly/utils/utils.dart';
 
 class FiltersScreen extends StatefulWidget {
   const FiltersScreen({Key? key}) : super(key: key);
@@ -17,24 +20,72 @@ class _FiltersScreenState extends State<FiltersScreen> {
   final TextEditingController _modelText = TextEditingController();
   RangeValues _maximumPriceRange = const RangeValues(0, 100);
   bool _handWithdrawals = false;
+  List<int> _conditions = [];
+  List<int> _colors = [];
+  List<ProductColor> _colorsList = [];
 
-  Widget getTag(String label, bool selected) {
-    return Container(
-      decoration: BoxDecoration(
-        color: selected ? Color(0xfffedcdc) : Color(0xffeff2f5),
-        borderRadius: BorderRadius.circular(60)
-      ),
-      margin: const EdgeInsets.only(right: 8, bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
-      child: Text(
-        label,
-        style: TextStyle(
-            color: selected ? Constants.DARK_TEXT_COLOR : Constants.LIGHT_TEXT_COLOR,
-            fontSize: 16,
-            height: 1.8,
-            fontFamily: Constants.FONT
+  @override
+  void initState() {
+    super.initState();
+
+    Future.delayed(Duration.zero, () {
+      getColors();
+    });
+  }
+
+  getColors() {
+    ApiManager(context).makeGetRequest('/admin/color', {}, (res) {
+      _colorsList = [];
+
+      var data = res["data"];
+      if (data != null) {
+        for (var prod in data) {
+          _colorsList.add(ProductColor.fromJson(prod));
+        }
+      }
+
+      setState(() {
+
+      });
+    }, (res) {
+
+    });
+  }
+
+  applyFilters() {
+
+  }
+
+  Widget getTag(int id, String label, List<int> selected) {
+    return InkWell(
+      onTap: () {
+        if(selected.contains(id)) {
+          selected.remove(id);
+        } else {
+          selected.add(id);
+        }
+
+        setState(() {
+
+        });
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: selected.contains(id) ? Color(0xfffedcdc) : Color(0xffeff2f5),
+          borderRadius: BorderRadius.circular(60)
         ),
-        textAlign: TextAlign.center,
+        margin: const EdgeInsets.only(right: 8, bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+        child: Text(
+          label,
+          style: TextStyle(
+              color: selected.contains(id) ? Constants.DARK_TEXT_COLOR : Constants.LIGHT_TEXT_COLOR,
+              fontSize: 16,
+              height: 1.8,
+              fontFamily: Constants.FONT
+          ),
+          textAlign: TextAlign.center,
+        ),
       ),
     );
   }
@@ -62,16 +113,29 @@ class _FiltersScreenState extends State<FiltersScreen> {
     );
   }
   
-  Widget getColorBullet(Color color, bool selected) {
-    return Container(
-      width: 24,
-      height: 24,
-      margin: const EdgeInsets.only(right: 12, bottom: 8),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(30)
+  Widget getColorBullet(int id, Color color, List<int> selected) {
+    return InkWell(
+      onTap: () {
+        if(selected.contains(id)) {
+          selected.remove(id);
+        } else {
+          selected.add(id);
+        }
+
+        setState(() {
+
+        });
+      },
+      child: Container(
+        width: 24,
+        height: 24,
+        margin: const EdgeInsets.only(right: 12, bottom: 8),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(30)
+        ),
+        child: selected.contains(id) ? SizedBox() : SvgPicture.asset("assets/images/check_color.svg", width: 13, height: 10, fit: BoxFit.scaleDown)
       ),
-      child: selected ? SizedBox() : SvgPicture.asset("assets/images/check_color.svg", width: 13, height: 10, fit: BoxFit.scaleDown)
     );
   }
   
@@ -137,7 +201,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                             ),
                           ),
                           SizedBox(height: 40,),
-                          Text(
+                          /*Text(
                             "Category",
                             style: TextStyle(
                                 color: Constants.DARK_TEXT_COLOR,
@@ -156,7 +220,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                               getCategoryRadio("Backpack", true)
                             ],
                           ),
-                          SizedBox(height: 24,),
+                          SizedBox(height: 24,),*/
                           Text(
                             "Conditions",
                             style: TextStyle(
@@ -169,9 +233,9 @@ class _FiltersScreenState extends State<FiltersScreen> {
                           SizedBox(height: 8,),
                           Wrap(
                             children: [
-                              getTag("Excellent", false),
-                              getTag("Good", true),
-                              getTag("Scarce", false)
+                              getTag(1, "Excellent", _conditions),
+                              getTag(2, "Good", _conditions),
+                              getTag(3, "Scarce", _conditions)
                             ],
                           ),
                           SizedBox(height: 24,),
@@ -186,11 +250,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                           ),
                           SizedBox(height: 8,),
                           Wrap(
-                            children: [
-                              getColorBullet(Colors.redAccent, false),
-                              getColorBullet(Colors.amberAccent, true),
-                              getColorBullet(Colors.blueAccent, false)
-                            ],
+                            children: _colorsList.map((e) => getColorBullet(e.id, HexColor(e.hexadecimal), _colors)).toList(),
                           ),
                           SizedBox(height: 24,),
                           Text(
@@ -262,7 +322,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                               ),
                             ],
                           ),
-                          SizedBox(height: 32,),
+                          /*SizedBox(height: 32,),
                           Text(
                             "Inspirations",
                             style: TextStyle(
@@ -281,7 +341,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                               getTag("Wedding", true),
                               getTag("Wedding", true)
                             ],
-                          ),
+                          ),*/
                           SizedBox(height: 32,),
                           Text(
                             "Availability",
@@ -569,7 +629,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                             ],
                           ),
                           SizedBox(height: 32,),
-                          Row(
+                          /*Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
@@ -610,7 +670,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                               ),
                             ],
                           ),
-                          Divider(),
+                          Divider(),*/
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             crossAxisAlignment: CrossAxisAlignment.center,
@@ -631,7 +691,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                               ),
                             ],
                           ),
-                          Divider(),
+                          /*Divider(),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             crossAxisAlignment: CrossAxisAlignment.center,
@@ -651,7 +711,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                                 onChanged: (bool value) { setState(() { _handWithdrawals = value; }); },
                               ),
                             ],
-                          )
+                          )*/
                         ],
                       ),
                     ),
@@ -668,7 +728,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                       ),
                       child: Text('Apply'),
                       onPressed: () {
-
+                        applyFilters();
                       },
                     ),
                   ],

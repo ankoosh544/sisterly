@@ -1,4 +1,5 @@
 import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:sisterly/models/product.dart';
 import 'package:sisterly/screens/product_screen.dart';
 import 'package:sisterly/screens/reset_screen.dart';
 import 'package:sisterly/screens/signup_screen.dart';
@@ -25,10 +26,39 @@ class WishlistScreen extends StatefulWidget {
 
 class WishlistScreenState extends State<WishlistScreen>  {
 
+  List<Product> _productsFavorite = [];
+  bool _isLoading = false;
+
   @override
   void initState() {
     super.initState();
 
+    Future.delayed(Duration.zero, () {
+      getProductsFavorite();
+    });
+  }
+
+  getProductsFavorite() {
+    setState(() {
+      _isLoading = true;
+    });
+    ApiManager(context).makeGetRequest('/product/favorite/', {}, (res) {
+      setState(() {
+        _isLoading = false;
+      });
+      _productsFavorite = [];
+
+      var data = res["data"];
+      if (data != null) {
+        for (var prod in data) {
+          _productsFavorite.add(Product.fromJson(prod));
+        }
+      }
+    }, (res) {
+      setState(() {
+        _isLoading = false;
+      });
+    });
   }
 
   @override
@@ -165,84 +195,86 @@ class WishlistScreenState extends State<WishlistScreen>  {
           ),
           SizedBox(height: 16,),
           Expanded(
-            child: SingleChildScrollView(
-              child: Container(
-                width: MediaQuery.of(context).size.width,
-                decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(30),
-                        topRight: Radius.circular(30)
-                    )
-                ),
-                child: Column(
-                  children: [
-                    Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12),
-                        child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              SizedBox(height: 24),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Wrap(
-                                    crossAxisAlignment: WrapCrossAlignment.center,
-                                    children: const [
-                                      Text(
-                                        "My Wishlist",
-                                        style: TextStyle(
-                                            color: Constants.DARK_TEXT_COLOR,
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                            fontFamily: Constants.FONT
+            child: Container(
+              decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30)
+                  )
+              ),
+              child: SingleChildScrollView(
+                child: Container(
+                  width: MediaQuery.of(context).size.width,
+                  child: Column(
+                    children: [
+                      Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12),
+                          child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                SizedBox(height: 24),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Wrap(
+                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      children: [
+                                        Text(
+                                          "Lista dei desideri",
+                                          style: TextStyle(
+                                              color: Constants.DARK_TEXT_COLOR,
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                              fontFamily: Constants.FONT
+                                          ),
                                         ),
-                                      ),
-                                      SizedBox(width: 8,),
-                                      Text(
-                                        "(7 items)",
-                                        style: TextStyle(
-                                            color: Constants.TEXT_COLOR,
-                                            fontSize: 14,
-                                            fontFamily: Constants.FONT
+                                        SizedBox(width: 8,),
+                                        Text(
+                                          "(" + _productsFavorite.length.toString() + " prodotti)",
+                                          style: TextStyle(
+                                              color: Constants.TEXT_COLOR,
+                                              fontSize: 14,
+                                              fontFamily: Constants.FONT
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                  Text(
-                                    "See All",
-                                    style: TextStyle(
-                                        color: Constants.SECONDARY_COLOR,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        fontFamily: Constants.FONT,
-                                        decoration: TextDecoration.underline
+                                      ],
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ])
-                    ),
-                    Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                        child:   MediaQuery.removePadding(
-                          context: context,
-                          removeTop: true,
-                          child: GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                childAspectRatio: 0.8 / 1,
-                                crossAxisCount: 2,
-                              ),
-                              itemCount: 6,
-                              itemBuilder: (BuildContext context, int index) {
-                                return productCell();
-                              }
-                          ),
-                        )
-                    ),
-                  ],
+                                    if(_productsFavorite.isNotEmpty) Text(
+                                      "See All",
+                                      style: TextStyle(
+                                          color: Constants.SECONDARY_COLOR,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: Constants.FONT,
+                                          decoration: TextDecoration.underline
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ])
+                      ),
+                      Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12),
+                          child: _isLoading ? Center(child: CircularProgressIndicator()) : _productsFavorite.isNotEmpty ? MediaQuery.removePadding(
+                            context: context,
+                            removeTop: true,
+                            child: GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                  childAspectRatio: 0.8 / 1,
+                                  crossAxisCount: 2,
+                                ),
+                                itemCount: _productsFavorite.length,
+                                itemBuilder: (BuildContext context, int index) {
+                                  return productCell();
+                                }
+                            ),
+                          ) : Text("Non ci sono prodotti nella tua lista preferiti")
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

@@ -10,16 +10,17 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sisterly/utils/session_data.dart';
 
 import '../utils/constants.dart';
+import 'filters_screen.dart';
 
-class HomeScreen extends StatefulWidget {
+class SearchScreen extends StatefulWidget {
 
-  const HomeScreen({Key? key}) : super(key: key);
+  const SearchScreen({Key? key}) : super(key: key);
 
   @override
-  HomeScreenState createState() => HomeScreenState();
+  SearchScreenState createState() => SearchScreenState();
 }
 
-class HomeScreenState extends State<HomeScreen>  {
+class SearchScreenState extends State<SearchScreen>  {
 
   List<Product> _products = [];
   List<Product> _productsFavorite = [];
@@ -32,7 +33,21 @@ class HomeScreenState extends State<HomeScreen>  {
     Future.delayed(Duration.zero, () {
       getProducts();
       getProductsFavorite();
+
+      showFilters();
     });
+  }
+
+  showFilters() {
+    showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => FractionallySizedBox(
+            heightFactor: 0.85,
+            child: FiltersScreen()
+        )
+    );
   }
 
   @override
@@ -206,7 +221,7 @@ class HomeScreenState extends State<HomeScreen>  {
                       const Padding(
                         padding: EdgeInsets.only(top: 24),
                         child: Text(
-                          "Home",
+                          "Prodotti",
                           style: TextStyle(
                               color: Colors.white,
                               fontSize: 28,
@@ -224,10 +239,10 @@ class HomeScreenState extends State<HomeScreen>  {
                                 color: Color(0xff337a9d),
                                 borderRadius: BorderRadius.circular(42)
                             ),
-                            child: SizedBox(width: 17, height: 19, child: SvgPicture.asset("assets/images/nfc.svg", width: 17, height: 19, fit: BoxFit.scaleDown,))
+                            child: SizedBox(width: 17, height: 19, child: SvgPicture.asset("assets/images/search_white.svg", width: 17, height: 19, fit: BoxFit.scaleDown,))
                         ),
                         onTap: () {
-                          Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => NfcScreen()));
+                          showFilters();
                         },
                       ),
                     ],

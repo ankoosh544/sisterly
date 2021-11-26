@@ -39,7 +39,6 @@ dependencies:
   intl: ^0.17.0
   flutter_sequence_animation: ^4.0.0-nullsafety
   fluttertoast: ^8.0.8
-  cached_network_image: ^3.0.0-nullsafety
   url_launcher: ^6.0.2
   package_info: ^2.0.0
   double_back_to_close_app: ^2.0.1
@@ -53,6 +52,8 @@ dependencies:
   flutter_linkify: ^5.0.2
   pin_code_fields: ^7.3.0
   intl_phone_number_input: ^0.7.0+2
+  share: ^2.0.4
+  cached_network_image: ^3.1.0+1
 
 dev_dependencies:
   flutter_test:

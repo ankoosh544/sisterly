@@ -2,6 +2,7 @@ import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:sisterly/screens/account_screen.dart';
 import 'package:sisterly/screens/home_screen.dart';
 import 'package:sisterly/screens/reset_screen.dart';
+import 'package:sisterly/screens/search_screen.dart';
 import 'package:sisterly/screens/signup_screen.dart';
 import 'package:sisterly/screens/signup_success_screen.dart';
 import 'package:sisterly/screens/upload_screen.dart';
@@ -40,16 +41,17 @@ class TabScreenState extends State<TabScreen>  {
     super.dispose();
   }
 
-  Widget getTabItem(String icon, int index) {
+  Widget getTabItem(String icon, String iconActive, int index) {
     return InkWell(
       onTap: () {
         setState(() {
           selectedTab = index;
         });
+        debugPrint("index "+index.toString()+"  selectedTab: "+selectedTab.toString());
       },
       child: Container(
         padding: const EdgeInsets.all(0),
-        child: SvgPicture.asset(icon),
+        child: SvgPicture.asset(selectedTab == index ? iconActive : icon),
       ),
     );
   }
@@ -57,6 +59,7 @@ class TabScreenState extends State<TabScreen>  {
   Widget getChild() {
     switch(selectedTab) {
       case 0: return HomeScreen();
+      case 1: return SearchScreen();
       case 3: return AccountScreen();
     }
 
@@ -101,11 +104,11 @@ class TabScreenState extends State<TabScreen>  {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  getTabItem("assets/images/home.svg", 0),
-                  getTabItem("assets/images/search.svg", 1),
+                  getTabItem("assets/images/home.svg", "assets/images/home_active.svg", 0),
+                  getTabItem("assets/images/search.svg", "assets/images/search_active.svg", 1),
                   SizedBox(),
-                  getTabItem("assets/images/mail.svg", 2),
-                  getTabItem("assets/images/account.svg", 3),
+                  getTabItem("assets/images/mail.svg", "assets/images/mail.svg", 2),
+                  getTabItem("assets/images/account.svg", "assets/images/account_active.svg", 3),
                 ],
               ),
             ),

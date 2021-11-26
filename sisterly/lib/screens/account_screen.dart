@@ -1,4 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:sisterly/models/account.dart';
+import 'package:sisterly/screens/inbox_screen.dart';
 import 'package:sisterly/screens/product_screen.dart';
 import 'package:sisterly/screens/profile_screen.dart';
 import 'package:sisterly/screens/reset_screen.dart';
@@ -8,18 +11,17 @@ import 'package:sisterly/screens/signup_success_screen.dart';
 import 'package:sisterly/screens/sister_advice_screen.dart';
 import 'package:sisterly/screens/splash_screen.dart';
 import 'package:sisterly/screens/verify_screen.dart';
+import 'package:sisterly/screens/welcome_2_screen.dart';
 import 'package:sisterly/screens/wishlist_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:sisterly/utils/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sisterly/utils/session_data.dart';
-import 'package:sisterly/widgets/custom_app_bar.dart';
-
+import 'package:share/share.dart';
+import "package:sisterly/utils/utils.dart";
 import '../utils/constants.dart';
-import 'login_screen.dart';
 
 class AccountScreen extends StatefulWidget {
 
@@ -31,15 +33,43 @@ class AccountScreen extends StatefulWidget {
 
 class AccountScreenState extends State<AccountScreen>  {
 
+  bool _isLoading = false;
+  Account? _profile;
+
   @override
   void initState() {
     super.initState();
 
+    Future.delayed(Duration.zero, () {
+      getUser();
+    });
   }
 
   @override
   void dispose() {
     super.dispose();
+  }
+
+  getUser() {
+    setState(() {
+      _isLoading = true;
+    });
+    ApiManager(context).makeGetRequest('/client/properties', {}, (res) {
+      // print(res);
+      setState(() {
+        _isLoading = false;
+        _profile = Account.fromJson(res["data"]);
+      });
+    }, (res) {
+      setState(() {
+        _isLoading = false;
+      });
+    });
+  }
+
+  String getFullName() {
+    if(_profile == null) return "";
+    return _profile!.firstName!.capitalize() + " " + _profile!.lastName!.capitalize();
   }
 
   Widget getItem(String icon, String label) {
@@ -104,7 +134,7 @@ class AccountScreenState extends State<AccountScreen>  {
                         child: Padding(
                           padding: EdgeInsets.only(top: 24),
                           child: Text(
-                            "Your Profile",
+                            "Il tuo profilo",
                             style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 28,
@@ -122,113 +152,137 @@ class AccountScreenState extends State<AccountScreen>  {
           ),
           SizedBox(height: 16,),
           Expanded(
-            child: SingleChildScrollView(
-              child: Container(
-                width: MediaQuery.of(context).size.width,
-                decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(30),
-                        topRight: Radius.circular(30))),
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      SizedBox(height: 8),
-                      Row(
-                        children: [
-                          ClipRRect(
-                              borderRadius: BorderRadius.circular(68.0),
-                              child: Image.asset("assets/images/product.png", width: 68, height: 68, fit: BoxFit.cover,)
-                          ),
-                          SizedBox(width: 12,),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Beatrice Pedrali",
-                                style: TextStyle(
-                                    color: Constants.DARK_TEXT_COLOR,
-                                    fontSize: 20,
-                                    fontFamily: Constants.FONT
+            child: Container(
+              decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30))),
+              child: SingleChildScrollView(
+                child: Container(
+                  width: MediaQuery.of(context).size.width,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        SizedBox(height: 8),
+                        _isLoading ? CircularProgressIndicator() : Row(
+                          children: [
+                            if(_profile != null && _profile!.image != null) ClipRRect(
+                                borderRadius: BorderRadius.circular(68.0),
+                                child: CachedNetworkImage(
+                                  width: 68, height: 68, fit: BoxFit.cover,
+                                  imageUrl: _profile!.image!,
+                                  placeholder: (context, url) => CircularProgressIndicator(),
+                                  errorWidget: (context, url, error) => Icon(Icons.error),
                                 ),
-                              ),
-                              SizedBox(height: 6,),
-                              Wrap(
-                                spacing: 3,
-                                children: [
-                                  SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                                  SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                                  SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                                  SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                                  SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                                  Text(
-                                    "5.0",
-                                    style: TextStyle(
-                                        color: Constants.DARK_TEXT_COLOR,
-                                        fontSize: 14,
-                                        fontFamily: Constants.FONT
-                                    ),
+                            ),
+                            if(_profile != null && _profile!.image != null) SizedBox(width: 12,),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  getFullName(),
+                                  style: TextStyle(
+                                      color: Constants.DARK_TEXT_COLOR,
+                                      fontSize: 20,
+                                      fontFamily: Constants.FONT
                                   ),
-                                ],
-                              )
-                            ],
-                          )
-                        ],
-                      ),
-                      SizedBox(height: 24,),
-                      InkWell(
-                        onTap: () {
-                          Navigator.of(context).push(
-                              MaterialPageRoute(builder: (BuildContext context) => ProfileScreen()));
-                        },
-                        child: Text(
-                          "View Your Profile",
-                          style: TextStyle(
-                              color: Constants.PRIMARY_COLOR,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              decoration: TextDecoration.underline,
-                              fontFamily: Constants.FONT
+                                ),
+                                SizedBox(height: 6,),
+                                Wrap(
+                                  spacing: 3,
+                                  children: [
+                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
+                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
+                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
+                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
+                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
+                                    Text(
+                                      "5.0",
+                                      style: TextStyle(
+                                          color: Constants.DARK_TEXT_COLOR,
+                                          fontSize: 14,
+                                          fontFamily: Constants.FONT
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              ],
+                            )
+                          ],
+                        ),
+                        SizedBox(height: 24,),
+                        InkWell(
+                          onTap: () {
+                            Navigator.of(context).push(
+                                MaterialPageRoute(builder: (BuildContext context) => ProfileScreen(id: null,)));
+                          },
+                          child: Text(
+                            "Vai al tuo profilo",
+                            style: TextStyle(
+                                color: Constants.PRIMARY_COLOR,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                decoration: TextDecoration.underline,
+                                fontFamily: Constants.FONT
+                            ),
                           ),
                         ),
-                      ),
-                      SizedBox(height: 24,),
-                      InkWell(
+                        SizedBox(height: 24,),
+                        InkWell(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (BuildContext context) => SisterAdviceScreen()));
+                            },
+                            child: getItem("assets/images/guidebook.svg", "Guida Sisterly")
+                        ),
+                        /*getItem("assets/images/edit.svg", "Edit Your Profile"),*/
+                        InkWell(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (BuildContext context) => WishlistScreen()));
+                            },
+                            child: getItem("assets/images/articles_saved.svg", "Lista dei desideri")
+                        ),
+                        getItem("assets/images/rent 2.svg", "I miei noleggi"),
+                        InkWell(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (BuildContext context) => InboxScreen()));
+                            },
+                            child: getItem("assets/images/chat.svg", "Sister Chats")
+                        ),
+                        InkWell(
+                          onTap: () {
+                            Share.share('check out my website https://example.com');
+                          },
+                            child: getItem("assets/images/invite.svg", "Invita una Sister")
+                        ),
+                        InkWell(
                           onTap: () {
                             Navigator.of(context).push(
-                                MaterialPageRoute(builder: (BuildContext context) => SisterAdviceScreen()));
+                                MaterialPageRoute(builder: (BuildContext context) => ProfileScreen(id: null,)));
                           },
-                          child: getItem("assets/images/guidebook.svg", "Sisterly Guide")
-                      ),
-                      getItem("assets/images/edit.svg", "Edit Your Profile"),
-                      InkWell(
+                            child: getItem("assets/images/offer.svg", "I tuoi prodotti")
+                        ),
+                        InkWell(
                           onTap: () {
                             Navigator.of(context).push(
-                                MaterialPageRoute(builder: (BuildContext context) => WishlistScreen()));
+                                MaterialPageRoute(builder: (BuildContext context) => ReviewsScreen()));
                           },
-                          child: getItem("assets/images/articles_saved.svg", "Articles Saved")
-                      ),
-                      getItem("assets/images/rent 2.svg", "My Rentals"),
-                      getItem("assets/images/chat.svg", "Sister Talks"),
-                      getItem("assets/images/invite.svg", "Invite a Sister"),
-                      getItem("assets/images/offer.svg", "Your Offers"),
-                      InkWell(
-                        onTap: () {
-                          Navigator.of(context).push(
-                              MaterialPageRoute(builder: (BuildContext context) => ReviewsScreen()));
-                        },
-                          child: getItem("assets/images/review.svg", "Your Reviews")
-                      ),
-                      InkWell(
-                        onTap: () {
-                          SessionData().clearStorageData();
-                          Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => SplashScreen()), (_) => false);
-                        },
-                          child: getItem("assets/images/review.svg", "Log out")
-                      )
-                    ],
+                            child: getItem("assets/images/review.svg", "Le tue recensioni")
+                        ),
+                        InkWell(
+                          onTap: () {
+                            SessionData().logout(context);
+                            Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => Welcome2Screen()), (_) => false);
+                          },
+                            child: getItem("assets/images/review.svg", "Esci")
+                        )
+                      ],
+                    ),
                   ),
                 ),
               ),
