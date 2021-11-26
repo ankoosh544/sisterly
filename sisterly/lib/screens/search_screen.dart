@@ -1,4 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:intl/intl.dart';
+import 'package:sisterly/models/filters.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/screens/nfc_screen.dart';
 import 'package:sisterly/screens/product_screen.dart';
@@ -25,6 +27,7 @@ class SearchScreenState extends State<SearchScreen>  {
   List<Product> _products = [];
   List<Product> _productsFavorite = [];
   bool _isLoading = false;
+  Filters _filters = Filters();
 
   @override
   void initState() {
@@ -38,16 +41,18 @@ class SearchScreenState extends State<SearchScreen>  {
     });
   }
 
-  showFilters() {
-    showModalBottomSheet(
+  showFilters() async {
+    _filters = await showModalBottomSheet(
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
         builder: (context) => FractionallySizedBox(
             heightFactor: 0.85,
-            child: FiltersScreen()
+            child: FiltersScreen(filters: _filters,)
         )
     );
+
+    getProducts();
   }
 
   @override
@@ -133,15 +138,38 @@ class SearchScreenState extends State<SearchScreen>  {
   }
 
   getProducts() {
+    var params = {};
+
+    if(_filters.model != null && _filters.model!.isNotEmpty) {
+      params["model"] = _filters.model;
+    }
+
+    if(_filters.conditions.isNotEmpty) {
+      params["conditions"] = _filters.conditions;
+    }
+
+    if(_filters.deliveryModes.isNotEmpty) {
+      params["delivery_mode"] = _filters.deliveryModes;
+    }
+
+    if(_filters.colors.isNotEmpty) {
+      params["id_colors"] = _filters.colors;
+    }
+
+    if(_filters.onlySameCity) {
+      params["same_city"] = true;
+    }
+
+    params["start"] = 0;
+    params["count"] = 2000;
+    params["start_date"] = DateFormat("yyyy-MM-dd").format(_filters.availableFrom);
+    params["end_date"] = DateFormat("yyyy-MM-dd").format(_filters.availableTo);
+
     setState(() {
       _isLoading = true;
     });
-    ApiManager(context).makeGetRequest('/product/', {}, (res) {
+    ApiManager(context).makePostRequest('/product/search/', params, (res) {
       // print(res);
-      setState(() {
-        _isLoading = false;
-      });
-
       _products = [];
 
       var data = res["data"];
@@ -150,6 +178,10 @@ class SearchScreenState extends State<SearchScreen>  {
           _products.add(Product.fromJson(prod));
         }
       }
+
+      setState(() {
+        _isLoading = false;
+      });
     }, (res) {
       setState(() {
         _isLoading = false;
