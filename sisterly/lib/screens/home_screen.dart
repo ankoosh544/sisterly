@@ -64,7 +64,7 @@ class HomeScreenState extends State<HomeScreen>  {
                     child: CachedNetworkImage(
                       height: 169,
                       imageUrl: SessionData().serverUrl + product.images[0],
-                      placeholder: (context, url) => CircularProgressIndicator(),
+                      placeholder: (context, url) => Center(child: CircularProgressIndicator()),
                       errorWidget: (context, url, error) => Icon(Icons.error),
                     ),
                   ),
