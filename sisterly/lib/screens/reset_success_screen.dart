@@ -60,7 +60,7 @@ class ResetSuccessScreenState extends State<ResetSuccessScreen> {
                 ),
               ),
               const SizedBox(height: 40),
-              const Text("You can now use your new password\nto log into your account",
+              const Text("Check your emails!",
                   style: TextStyle(
                     color: Constants.TEXT_COLOR,
                     fontSize: 16,

@@ -1,16 +1,12 @@
 import 'package:sisterly/screens/reset_screen.dart';
-import 'package:sisterly/screens/signup_screen.dart';
+import 'package:sisterly/screens/reset_success_screen.dart';
 import 'package:sisterly/screens/verify_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
-import 'package:sisterly/utils/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sisterly/widgets/custom_app_bar.dart';
 
 import '../utils/constants.dart';
-import 'login_screen.dart';
 
 class ForgotScreen extends StatefulWidget {
 
@@ -45,40 +41,22 @@ class ForgotScreenState extends State<ForgotScreen>
   }
 
   forgot() async {
-    //Navigator.of(context).pushAndRemoveUntil(new MaterialPageRoute(builder: (BuildContext context) => new TabScreen()), (_) => false);
     if (ApiManager.isEmpty(_emailFilter.text.trim())) {
       ApiManager.showErrorToast(context, "login_email_mandatory");
       return;
     }
-
-    _emailFilter.text = _emailFilter.text.toLowerCase().trim();
-
-    /*ApiManager(context).login(_emailFilter.text.trim(), _passwordFilter.text,
-        (response) async {
-      if (response["success"] == true) {
-        debugPrint("login success");
-
-        var preferences = await SharedPreferences.getInstance();
-        preferences.setString(Constants.PREFS_EMAIL, _emailFilter.text);
-
-        loginSuccess(response["data"]);
-      } else {
-        ApiManager.showErrorMessage(context, response["code"]);
-      }
-    }, (statusCode) {
-      ApiManager.showErrorMessage(context, "generic_error");
-      debugPrint("login failure");
-    });*/
     
-    forgotSuccess();
+    ApiManager(context).makePostRequest('/client/reset_password', {
+      "email": _emailFilter.text.toLowerCase().trim()
+    }, (res) {
+      forgotSuccess();
+    }, (res) {
+      forgotSuccess();
+    });
   }
 
   forgotSuccess() async {
-    Navigator.of(context).push(
-          MaterialPageRoute(builder: (BuildContext context) => VerifyScreen(email: _emailFilter.text, next: () {
-            Navigator.of(context).push(
-                MaterialPageRoute(builder: (BuildContext context) => ResetScreen()));
-          },)));
+    Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ResetSuccessScreen()));
   }
 
   @override
