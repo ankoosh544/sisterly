@@ -57,7 +57,7 @@ class ApiManager {
   }
 
   makePostRequest(endpoint, params, success, failure) async {
-    await internalMakePostRequest(endpoint, params, SessionData().token ?? '', success, failure, true);
+    await internalMakePostRequest(endpoint, params, SessionData().token, success, failure, true);
   }
 
   internalMakePostRequest(endpoint, params, token, success, failure, retry) async {
@@ -65,9 +65,12 @@ class ApiManager {
 
     Map<String, String> headers = {
       "Content-type": "application/json",
-      "Authorization": "Bearer $token",
       "Accept-Language": await getLocale(context) ?? ''
     };
+    if (token != null) {
+      headers["Authorization"] = "Bearer $token";
+    }
+
     String json = jsonEncode(params);
 
     debugPrint("internalMakePostRequest "+url+" with params: "+json);

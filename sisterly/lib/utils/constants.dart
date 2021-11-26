@@ -15,6 +15,7 @@ class Constants {
   static const Color PLACEHOLDER_COLOR = Color(0xffd1d1d1);
   static const Color LIGHT_GREY_COLOR = Color(0xffaeb4c0);
   static const Color LIGHT_GREY_COLOR2 = Color(0xffeff2f5);
+  static const Color GREEN_SAVE = Color(0xff91ffb2);
 
   static const Color GREY = Color(0xff8F8F8F);
   static const Color FORM_TEXT = Color(0xff1f1f1f);

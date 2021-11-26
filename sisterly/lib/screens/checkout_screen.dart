@@ -31,6 +31,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   List<Address> _addresses = [];
   Address? _activeAddress;
   bool _addNewAddress = false;
+  bool _editAddress = false;
+  Address? _addressToEdit;
 
   @override
   void initState() {
@@ -170,7 +172,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             fontWeight: FontWeight.bold
                         ),
                       ),
-                      if (!_hasAddress || _addNewAddress) Column(
+                      SizedBox(height: 15),
+                      if (!_hasAddress || _addNewAddress || _editAddress) Column(
                         children: [
                           inputField("Name", _name),
                           inputField("Address", _address),
@@ -182,7 +185,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           inputField("Email", _email),
                           inputField("Phone number", _phone),
                           const SizedBox(height: 25),
-                          Row(
+                          if (!_editAddress) Row(
                               children: [
                                 Text('Save for for future purchases',
                                     style: TextStyle(
@@ -200,8 +203,27 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                         ]
                       ),
-                      SizedBox(height: 15),
-                      if (_hasAddress && !_addNewAddress) Column(
+                      if (_editAddress) ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            primary: Constants.GREEN_SAVE,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
+                        ),
+                        child: Text('Save',
+                            style: TextStyle(
+                              color: Constants.TEXT_COLOR,
+                              fontSize: 16,
+                              fontFamily: Constants.FONT,
+                            )
+                        ),
+                        onPressed: () {
+                          _updateAddress();
+                          setState(() {
+                            _editAddress = false;
+                            _addressToEdit = null;
+                          });
+                        },
+                      ),
+                      if (_hasAddress && !_addNewAddress && !_editAddress) Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           SingleChildScrollView(
@@ -234,7 +256,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                         ]
                       ),
-
                       SizedBox(height: 25),
                       Text(
                         "Do you want to add insurance coverage for this bag?",
@@ -303,7 +324,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                           child: Text('Next'),
                           onPressed: () {
-                            if (!_hasAddress || (_saveAddress && _addNewAddress)) {
+                            if (!_hasAddress || (_saveAddress && _addNewAddress && !_editAddress)) {
                               saveAddress();
                             }
                             Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChoosePaymentScreen())).then((value) => setState(() {
@@ -438,6 +459,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _renderAddress(Address address) {
+    List<String> menu = ['Delete', 'Set active', 'Edit'];
+    if (address.active) {
+      menu = ['Edit'];
+    }
+
     return Container(
       padding: EdgeInsets.all(25),
       margin: EdgeInsets.only(right: 20),
@@ -496,7 +522,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                if (!address.active) PopupMenuButton<String>(
+                PopupMenuButton<String>(
                   child: Container(
                     alignment: Alignment.centerRight,
                     child: Icon(
@@ -512,10 +538,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       case 'Set active':
                         _setActiveAddress(address);
                         break;
+                      case 'Edit':
+                        setState(() {
+                          _addressToEdit = address;
+                          _editAddress = true;
+                          _name.text = address.name;
+                          _address.text = address.address1;
+                          _address2.text = address.address2!;
+                          _city.text = address.city;
+                          _zip.text = address.zip;
+                          _state.text = address.province;
+                          _country.text = address.country;
+                          // _email.text = address.email;
+                          // _phone.text = address.phone;
+                        });
+                        break;
                     }
                   },
                   itemBuilder: (BuildContext context) {
-                    return ['Delete', 'Set active'].map((String choice) {
+                    return menu.map((String choice) {
                       return PopupMenuItem<String>(
                         value: choice,
                         child: Text(choice),
@@ -621,6 +662,27 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       _removeAddress(address);
     } catch(e) {
       //
+    }
+  }
+
+  _updateAddress() async {
+    if (_addressToEdit != null && _name.text.isNotEmpty && _address.text.isNotEmpty && _country.text.isNotEmpty && _state.text.isNotEmpty && _zip.text.isNotEmpty && _city.text.isNotEmpty) {
+      ApiManager(context).makePostRequest('/client/address/${_addressToEdit!.id}', {
+        "name": _name.text,
+        "address1": _address.text,
+        "country": _country.text,
+        "province": _state.text,
+        "zip": _zip.text,
+        "city": _city.text,
+        "latitude": -5,
+        "longitude": -5,
+        "address2": _address2.text,
+        "note": "",
+        "default": false,
+        "active": _addressToEdit!.active
+      }, (res) {
+        getAddresses();
+      }, (res) {});
     }
   }
 }
