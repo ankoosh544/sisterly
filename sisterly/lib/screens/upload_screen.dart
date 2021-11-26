@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:flutter/cupertino.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:sisterly/screens/product_screen.dart';
 import 'package:sisterly/screens/profile_screen.dart';
@@ -15,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sisterly/widgets/custom_app_bar.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../utils/constants.dart';
 import 'login_screen.dart';
@@ -32,6 +37,8 @@ class UploadScreenState extends State<UploadScreen>  {
   final TextEditingController _modelText = TextEditingController();
   final TextEditingController _brandText = TextEditingController();
   final TextEditingController _descriptionText = TextEditingController();
+  final ImagePicker picker = ImagePicker();
+  List<XFile>? _images;
 
   @override
   void initState() {
@@ -119,6 +126,80 @@ class UploadScreenState extends State<UploadScreen>  {
                             fontWeight: FontWeight.bold,
                             fontFamily: Constants.FONT
                         ),
+                      ),
+                      SizedBox(height: 24,),
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15),
+                          color: Constants.SECONDARY_COLOR_LIGHT
+                        ),
+                        child: Column(
+                          children: [
+                            SizedBox(height: 10),
+                            Text(
+                              "Add up to 20 photos",
+                              style: TextStyle(
+                                  color: Constants.LIGHT_TEXT_COLOR,
+                                  fontSize: 14,
+                                  fontFamily: Constants.FONT
+                              )
+                            ),
+                            SizedBox(height: 10),
+                            TextButton(
+                              style: ButtonStyle(
+                                backgroundColor: MaterialStateProperty.all(Constants.SECONDARY_COLOR),
+                                padding: MaterialStateProperty.all(EdgeInsets.symmetric(horizontal: 46, vertical: 14)),
+                                shape: MaterialStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)))
+                              ),
+                              child: Text(
+                                  "Upload Photos",
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontFamily: Constants.FONT
+                                  )
+                              ),
+                              onPressed: () async {
+                                _images = await picker.pickMultiImage();
+                                setState(() {});
+                              },
+                            ),
+                            SizedBox(height: 20),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => SisterAdviceScreen()));
+                              },
+                              child: Text(
+                                  "See photo tips",
+                                  style: TextStyle(
+                                    color: Constants.PRIMARY_COLOR,
+                                    fontSize: 14,
+                                    fontFamily: Constants.FONT,
+                                    decoration: TextDecoration.underline
+                                  )
+                              ),
+                            ),
+                            SizedBox(height: 10),
+                            // SizedBox(
+                            //   height: 400,
+                            //   width: double.infinity,
+                            //   child: StaggeredGridView.count(
+                            //     crossAxisCount: 2,
+                            //     children: [
+                            //       Container(height: 50, width: 50, color: Colors.blue),
+                            //       Container(height: 50, width: 50, color: Colors.blue),
+                            //       Container(height: 50, width: 50, color: Colors.blue)
+                            //       // if (_images != null && _images!.isNotEmpty)
+                            //       //   for (var img in _images!)
+                            //       //     Image.file(File(img.path), width: 100, height: 100,)
+                            //     ]
+                            //   ),
+                            // ),
+                            SizedBox(height: 10)
+                          ]
+                        )
                       ),
                       SizedBox(height: 24,),
                       Text(
