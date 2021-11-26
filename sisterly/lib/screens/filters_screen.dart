@@ -3,13 +3,18 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:sisterly/models/delivery_mode.dart';
+import 'package:sisterly/models/filters.dart';
 import 'package:sisterly/models/product_color.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:sisterly/utils/utils.dart';
 
 class FiltersScreen extends StatefulWidget {
-  const FiltersScreen({Key? key}) : super(key: key);
+
+  final Filters? filters;
+
+  const FiltersScreen({Key? key, @required this.filters}) : super(key: key);
 
   @override
   _FiltersScreenState createState() => _FiltersScreenState();
@@ -18,18 +23,32 @@ class FiltersScreen extends StatefulWidget {
 class _FiltersScreenState extends State<FiltersScreen> {
 
   final TextEditingController _modelText = TextEditingController();
-  RangeValues _maximumPriceRange = const RangeValues(0, 100);
-  bool _handWithdrawals = false;
-  List<int> _conditions = [];
-  List<int> _colors = [];
+
+  final TextEditingController _fromDayText = TextEditingController();
+  final TextEditingController _fromMonthText = TextEditingController();
+  final TextEditingController _fromYearText = TextEditingController();
+
+  final TextEditingController _toDayText = TextEditingController();
+  final TextEditingController _toMonthText = TextEditingController();
+  final TextEditingController _toYearText = TextEditingController();
+
   List<ProductColor> _colorsList = [];
+  List<DeliveryMode> _deliveryModesList = [];
+
+  Filters _filters = Filters();
 
   @override
   void initState() {
     super.initState();
 
+    if(widget.filters != null) _filters = widget.filters!;
+
     Future.delayed(Duration.zero, () {
       getColors();
+      getDeliveryModes();
+
+      setFromDate(_filters.availableFrom);
+      setToDate(_filters.availableTo);
     });
   }
 
@@ -52,8 +71,29 @@ class _FiltersScreenState extends State<FiltersScreen> {
     });
   }
 
-  applyFilters() {
+  getDeliveryModes() {
+    ApiManager(context).makeGetRequest('/product/delivery_modes', {}, (res) {
+      _deliveryModesList = [];
 
+      var data = res["data"];
+      if (data != null) {
+        for (var prod in data) {
+          _deliveryModesList.add(DeliveryMode.fromJson(prod));
+        }
+      }
+
+      setState(() {
+
+      });
+    }, (res) {
+
+    });
+  }
+
+  applyFilters() {
+    _filters.model = _modelText.text;
+
+    Navigator.of(context).pop(_filters);
   }
 
   Widget getTag(int id, String label, List<int> selected) {
@@ -138,6 +178,18 @@ class _FiltersScreenState extends State<FiltersScreen> {
       ),
     );
   }
+
+  setFromDate(DateTime date) {
+    _fromDayText.text = date.day.toString();
+    _fromMonthText.text = date.month.toString();
+    _fromYearText.text = date.year.toString();
+  }
+
+  setToDate(DateTime date) {
+    _toDayText.text = date.day.toString();
+    _toMonthText.text = date.month.toString();
+    _toYearText.text = date.year.toString();
+  }
   
   @override
   Widget build(BuildContext context) {
@@ -182,7 +234,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                                 color: Constants.FORM_TEXT,
                               ),
                               decoration: InputDecoration(
-                                hintText: "Model designer...",
+                                hintText: "Nome modello...",
                                 hintStyle: const TextStyle(
                                     color: Constants.PLACEHOLDER_COLOR),
                                 border: OutlineInputBorder(
@@ -222,7 +274,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                           ),
                           SizedBox(height: 24,),*/
                           Text(
-                            "Conditions",
+                            "Condizioni",
                             style: TextStyle(
                                 color: Constants.DARK_TEXT_COLOR,
                                 fontSize: 20,
@@ -233,14 +285,14 @@ class _FiltersScreenState extends State<FiltersScreen> {
                           SizedBox(height: 8,),
                           Wrap(
                             children: [
-                              getTag(1, "Excellent", _conditions),
-                              getTag(2, "Good", _conditions),
-                              getTag(3, "Scarce", _conditions)
+                              getTag(1, "Excellent", _filters.conditions),
+                              getTag(2, "Good", _filters.conditions),
+                              getTag(3, "Scarce", _filters.conditions)
                             ],
                           ),
                           SizedBox(height: 24,),
                           Text(
-                            "Color",
+                            "Colore",
                             style: TextStyle(
                                 color: Constants.DARK_TEXT_COLOR,
                                 fontSize: 20,
@@ -250,11 +302,25 @@ class _FiltersScreenState extends State<FiltersScreen> {
                           ),
                           SizedBox(height: 8,),
                           Wrap(
-                            children: _colorsList.map((e) => getColorBullet(e.id, HexColor(e.hexadecimal), _colors)).toList(),
+                            children: _colorsList.map((e) => getColorBullet(e.id, HexColor(e.hexadecimal), _filters.colors)).toList(),
                           ),
                           SizedBox(height: 24,),
                           Text(
-                            "Maximum Price",
+                            "Modalità di consegna",
+                            style: TextStyle(
+                                color: Constants.DARK_TEXT_COLOR,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: Constants.FONT),
+                            textAlign: TextAlign.center,
+                          ),
+                          SizedBox(height: 8,),
+                          Wrap(
+                            children: _deliveryModesList.map((e) => getTag(e.id, e.description, _filters.deliveryModes),).toList(),
+                          ),
+                          SizedBox(height: 24,),
+                          Text(
+                            "Prezzo massimo",
                             style: TextStyle(
                                 color: Constants.DARK_TEXT_COLOR,
                                 fontSize: 20,
@@ -277,22 +343,16 @@ class _FiltersScreenState extends State<FiltersScreen> {
                           activeTickMarkColor: Colors.white,
                           showValueIndicator: ShowValueIndicator.always,
                           valueIndicatorColor: Constants.SECONDARY_COLOR,
-                          trackHeight: 3,
-                            valueIndicatorTextStyle: TextStyle(
-                                color: Colors.white, letterSpacing: 2.0),
-                          thumbShape: RoundSliderThumbShape(enabledThumbRadius: 0, elevation: 0, disabledThumbRadius: 0, pressedElevation: 0)
+                          trackHeight: 3
                         ),
-                        child: RangeSlider(
-                          values: _maximumPriceRange,
+                        child: Slider(
+                          value: _filters.maxPrice,
                           min: 0,
                           max: 100,
-                          labels: RangeLabels(
-                            _maximumPriceRange.start.round().toString(),
-                            _maximumPriceRange.end.round().toString(),
-                          ),
-                          onChanged: (RangeValues values) {
+                          label: _filters.maxPrice.round().toString(),
+                          onChanged: (double value) {
                             setState(() {
-                              _maximumPriceRange = values;
+                              _filters.maxPrice = value;
                             });
                           },
                         ),
@@ -344,7 +404,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                           ),*/
                           SizedBox(height: 32,),
                           Text(
-                            "Availability",
+                            "Disponibilità",
                             style: TextStyle(
                                 color: Constants.DARK_TEXT_COLOR,
                                 fontSize: 20,
@@ -354,7 +414,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                           ),
                           SizedBox(height: 8,),
                           Text(
-                            "From",
+                            "Da",
                             style: TextStyle(
                                 color: Constants.TEXT_COLOR,
                                 fontSize: 16,
@@ -363,136 +423,162 @@ class _FiltersScreenState extends State<FiltersScreen> {
                             textAlign: TextAlign.center,
                           ),
                           SizedBox(height: 4,),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Color(0x4ca3c4d4),
-                                        spreadRadius: 2,
-                                        blurRadius: 15,
-                                        offset:
-                                        Offset(0, 0), // changes position of shadow
+                          InkWell(
+                            onTap: () async {
+                              debugPrint("show date picker");
+                              final DateTime? picked = await showDatePicker(
+                                context: context,
+                                initialDate: _filters.availableFrom,
+                                firstDate: DateTime.now().subtract(Duration(days: 1)),
+                                lastDate: DateTime.now().add(Duration(days: 700)),
+                              );
+
+                              setState(() {
+                                if(picked != null) {
+                                  _filters.availableFrom = picked;
+
+                                  setFromDate(_filters.availableFrom);
+
+                                  if(_filters.availableTo.isBefore(_filters.availableFrom)) {
+                                    _filters.availableTo = _filters.availableFrom;
+                                    setToDate(_filters.availableTo);
+                                  }
+                                }
+                              });
+                            },
+                            child: AbsorbPointer(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      decoration: const BoxDecoration(
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Color(0x4ca3c4d4),
+                                            spreadRadius: 2,
+                                            blurRadius: 15,
+                                            offset:
+                                            Offset(0, 0), // changes position of shadow
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
-                                  child: TextField(
-                                    keyboardType: TextInputType.emailAddress,
-                                    cursorColor: Constants.PRIMARY_COLOR,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      color: Constants.FORM_TEXT,
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: "dd",
-                                      hintStyle: const TextStyle(
-                                          color: Constants.PLACEHOLDER_COLOR),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(
-                                          width: 0,
-                                          style: BorderStyle.none,
+                                      child: TextField(
+                                        keyboardType: TextInputType.emailAddress,
+                                        cursorColor: Constants.PRIMARY_COLOR,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          color: Constants.FORM_TEXT,
                                         ),
-                                      ),
-                                      suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
-                                      contentPadding: const EdgeInsets.all(16),
-                                      filled: true,
-                                      fillColor: Constants.WHITE,
-                                    ),
-                                    controller: _modelText,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 8,),
-                              Expanded(
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Color(0x4ca3c4d4),
-                                        spreadRadius: 2,
-                                        blurRadius: 15,
-                                        offset:
-                                        Offset(0, 0), // changes position of shadow
-                                      ),
-                                    ],
-                                  ),
-                                  child: TextField(
-                                    keyboardType: TextInputType.emailAddress,
-                                    cursorColor: Constants.PRIMARY_COLOR,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      color: Constants.FORM_TEXT,
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: "mm",
-                                      hintStyle: const TextStyle(
-                                          color: Constants.PLACEHOLDER_COLOR),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(
-                                          width: 0,
-                                          style: BorderStyle.none,
+                                        readOnly: true,
+                                        decoration: InputDecoration(
+                                          hintText: "gg",
+                                          hintStyle: const TextStyle(color: Constants.PLACEHOLDER_COLOR),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                            borderSide: const BorderSide(
+                                              width: 0,
+                                              style: BorderStyle.none,
+                                            ),
+                                          ),
+                                          suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                          contentPadding: const EdgeInsets.all(12),
+                                          filled: true,
+                                          fillColor: Constants.WHITE,
                                         ),
+                                        controller: _fromDayText,
                                       ),
-                                      suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
-                                      contentPadding: const EdgeInsets.all(16),
-                                      filled: true,
-                                      fillColor: Constants.WHITE,
                                     ),
-                                    controller: _modelText,
                                   ),
-                                ),
-                              ),
-                              SizedBox(width: 8,),
-                              Expanded(
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Color(0x4ca3c4d4),
-                                        spreadRadius: 2,
-                                        blurRadius: 15,
-                                        offset:
-                                        Offset(0, 0), // changes position of shadow
+                                  SizedBox(width: 8,),
+                                  Expanded(
+                                    child: Container(
+                                      decoration: const BoxDecoration(
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Color(0x4ca3c4d4),
+                                            spreadRadius: 2,
+                                            blurRadius: 15,
+                                            offset:
+                                            Offset(0, 0), // changes position of shadow
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
-                                  child: TextField(
-                                    keyboardType: TextInputType.emailAddress,
-                                    cursorColor: Constants.PRIMARY_COLOR,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      color: Constants.FORM_TEXT,
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: "yyyy",
-                                      hintStyle: const TextStyle(
-                                          color: Constants.PLACEHOLDER_COLOR),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(
-                                          width: 0,
-                                          style: BorderStyle.none,
+                                      child: TextField(
+                                        keyboardType: TextInputType.emailAddress,
+                                        cursorColor: Constants.PRIMARY_COLOR,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          color: Constants.FORM_TEXT,
                                         ),
+                                        decoration: InputDecoration(
+                                          hintText: "mm",
+                                          hintStyle: const TextStyle(
+                                              color: Constants.PLACEHOLDER_COLOR),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                            borderSide: const BorderSide(
+                                              width: 0,
+                                              style: BorderStyle.none,
+                                            ),
+                                          ),
+                                          suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                          contentPadding: const EdgeInsets.all(12),
+                                          filled: true,
+                                          fillColor: Constants.WHITE,
+                                        ),
+                                        controller: _fromMonthText,
                                       ),
-                                      suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
-                                      contentPadding: const EdgeInsets.all(16),
-                                      filled: true,
-                                      fillColor: Constants.WHITE,
                                     ),
-                                    controller: _modelText,
                                   ),
-                                ),
+                                  SizedBox(width: 8,),
+                                  Expanded(
+                                    child: Container(
+                                      decoration: const BoxDecoration(
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Color(0x4ca3c4d4),
+                                            spreadRadius: 2,
+                                            blurRadius: 15,
+                                            offset:
+                                            Offset(0, 0), // changes position of shadow
+                                          ),
+                                        ],
+                                      ),
+                                      child: TextField(
+                                        keyboardType: TextInputType.emailAddress,
+                                        cursorColor: Constants.PRIMARY_COLOR,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          color: Constants.FORM_TEXT,
+                                        ),
+                                        decoration: InputDecoration(
+                                          hintText: "aaaa",
+                                          hintStyle: const TextStyle(
+                                              color: Constants.PLACEHOLDER_COLOR),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                            borderSide: const BorderSide(
+                                              width: 0,
+                                              style: BorderStyle.none,
+                                            ),
+                                          ),
+                                          suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                          contentPadding: const EdgeInsets.all(12),
+                                          filled: true,
+                                          fillColor: Constants.WHITE,
+                                        ),
+                                        controller: _fromYearText,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                           SizedBox(height: 24,),
                           Text(
-                            "To",
+                            "A",
                             style: TextStyle(
                                 color: Constants.TEXT_COLOR,
                                 fontSize: 16,
@@ -501,132 +587,161 @@ class _FiltersScreenState extends State<FiltersScreen> {
                             textAlign: TextAlign.center,
                           ),
                           SizedBox(height: 4,),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Color(0x4ca3c4d4),
-                                        spreadRadius: 2,
-                                        blurRadius: 15,
-                                        offset:
-                                        Offset(0, 0), // changes position of shadow
+                          InkWell(
+                            onTap: () async {
+                              debugPrint("show date picker TO");
+                              final DateTime? picked = await showDatePicker(
+                                context: context,
+                                initialDate: _filters.availableTo,
+                                firstDate: DateTime.now(),
+                                lastDate: DateTime.now().add(Duration(days: 700)),
+                              );
+
+                              setState(() {
+                                if(picked != null) {
+                                  _filters.availableTo = picked;
+
+                                  setToDate(_filters.availableTo);
+
+                                  if (_filters.availableFrom.isAfter(
+                                      _filters.availableTo)) {
+                                    debugPrint("Correct date");
+                                    _filters.availableFrom =
+                                        _filters.availableTo;
+                                    setFromDate(_filters.availableFrom);
+                                  }
+                                }
+                              });
+                            },
+                            child: AbsorbPointer(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      decoration: const BoxDecoration(
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Color(0x4ca3c4d4),
+                                            spreadRadius: 2,
+                                            blurRadius: 15,
+                                            offset:
+                                            Offset(0, 0), // changes position of shadow
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
-                                  child: TextField(
-                                    keyboardType: TextInputType.emailAddress,
-                                    cursorColor: Constants.PRIMARY_COLOR,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      color: Constants.FORM_TEXT,
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: "dd",
-                                      hintStyle: const TextStyle(
-                                          color: Constants.PLACEHOLDER_COLOR),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(
-                                          width: 0,
-                                          style: BorderStyle.none,
+                                      child: TextField(
+                                        keyboardType: TextInputType.emailAddress,
+                                        cursorColor: Constants.PRIMARY_COLOR,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          color: Constants.FORM_TEXT,
                                         ),
-                                      ),
-                                      suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
-                                      contentPadding: const EdgeInsets.all(16),
-                                      filled: true,
-                                      fillColor: Constants.WHITE,
-                                    ),
-                                    controller: _modelText,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 8,),
-                              Expanded(
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Color(0x4ca3c4d4),
-                                        spreadRadius: 2,
-                                        blurRadius: 15,
-                                        offset:
-                                        Offset(0, 0), // changes position of shadow
-                                      ),
-                                    ],
-                                  ),
-                                  child: TextField(
-                                    keyboardType: TextInputType.emailAddress,
-                                    cursorColor: Constants.PRIMARY_COLOR,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      color: Constants.FORM_TEXT,
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: "mm",
-                                      hintStyle: const TextStyle(
-                                          color: Constants.PLACEHOLDER_COLOR),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(
-                                          width: 0,
-                                          style: BorderStyle.none,
+                                        decoration: InputDecoration(
+                                          hintText: "gg",
+                                          hintStyle: const TextStyle(
+                                              color: Constants.PLACEHOLDER_COLOR),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                            borderSide: const BorderSide(
+                                              width: 0,
+                                              style: BorderStyle.none,
+                                            ),
+                                          ),
+                                          suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                          contentPadding: const EdgeInsets.all(12),
+                                          filled: true,
+                                          fillColor: Constants.WHITE,
                                         ),
+                                        controller: _toDayText,
                                       ),
-                                      suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
-                                      contentPadding: const EdgeInsets.all(16),
-                                      filled: true,
-                                      fillColor: Constants.WHITE,
                                     ),
-                                    controller: _modelText,
                                   ),
-                                ),
-                              ),
-                              SizedBox(width: 8,),
-                              Expanded(
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Color(0x4ca3c4d4),
-                                        spreadRadius: 2,
-                                        blurRadius: 15,
-                                        offset:
-                                        Offset(0, 0), // changes position of shadow
+                                  SizedBox(width: 8,),
+                                  Expanded(
+                                    child: Container(
+                                      decoration: const BoxDecoration(
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Color(0x4ca3c4d4),
+                                            spreadRadius: 2,
+                                            blurRadius: 15,
+                                            offset:
+                                            Offset(0, 0), // changes position of shadow
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
-                                  child: TextField(
-                                    keyboardType: TextInputType.emailAddress,
-                                    cursorColor: Constants.PRIMARY_COLOR,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      color: Constants.FORM_TEXT,
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: "yyyy",
-                                      hintStyle: const TextStyle(
-                                          color: Constants.PLACEHOLDER_COLOR),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(
-                                          width: 0,
-                                          style: BorderStyle.none,
+                                      child: TextField(
+                                        keyboardType: TextInputType.emailAddress,
+                                        cursorColor: Constants.PRIMARY_COLOR,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          color: Constants.FORM_TEXT,
                                         ),
+                                        decoration: InputDecoration(
+                                          hintText: "mm",
+                                          hintStyle: const TextStyle(
+                                              color: Constants.PLACEHOLDER_COLOR),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                            borderSide: const BorderSide(
+                                              width: 0,
+                                              style: BorderStyle.none,
+                                            ),
+                                          ),
+                                          suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                          contentPadding: const EdgeInsets.all(12),
+                                          filled: true,
+                                          fillColor: Constants.WHITE,
+                                        ),
+                                        controller: _toMonthText,
                                       ),
-                                      suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
-                                      contentPadding: const EdgeInsets.all(16),
-                                      filled: true,
-                                      fillColor: Constants.WHITE,
                                     ),
-                                    controller: _modelText,
                                   ),
-                                ),
+                                  SizedBox(width: 8,),
+                                  Expanded(
+                                    child: Container(
+                                      decoration: const BoxDecoration(
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Color(0x4ca3c4d4),
+                                            spreadRadius: 2,
+                                            blurRadius: 15,
+                                            offset:
+                                            Offset(0, 0), // changes position of shadow
+                                          ),
+                                        ],
+                                      ),
+                                      child: TextField(
+                                        keyboardType: TextInputType.emailAddress,
+                                        cursorColor: Constants.PRIMARY_COLOR,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          color: Constants.FORM_TEXT,
+                                        ),
+                                        decoration: InputDecoration(
+                                          hintText: "aaaa",
+                                          hintStyle: const TextStyle(
+                                              color: Constants.PLACEHOLDER_COLOR),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                            borderSide: const BorderSide(
+                                              width: 0,
+                                              style: BorderStyle.none,
+                                            ),
+                                          ),
+                                          suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                          contentPadding: const EdgeInsets.all(12),
+                                          filled: true,
+                                          fillColor: Constants.WHITE,
+                                        ),
+                                        controller: _toYearText,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                           SizedBox(height: 32,),
                           /*Row(
@@ -676,7 +791,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
-                                "Only show bags in your city",
+                                "Mostra solo nella tua città",
                                 style: TextStyle(
                                     color: Constants.DARK_TEXT_COLOR,
                                     fontSize: 16,
@@ -685,9 +800,9 @@ class _FiltersScreenState extends State<FiltersScreen> {
                                 textAlign: TextAlign.center,
                               ),
                               CupertinoSwitch(
-                                value: _handWithdrawals,
+                                value: _filters.onlySameCity,
                                 activeColor: Constants.SECONDARY_COLOR,
-                                onChanged: (bool value) { setState(() { _handWithdrawals = value; }); },
+                                onChanged: (bool value) { setState(() { _filters.onlySameCity = value; }); },
                               ),
                             ],
                           ),
@@ -726,7 +841,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
                       ),
-                      child: Text('Apply'),
+                      child: Text('Applica'),
                       onPressed: () {
                         applyFilters();
                       },

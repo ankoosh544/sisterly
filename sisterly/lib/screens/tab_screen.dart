@@ -1,6 +1,7 @@
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:sisterly/screens/account_screen.dart';
 import 'package:sisterly/screens/home_screen.dart';
+import 'package:sisterly/screens/inbox_screen.dart';
 import 'package:sisterly/screens/reset_screen.dart';
 import 'package:sisterly/screens/search_screen.dart';
 import 'package:sisterly/screens/signup_screen.dart';
@@ -60,6 +61,7 @@ class TabScreenState extends State<TabScreen>  {
     switch(selectedTab) {
       case 0: return HomeScreen();
       case 1: return SearchScreen();
+      case 2: return InboxScreen();
       case 3: return AccountScreen();
     }
 
