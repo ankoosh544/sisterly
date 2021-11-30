@@ -83,7 +83,7 @@ class WelcomeScreenState extends State<WelcomeScreen> {
                   Wrap(
                     children: const [
                       Text(
-                        "Welcome to ",
+                        "Benvenuto in ",
                         style: TextStyle(
                             color: Constants.PRIMARY_COLOR,
                             fontSize: 25,
@@ -103,7 +103,7 @@ class WelcomeScreenState extends State<WelcomeScreen> {
                   ),
                   const SizedBox(height: 24,),
                   const Text(
-                    "The first Italian platform for peer to peer luxury bag rental.",
+                    "La prima piattaforma di noleggio borse di lusso tra utenti.",
                     style: TextStyle(
                         color: Constants.PRIMARY_COLOR,
                         fontSize: 16,
@@ -121,7 +121,7 @@ class WelcomeScreenState extends State<WelcomeScreen> {
                           shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                               RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(50)))),
-                      child: Text('Find Out How It Works'),
+                      child: Text('Scopri come funziona'),
                       onPressed: () {
                         next();
                       },
