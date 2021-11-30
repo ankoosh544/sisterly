@@ -1,28 +1,21 @@
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:pin_code_fields/pin_code_fields.dart';
-import 'package:sisterly/screens/product_screen.dart';
-import 'package:sisterly/screens/profile_screen.dart';
-import 'package:sisterly/screens/reset_screen.dart';
-import 'package:sisterly/screens/reviews_screen.dart';
-import 'package:sisterly/screens/signup_screen.dart';
-import 'package:sisterly/screens/signup_success_screen.dart';
+import 'package:sisterly/models/brand.dart';
+import 'package:sisterly/models/color.dart';
+import 'package:sisterly/models/delivery_mode.dart';
+import 'package:sisterly/models/generic.dart';
+import 'package:sisterly/models/material.dart';
+import 'package:sisterly/models/var.dart';
 import 'package:sisterly/screens/sister_advice_screen.dart';
-import 'package:sisterly/screens/verify_screen.dart';
-import 'package:sisterly/screens/wishlist_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
-import 'package:sisterly/utils/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sisterly/widgets/custom_app_bar.dart';
+import 'package:sisterly/utils/utils.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../utils/constants.dart';
-import 'login_screen.dart';
 
 class UploadScreen extends StatefulWidget {
 
@@ -35,15 +28,30 @@ class UploadScreen extends StatefulWidget {
 class UploadScreenState extends State<UploadScreen>  {
 
   final TextEditingController _modelText = TextEditingController();
-  final TextEditingController _brandText = TextEditingController();
   final TextEditingController _descriptionText = TextEditingController();
+  final TextEditingController _retail = TextEditingController();
+  final TextEditingController _selling = TextEditingController();
+  final TextEditingController _offer = TextEditingController();
   final ImagePicker picker = ImagePicker();
-  List<XFile>? _images;
+  List<XFile> _images = [];
+  final List<Brand> _brands = [];
+  final List<MyColor> _colors = [];
+  final List<MyMaterial> _materials = [];
+  late Brand _selectedBrand;
+  late MyColor _selectedColor;
+  late MyMaterial _selectedMaterial;
+  DeliveryMode _selectedDelivery = deliveryTypes[0];
+  Generic _selectedConditions = productConditions[0];
+  Generic _selectedBagYears = bagYears[0];
+  Generic _selectedBagSize = bagSizes[0];
+  final List<String> _uploads = [];
 
   @override
   void initState() {
     super.initState();
-
+    _getBrands();
+    _getColors();
+    _getMaterials();
   }
 
   @override
@@ -51,16 +59,21 @@ class UploadScreenState extends State<UploadScreen>  {
     super.dispose();
   }
 
-  Widget getColorBullet(Color color, bool selected) {
-    return Container(
-        width: 24,
-        height: 24,
-        margin: const EdgeInsets.only(right: 12, bottom: 8),
-        decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(30)
-        ),
-        child: selected ? SizedBox() : SvgPicture.asset("assets/images/check_color.svg", width: 13, height: 10, fit: BoxFit.scaleDown)
+  Widget getColorBullet(MyColor c) {
+    Color color = HexColor(c.hex);
+    bool selected = c.id != _selectedColor.id;
+    return InkWell(
+      onTap: () => setState(() => _selectedColor = c),
+      child: Container(
+          width: 24,
+          height: 24,
+          margin: const EdgeInsets.only(right: 12, bottom: 8),
+          decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(30)
+          ),
+          child: selected ? SizedBox() : SvgPicture.asset("assets/images/check_color.svg", width: 13, height: 10, fit: BoxFit.scaleDown)
+      ),
     );
   }
 
@@ -138,14 +151,14 @@ class UploadScreenState extends State<UploadScreen>  {
                         child: Column(
                           children: [
                             SizedBox(height: 10),
-                            Text(
-                              "Add up to 20 photos",
-                              style: TextStyle(
-                                  color: Constants.LIGHT_TEXT_COLOR,
-                                  fontSize: 14,
-                                  fontFamily: Constants.FONT
-                              )
-                            ),
+                            // Text(
+                            //   "Add up to 20 photos",
+                            //   style: TextStyle(
+                            //       color: Constants.LIGHT_TEXT_COLOR,
+                            //       fontSize: 14,
+                            //       fontFamily: Constants.FONT
+                            //   )
+                            // ),
                             SizedBox(height: 10),
                             TextButton(
                               style: ButtonStyle(
@@ -154,7 +167,7 @@ class UploadScreenState extends State<UploadScreen>  {
                                 shape: MaterialStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)))
                               ),
                               child: Text(
-                                  "Upload Photos",
+                                  "Upload photos",
                                   style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 16,
@@ -162,7 +175,8 @@ class UploadScreenState extends State<UploadScreen>  {
                                   )
                               ),
                               onPressed: () async {
-                                _images = await picker.pickMultiImage();
+                                _images = (await picker.pickMultiImage())!;
+                                _upload();
                                 setState(() {});
                               },
                             ),
@@ -182,26 +196,22 @@ class UploadScreenState extends State<UploadScreen>  {
                               ),
                             ),
                             SizedBox(height: 10),
-                            // SizedBox(
-                            //   height: 400,
-                            //   width: double.infinity,
-                            //   child: StaggeredGridView.count(
-                            //     crossAxisCount: 2,
-                            //     children: [
-                            //       Container(height: 50, width: 50, color: Colors.blue),
-                            //       Container(height: 50, width: 50, color: Colors.blue),
-                            //       Container(height: 50, width: 50, color: Colors.blue)
-                            //       // if (_images != null && _images!.isNotEmpty)
-                            //       //   for (var img in _images!)
-                            //       //     Image.file(File(img.path), width: 100, height: 100,)
-                            //     ]
-                            //   ),
-                            // ),
+                            if (_images.isNotEmpty) GridView.count(
+                              shrinkWrap: true,
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 5.0,
+                              crossAxisSpacing: 5.0,
+                              physics: NeverScrollableScrollPhysics(),
+                              children: [
+                                  for (var img in _images)
+                                    Image.file(File(img.path), fit: BoxFit.cover)
+                              ]
+                            ),
                             SizedBox(height: 10)
                           ]
                         )
                       ),
-                      SizedBox(height: 24,),
+                      SizedBox(height: 32),
                       Text(
                         "Model Name",
                         style: TextStyle(
@@ -224,7 +234,7 @@ class UploadScreenState extends State<UploadScreen>  {
                           ],
                         ),
                         child: TextField(
-                          keyboardType: TextInputType.emailAddress,
+                          keyboardType: TextInputType.text,
                           cursorColor: Constants.PRIMARY_COLOR,
                           style: const TextStyle(
                             fontSize: 16,
@@ -250,7 +260,7 @@ class UploadScreenState extends State<UploadScreen>  {
                       ),
                       SizedBox(height: 32,),
                       Text(
-                        "Brand Name",
+                        "Brand",
                         style: TextStyle(
                             color: Constants.TEXT_COLOR,
                             fontSize: 16,
@@ -258,9 +268,13 @@ class UploadScreenState extends State<UploadScreen>  {
                         ),
                       ),
                       SizedBox(height: 8,),
-                      Container(
-                        decoration: const BoxDecoration(
-                          boxShadow: [
+                      if (_brands.isNotEmpty)  Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.only(left: 15),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: const [
                             BoxShadow(
                               color: Color(0x4ca3c4d4),
                               spreadRadius: 8,
@@ -270,41 +284,57 @@ class UploadScreenState extends State<UploadScreen>  {
                             ),
                           ],
                         ),
-                        child: TextField(
-                          keyboardType: TextInputType.emailAddress,
-                          cursorColor: Constants.PRIMARY_COLOR,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Constants.FORM_TEXT,
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<Brand>(
+                            items: _brands.map((Brand b) => DropdownMenuItem<Brand>(
+                                child: Text(b.name, style: TextStyle(fontSize: 16)),
+                                value: b
+                              )
+                            ).toList(),
+                            onChanged: (val) => setState(() => _selectedBrand = val!),
+                            value: _selectedBrand
                           ),
-                          decoration: InputDecoration(
-                            hintText: "Brand name...",
-                            hintStyle: const TextStyle(
-                                color: Constants.PLACEHOLDER_COLOR),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                width: 0,
-                                style: BorderStyle.none,
-                              ),
-                            ),
-                            contentPadding: const EdgeInsets.all(16),
-                            filled: true,
-                            fillColor: Constants.WHITE,
-                          ),
-                          controller: _brandText,
-                        ),
+                        )
                       ),
-                      SizedBox(height: 12,),
+                      SizedBox(height: 32),
                       Text(
-                        "The suggested price is calculated on the basis of the average for this stock market model. you can change it at any time.",
+                        "Material",
                         style: TextStyle(
                             color: Constants.TEXT_COLOR,
-                            fontSize: 12,
+                            fontSize: 16,
                             fontFamily: Constants.FONT
                         ),
                       ),
-                      SizedBox(height: 32,),
+                      SizedBox(height: 8,),
+                      if (_materials.isNotEmpty)  Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.only(left: 15),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x4ca3c4d4),
+                              spreadRadius: 8,
+                              blurRadius: 12,
+                              offset:
+                              Offset(0, 0), // changes position of shadow
+                            ),
+                          ],
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<MyMaterial>(
+                            items: _materials.map((MyMaterial m) => DropdownMenuItem<MyMaterial>(
+                                child: Text(m.material, style: TextStyle(fontSize: 16)),
+                                value: m
+                              )
+                            ).toList(),
+                            onChanged: (val) => setState(() => _selectedMaterial = val!),
+                            value: _selectedMaterial
+                          ),
+                        )
+                      ),
+                      SizedBox(height: 32),
                       Text(
                         "Description",
                         style: TextStyle(
@@ -327,7 +357,7 @@ class UploadScreenState extends State<UploadScreen>  {
                           ],
                         ),
                         child: TextField(
-                          keyboardType: TextInputType.emailAddress,
+                          keyboardType: TextInputType.text,
                           cursorColor: Constants.PRIMARY_COLOR,
                           style: const TextStyle(
                             fontSize: 16,
@@ -363,16 +393,15 @@ class UploadScreenState extends State<UploadScreen>  {
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: 8,),
-                      Wrap(
+                      if (_colors.isNotEmpty) Wrap(
                         children: [
-                          getColorBullet(Colors.redAccent, false),
-                          getColorBullet(Colors.amberAccent, true),
-                          getColorBullet(Colors.blueAccent, false)
+                          for (var c in _colors)
+                            getColorBullet(c)
                         ],
                       ),
                       SizedBox(height: 32,),
                       Text(
-                        "Category",
+                        "Delivery",
                         style: TextStyle(
                             color: Constants.DARK_TEXT_COLOR,
                             fontSize: 16,
@@ -381,26 +410,178 @@ class UploadScreenState extends State<UploadScreen>  {
                       ),
                       SizedBox(height: 8,),
                       Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.only(left: 15),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x4ca3c4d4),
+                                spreadRadius: 8,
+                                blurRadius: 12,
+                                offset:
+                                Offset(0, 0), // changes position of shadow
+                              ),
+                            ],
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<DeliveryMode>(
+                                items: deliveryTypes.map((DeliveryMode val) => DropdownMenuItem<DeliveryMode>(
+                                    child: Text(val.description, style: TextStyle(fontSize: 16)),
+                                    value: val
+                                  )
+                                ).toList(),
+                                onChanged: (val) => setState(() => _selectedDelivery = val!),
+                                value: _selectedDelivery
+                            ),
+                          )
+                      ),
+                      SizedBox(height: 32),
+                      Text(
+                        "Conditions",
+                        style: TextStyle(
+                            color: Constants.DARK_TEXT_COLOR,
+                            fontSize: 16,
+                            fontFamily: Constants.FONT),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 8,),
+                      Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.only(left: 15),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x4ca3c4d4),
+                                spreadRadius: 8,
+                                blurRadius: 12,
+                                offset:
+                                Offset(0, 0), // changes position of shadow
+                              ),
+                            ],
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<Generic>(
+                                items: productConditions.map((Generic val) => DropdownMenuItem<Generic>(
+                                    child: Text(val.name, style: TextStyle(fontSize: 16)),
+                                    value: val
+                                )
+                                ).toList(),
+                                onChanged: (val) => setState(() => _selectedConditions = val!),
+                                value: _selectedConditions
+                            ),
+                          )
+                      ),
+                      SizedBox(height: 32),
+                      Text(
+                        "Bag years",
+                        style: TextStyle(
+                            color: Constants.DARK_TEXT_COLOR,
+                            fontSize: 16,
+                            fontFamily: Constants.FONT),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 8,),
+                      Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.only(left: 15),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x4ca3c4d4),
+                                spreadRadius: 8,
+                                blurRadius: 12,
+                                offset:
+                                Offset(0, 0), // changes position of shadow
+                              ),
+                            ],
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<Generic>(
+                                items: bagYears.map((Generic val) => DropdownMenuItem<Generic>(
+                                    child: Text(val.name, style: TextStyle(fontSize: 16)),
+                                    value: val
+                                )
+                                ).toList(),
+                                onChanged: (val) => setState(() => _selectedBagYears = val!),
+                                value: _selectedBagYears
+                            ),
+                          )
+                      ),
+                      SizedBox(height: 32),
+                      Text(
+                        "Bag size",
+                        style: TextStyle(
+                            color: Constants.DARK_TEXT_COLOR,
+                            fontSize: 16,
+                            fontFamily: Constants.FONT),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 8,),
+                      Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.only(left: 15),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x4ca3c4d4),
+                                spreadRadius: 8,
+                                blurRadius: 12,
+                                offset:
+                                Offset(0, 0), // changes position of shadow
+                              ),
+                            ],
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<Generic>(
+                                items: bagSizes.map((Generic val) => DropdownMenuItem<Generic>(
+                                    child: Text(val.name, style: TextStyle(fontSize: 16)),
+                                    value: val
+                                )
+                                ).toList(),
+                                onChanged: (val) => setState(() => _selectedBagSize = val!),
+                                value: _selectedBagSize
+                            ),
+                          )
+                      ),
+                      SizedBox(height: 32),
+                      Text(
+                        "Retail price",
+                        style: TextStyle(
+                            color: Constants.TEXT_COLOR,
+                            fontSize: 16,
+                            fontFamily: Constants.FONT
+                        ),
+                      ),
+                      SizedBox(height: 8,),
+                      Container(
                         decoration: const BoxDecoration(
                           boxShadow: [
                             BoxShadow(
                               color: Color(0x4ca3c4d4),
-                              spreadRadius: 2,
-                              blurRadius: 15,
+                              spreadRadius: 8,
+                              blurRadius: 12,
                               offset:
                               Offset(0, 0), // changes position of shadow
                             ),
                           ],
                         ),
                         child: TextField(
-                          keyboardType: TextInputType.emailAddress,
+                          keyboardType: TextInputType.number,
                           cursorColor: Constants.PRIMARY_COLOR,
                           style: const TextStyle(
                             fontSize: 16,
                             color: Constants.FORM_TEXT,
                           ),
                           decoration: InputDecoration(
-                            hintText: "Select...",
+                            hintText: "Retail price...",
                             hintStyle: const TextStyle(
                                 color: Constants.PLACEHOLDER_COLOR),
                             border: OutlineInputBorder(
@@ -410,15 +591,127 @@ class UploadScreenState extends State<UploadScreen>  {
                                 style: BorderStyle.none,
                               ),
                             ),
-                            suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
                             contentPadding: const EdgeInsets.all(16),
                             filled: true,
                             fillColor: Constants.WHITE,
                           ),
-                          controller: _modelText,
+                          controller: _retail,
                         ),
                       ),
-                      SizedBox(height: 200,)
+                      SizedBox(height: 32),
+                      Text(
+                        "Selling price",
+                        style: TextStyle(
+                            color: Constants.TEXT_COLOR,
+                            fontSize: 16,
+                            fontFamily: Constants.FONT
+                        ),
+                      ),
+                      SizedBox(height: 8,),
+                      Container(
+                        decoration: const BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(0x4ca3c4d4),
+                              spreadRadius: 8,
+                              blurRadius: 12,
+                              offset:
+                              Offset(0, 0), // changes position of shadow
+                            ),
+                          ],
+                        ),
+                        child: TextField(
+                          keyboardType: TextInputType.number,
+                          cursorColor: Constants.PRIMARY_COLOR,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Constants.FORM_TEXT,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: "Selling price...",
+                            hintStyle: const TextStyle(
+                                color: Constants.PLACEHOLDER_COLOR),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                width: 0,
+                                style: BorderStyle.none,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.all(16),
+                            filled: true,
+                            fillColor: Constants.WHITE,
+                          ),
+                          controller: _selling,
+                        ),
+                      ),
+                      SizedBox(height: 32),
+                      Text(
+                        "Offer price",
+                        style: TextStyle(
+                            color: Constants.TEXT_COLOR,
+                            fontSize: 16,
+                            fontFamily: Constants.FONT
+                        ),
+                      ),
+                      SizedBox(height: 8,),
+                      Container(
+                        decoration: const BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(0x4ca3c4d4),
+                              spreadRadius: 8,
+                              blurRadius: 12,
+                              offset:
+                              Offset(0, 0), // changes position of shadow
+                            ),
+                          ],
+                        ),
+                        child: TextField(
+                          keyboardType: TextInputType.number,
+                          cursorColor: Constants.PRIMARY_COLOR,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Constants.FORM_TEXT,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: "Offer price...",
+                            hintStyle: const TextStyle(
+                                color: Constants.PLACEHOLDER_COLOR),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                width: 0,
+                                style: BorderStyle.none,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.all(16),
+                            filled: true,
+                            fillColor: Constants.WHITE,
+                          ),
+                          controller: _offer,
+                        ),
+                      ),
+                      SizedBox(height: 32),
+                      TextButton(
+                        style: ButtonStyle(
+                            backgroundColor: MaterialStateProperty.all(Constants.PRIMARY_COLOR),
+                            padding: MaterialStateProperty.all(EdgeInsets.symmetric(horizontal: 46, vertical: 14)),
+                            shape: MaterialStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)))
+                        ),
+                        child: Text(
+                            "Create product",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontFamily: Constants.FONT
+                            )
+                        ),
+                        onPressed: () {
+                          _createProduct();
+                        },
+                      ),
+                      SizedBox(height: 60)
                     ],
                   ),
                 ),
@@ -428,5 +721,88 @@ class UploadScreenState extends State<UploadScreen>  {
         ],
       ),
     );
+  }
+
+  _getBrands() {
+    ApiManager(context).makeGetRequest('/admin/brand', {}, (res) {
+      var data = res["data"];
+      if (data != null) {
+        setState(() {
+          for (var b in data) {
+            _brands.add(Brand.fromJson(b));
+          }
+          _selectedBrand = _brands[0];
+        });
+      }
+    }, (res) {});
+  }
+
+  _getColors() {
+    ApiManager(context).makeGetRequest('/admin/color', {}, (res) {
+      var data = res["data"];
+      if (data != null) {
+        setState(() {
+          for (var b in data) {
+            _colors.add(MyColor.fromJson(b));
+          }
+          _selectedColor = _colors[0];
+        });
+      }
+    }, (res) {});
+  }
+
+  _getMaterials() {
+    ApiManager(context).makeGetRequest('/admin/material', {}, (res) {
+      var data = res["data"];
+      if (data != null) {
+        setState(() {
+          for (var m in data) {
+            _materials.add(MyMaterial.fromJson(m));
+          }
+          _selectedMaterial = _materials[0];
+        });
+      }
+    }, (res) {});
+  }
+
+  _createProduct() {
+    if (!(_uploads.isEmpty || _modelText.text.isEmpty || _descriptionText.text.isEmpty || _retail.text.isEmpty || _selling.text.isEmpty)) {
+      ApiManager(context).makePutRequest('/product', {
+        "model": _modelText.text,
+        "media_pk": _uploads[0],
+        "brad_pk": _selectedBrand.id,
+        "color_pk": _selectedColor.id,
+        "material_pk": _selectedMaterial.id,
+        "conditions": _selectedConditions.id,
+        "year": _selectedBagYears.id,
+        "size": _selectedBagSize.id,
+        "price_retail": double.parse(_retail.text),
+        "price_offer": double.parse(_offer.text.isEmpty ? '0': _offer.text),
+        "selling_price": double.parse(_selling.text),
+        "delivery_type": _selectedDelivery.id,
+        "delivery_kit_pk": 0,
+        "description": _descriptionText.text,
+        "maximum_loan_days": -1
+      }, (res) {
+        Navigator.of(context).pop();
+      }, (res) {});
+    }
+  }
+
+  _upload() {
+    if (_images.isNotEmpty) {
+      ApiManager(context).makePutRequest('/client/media', {}, (res) {
+        String mediaId = res["data"]["id"];
+        int i = 1;
+        for (var photo in _images) {
+          ApiManager(context).makeUploadRequest(context, '/client/media/$mediaId/images', photo.path, i++, (res) {
+            debugPrint('Photo uploaded');
+            // _uploads.add(res["data"]["id"]);
+          }, (res) {
+            debugPrint('Failed uploading photo');
+          });
+        }
+      }, (res) {});
+    }
   }
 }

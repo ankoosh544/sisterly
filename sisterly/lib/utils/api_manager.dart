@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:sisterly/utils/localization/app_localizations.dart';
 import 'package:sisterly/utils/session_data.dart';
@@ -11,6 +12,7 @@ import 'package:http/http.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sisterly/widgets/alert/custom_alert.dart';
 import 'constants.dart';
+import 'package:image/image.dart' as Img;
 
 class ApiManager {
 
@@ -322,16 +324,22 @@ class ApiManager {
     }
   }
 
-  makeUploadRequest(context, endpoint, filePath, success, failure) async {
+  makeUploadRequest(context, endpoint, filePath, order, success, failure) async {
     final postUri = Uri.parse(SessionData().serverUrl + endpoint);
-    http.MultipartRequest request = http.MultipartRequest('POST', postUri);
+    http.MultipartRequest request = http.MultipartRequest('PUT', postUri);
+
     request.headers.addAll({
-      "Authorization": SessionData().token!,
+      "Authorization": "Bearer ${SessionData().token!}",
       "Content-Type": "multipart/form-data",
       "Accept-Language": await getLocale(context) ?? ''
     });
 
     try {
+      // File imgFile = File(filePath);
+      // Img.Image? tmp = Img.decodeImage(imgFile.readAsBytesSync());
+      // Img.Image? resized = Img.copyResize(tmp!, width: 1000);
+      // http.MultipartFile multipartFile = http.MultipartFile.fromBytes('file', Img.encodeJpg(resized));
+
       http.MultipartFile multipartFile = await http.MultipartFile.fromPath('image', filePath);
 
       debugPrint("multipartFile postUri: "+postUri.toString()+"  multipartFile.length: "+multipartFile.length.toString());
@@ -344,13 +352,9 @@ class ApiManager {
 
       debugPrint("makeUploadRequest completed json: "+json+"   files: " + request.files.length.toString());
 
-      if (statusCode == 200 || statusCode == 201) {
-        try {
-          success(jsonDecode(json.toString()));
-        } catch (ex) {
-          manageFailure(failure, context, statusCode, json);
-        }
-      } else {
+      try {
+        success(jsonDecode(json.toString()));
+      } catch (ex) {
         manageFailure(failure, context, statusCode, json);
       }
     } catch(ex) {
