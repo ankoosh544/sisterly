@@ -218,6 +218,16 @@ class _FiltersScreenState extends State<FiltersScreen> {
                   child: Column(
                     children: [
                       SizedBox(height: 20,),
+                      Text(
+                        "Filtri di ricerca",
+                        textAlign: TextAlign.left,
+                        style: TextStyle(
+                            color: Constants.PRIMARY_COLOR,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: Constants.FONT
+                        ),
+                      ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: Column(

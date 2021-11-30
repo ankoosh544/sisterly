@@ -40,7 +40,6 @@ dependencies:
   flutter_sequence_animation: ^4.0.0-nullsafety
   fluttertoast: ^8.0.8
   url_launcher: ^6.0.2
-  package_info: ^2.0.0
   double_back_to_close_app: ^2.0.1
   device_info: ^0.4.2+2
   firebase_core: ^1.0.4
@@ -56,6 +55,7 @@ dependencies:
   cached_network_image: ^3.1.0+1
   image_picker: ^0.8.4+4
   flutter_staggered_grid_view: ^0.4.1
+  package_info: ^2.0.2
 
 dev_dependencies:
   flutter_test:
