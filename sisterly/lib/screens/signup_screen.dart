@@ -30,6 +30,7 @@ class SignupScreenState extends State<SignupScreen>  {
 
   bool _showPassword = false;
   bool _terms = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -63,10 +64,18 @@ class SignupScreenState extends State<SignupScreen>  {
       return;
     }
 
+    setState(() {
+      _isLoading = true;
+    });
+
     _emailController.text = _emailController.text.toLowerCase().trim();
 
     ApiManager(context).signup(_emailController.text.trim(), _passwordController.text, _firstNameController.text, _lastNameController.text, _phoneController.text.trim(),
       (response) async {
+        setState(() {
+          _isLoading = false;
+        });
+
         if (response["data"] != null) {
           debugPrint("signup success");
 
@@ -75,9 +84,12 @@ class SignupScreenState extends State<SignupScreen>  {
 
           signupSuccess();
         } else {
-          ApiManager.showErrorMessage(context, response["code"]);
+          ApiManager.showFreeErrorToast(context, response["detail"]);
         }
       }, (statusCode) {
+          setState(() {
+            _isLoading = false;
+          });
         ApiManager.showErrorMessage(context, "generic_error");
         debugPrint("login failure");
      }
@@ -127,7 +139,7 @@ class SignupScreenState extends State<SignupScreen>  {
                       const Padding(
                         padding: EdgeInsets.only(top: 24),
                         child: Text(
-                          "Sign up",
+                          "Registrati",
                           style: TextStyle(
                               color: Colors.white,
                               fontSize: 28,
@@ -161,7 +173,7 @@ class SignupScreenState extends State<SignupScreen>  {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         const SizedBox(height: 25),
-                        const Text("Email",
+                        const Text("Nome",
                             style: TextStyle(
                               color: Constants.TEXT_COLOR,
                               fontSize: 16,
@@ -188,7 +200,7 @@ class SignupScreenState extends State<SignupScreen>  {
                               color: Constants.FORM_TEXT,
                             ),
                             decoration: InputDecoration(
-                              hintText: "First name",
+                              hintText: "Nome",
                               hintStyle: const TextStyle(
                                   color: Constants.PLACEHOLDER_COLOR),
                               border: OutlineInputBorder(
@@ -206,7 +218,7 @@ class SignupScreenState extends State<SignupScreen>  {
                           ),
                         ),
                         const SizedBox(height: 32),
-                        const Text("Last name",
+                        const Text("Cognome",
                             style: TextStyle(
                               color: Constants.TEXT_COLOR,
                               fontSize: 16,
@@ -233,7 +245,7 @@ class SignupScreenState extends State<SignupScreen>  {
                               color: Constants.FORM_TEXT,
                             ),
                             decoration: InputDecoration(
-                              hintText: "Last name",
+                              hintText: "Cognome",
                               hintStyle: const TextStyle(
                                   color: Constants.PLACEHOLDER_COLOR),
                               border: OutlineInputBorder(
@@ -251,7 +263,7 @@ class SignupScreenState extends State<SignupScreen>  {
                           ),
                         ),
                         const SizedBox(height: 32),
-                        const Text("Phone number",
+                        const Text("Cellulare",
                             style: TextStyle(
                               color: Constants.TEXT_COLOR,
                               fontSize: 16,
@@ -297,7 +309,7 @@ class SignupScreenState extends State<SignupScreen>  {
                                 color: Constants.PRIMARY_COLOR
                             ),
                             inputDecoration: InputDecoration(
-                              hintText: "Phone number",
+                              hintText: "Cellulare",
                               hintStyle: const TextStyle(
                                   color: Constants.PLACEHOLDER_COLOR),
                               border: OutlineInputBorder(
@@ -341,7 +353,7 @@ class SignupScreenState extends State<SignupScreen>  {
                               color: Constants.FORM_TEXT,
                             ),
                             decoration: InputDecoration(
-                              hintText: "Email address",
+                              hintText: "Email",
                               hintStyle: const TextStyle(
                                   color: Constants.PLACEHOLDER_COLOR),
                               border: OutlineInputBorder(
@@ -359,7 +371,7 @@ class SignupScreenState extends State<SignupScreen>  {
                           ),
                         ),
                         const SizedBox(height: 32),
-                        const Text("Create Password",
+                        const Text("Crea Password",
                             style: TextStyle(
                               color: Constants.TEXT_COLOR,
                               fontSize: 16,
@@ -380,7 +392,7 @@ class SignupScreenState extends State<SignupScreen>  {
                           ),
                           child: TextField(
                             keyboardType: TextInputType.visiblePassword,
-                            obscureText: _showPassword,
+                            obscureText: !_showPassword,
                             cursorColor: Constants.PRIMARY_COLOR,
                             style: const TextStyle(
                               fontSize: 16,
@@ -446,10 +458,10 @@ class SignupScreenState extends State<SignupScreen>  {
                                   text: TextSpan(
                                     //style: DefaultTextStyle.of(context).style,
                                     children: <TextSpan>[
-                                      TextSpan(text: "By registering you declare that you have read and to accept ",
+                                      TextSpan(text: "Registrandoti dichiari di aver letto e accettato i ",
                                         style: TextStyle(color: Color(0xff92a0a7), fontSize: 16, fontFamily: Constants.FONT),
                                       ),
-                                      TextSpan(text: "terms and conditions.",
+                                      TextSpan(text: "termini e condizioni.",
                                         style: TextStyle(color: Constants.PRIMARY_COLOR, fontSize: 16, fontWeight: FontWeight.bold, fontFamily: Constants.FONT),
                                         recognizer: TapGestureRecognizer()
                                           ..onTap = () {
@@ -466,7 +478,7 @@ class SignupScreenState extends State<SignupScreen>  {
                         SizedBox(height: 24,),
                         SafeArea(
                           child: Center(
-                            child: ElevatedButton(
+                            child: _isLoading ? CircularProgressIndicator() : ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                   primary: Constants.SECONDARY_COLOR,
                                   textStyle: const TextStyle(
@@ -476,7 +488,7 @@ class SignupScreenState extends State<SignupScreen>  {
                                       horizontal: 80, vertical: 14),
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(50))),
-                              child: Text('Confirm'),
+                              child: Text('Conferma'),
                               onPressed: () {
                                 signup();
                               },

@@ -525,6 +525,17 @@ class ApiManager {
     );
   }
 
+  static showFreeErrorToast(context, String text) {
+    Fluttertoast.showToast(
+        msg: text,
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.CENTER,
+        backgroundColor: Colors.redAccent,
+        textColor: Colors.white,
+        fontSize: 16.0
+    );
+  }
+
   loadLanguage() async {
     /*var preferences = await SharedPreferences.getInstance();
     String lang = preferences.getString(Constants.PREFS_LANGUAGE);

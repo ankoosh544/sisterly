@@ -99,11 +99,11 @@ class Welcome2ScreenState extends State<Welcome2Screen> {
                       ),
                     ),
                     SizedBox(height: 28,),
-                    getIconTextWidget("community", "A new way of experiencing fashion in a community of lender and borrower sisters!"),
+                    getIconTextWidget("community", "Un nuovo modo di vivere la moda in una community di lender e borrower sisters!"),
                     SizedBox(height: 40,),
-                    getIconTextWidget("bag", "The bag that's right for you, when you want and where you want. Explore the catalog and search among the offers."),
+                    getIconTextWidget("bag", "La borsa dei tuoi sogni, quando e dove vuoi. Esplora il catalogo e scegli quella che fa per te."),
                     SizedBox(height: 40,),
-                    getIconTextWidget("rent", "Rent the bags you no longer use and start earning comfortably and safely."),
+                    getIconTextWidget("rent", "Metti in affitto le borse che non usi e inizia a guadagnare, in modo comodo e sicuro."),
                     SizedBox(height: 40,),
                     Row(
                       children: [
@@ -121,7 +121,7 @@ class Welcome2ScreenState extends State<Welcome2Screen> {
                                   borderRadius: BorderRadius.circular(50),
                               )
                             ),
-                            child: Text('Become a Sister'),
+                            child: Text('Registrati'),
                             onPressed: () {
                               signup();
                             },

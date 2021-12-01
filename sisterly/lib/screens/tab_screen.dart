@@ -63,6 +63,7 @@ class TabScreenState extends State<TabScreen>  {
       case 1: return SearchScreen();
       case 2: return InboxScreen();
       case 3: return AccountScreen();
+      case 4: return UploadScreen();
     }
 
     return HomeScreen();
@@ -74,13 +75,14 @@ class TabScreenState extends State<TabScreen>  {
       backgroundColor: Colors.white,
       floatingActionButtonLocation: FloatingActionButtonLocation.miniCenterFloat,
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 30.0),
+        padding: const EdgeInsets.only(bottom: 0.0),
         child: FloatingActionButton(
           backgroundColor: Constants.SECONDARY_COLOR,
           child: SvgPicture.asset("assets/images/plus.svg"),
           onPressed: () {
-            Navigator.of(context).push(
-                MaterialPageRoute(builder: (BuildContext context) => UploadScreen()));
+            setState(() {
+              selectedTab = 4;
+            });
           },
         ),
       ),
@@ -102,14 +104,14 @@ class TabScreenState extends State<TabScreen>  {
                   ),
                 ],
               ),
-              height: 73,
+              height: 50,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   getTabItem("assets/images/home.svg", "assets/images/home_active.svg", 0),
                   getTabItem("assets/images/search.svg", "assets/images/search_active.svg", 1),
                   SizedBox(),
-                  getTabItem("assets/images/mail.svg", "assets/images/mail.svg", 2),
+                  getTabItem("assets/images/mail.svg", "assets/images/mail_active.svg", 2),
                   getTabItem("assets/images/account.svg", "assets/images/account_active.svg", 3),
                 ],
               ),

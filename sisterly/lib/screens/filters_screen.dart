@@ -193,666 +193,698 @@ class _FiltersScreenState extends State<FiltersScreen> {
   
   @override
   Widget build(BuildContext context) {
-    return BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Container(
-              width: MediaQuery.of(context).size.width,
-              decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(topRight: Radius.circular(30), topLeft: Radius.circular(30))
-              ),
-              child: SafeArea(
-                child: Column(
-                  children: [
-                    SizedBox(height: 20,),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            decoration: const BoxDecoration(
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Color(0x4ca3c4d4),
-                                  spreadRadius: 8,
-                                  blurRadius: 12,
-                                  offset:
-                                  Offset(0, 0), // changes position of shadow
+    return Stack(
+      children: [
+        BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            width: MediaQuery.of(context).size.width,
+            decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(topRight: Radius.circular(30), topLeft: Radius.circular(30))
+            ),
+            child: SafeArea(
+              child: SingleChildScrollView(
+                child: GestureDetector(
+                  onVerticalDragUpdate: (details) {
+                    int sensitivity = 8;
+                    if (details.delta.dy > sensitivity) {
+                      // Down Swipe
+                      debugPrint("down swipe");
+                    } else if(details.delta.dy < -sensitivity){
+                      // Up Swipe
+                    }
+                  },
+                  child: Column(
+                    children: [
+                      SizedBox(height: 20,),
+                      Text(
+                        "Filtri di ricerca",
+                        textAlign: TextAlign.left,
+                        style: TextStyle(
+                            color: Constants.PRIMARY_COLOR,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: Constants.FONT
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(height: 40,),
+                            Container(
+                              decoration: const BoxDecoration(
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Color(0x4ca3c4d4),
+                                    spreadRadius: 8,
+                                    blurRadius: 12,
+                                    offset:
+                                    Offset(0, 0), // changes position of shadow
+                                  ),
+                                ],
+                              ),
+                              child: TextField(
+                                keyboardType: TextInputType.emailAddress,
+                                cursorColor: Constants.PRIMARY_COLOR,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Constants.FORM_TEXT,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: "Nome modello...",
+                                  hintStyle: const TextStyle(
+                                      color: Constants.PLACEHOLDER_COLOR),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(
+                                      width: 0,
+                                      style: BorderStyle.none,
+                                    ),
+                                  ),
+                                  prefixIcon: SvgPicture.asset("assets/images/search.svg", width: 13, fit: BoxFit.scaleDown,),
+                                  contentPadding: const EdgeInsets.all(16),
+                                  filled: true,
+                                  fillColor: Constants.WHITE,
+                                ),
+                                controller: _modelText,
+                              ),
+                            ),
+                            SizedBox(height: 40,),
+                            /*Text(
+                              "Category",
+                              style: TextStyle(
+                                  color: Constants.DARK_TEXT_COLOR,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: Constants.FONT),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: 8,),
+                            Wrap(
+                              children: [
+                                getCategoryRadio("Shoulder Bag", false),
+                                getCategoryRadio("Clutch", true),
+                                getCategoryRadio("By Hand", true),
+                                getCategoryRadio("Shoppers", true),
+                                getCategoryRadio("Backpack", true)
+                              ],
+                            ),
+                            SizedBox(height: 24,),*/
+                            Text(
+                              "Condizioni",
+                              style: TextStyle(
+                                  color: Constants.DARK_TEXT_COLOR,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: Constants.FONT),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: 8,),
+                            Wrap(
+                              children: [
+                                getTag(1, "Eccellente", _filters.conditions),
+                                getTag(2, "Buone", _filters.conditions),
+                                getTag(3, "Scarse", _filters.conditions)
+                              ],
+                            ),
+                            SizedBox(height: 24,),
+                            Text(
+                              "Colore",
+                              style: TextStyle(
+                                  color: Constants.DARK_TEXT_COLOR,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: Constants.FONT),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: 8,),
+                            Wrap(
+                              children: _colorsList.map((e) => getColorBullet(e.id, HexColor(e.hexadecimal), _filters.colors)).toList(),
+                            ),
+                            SizedBox(height: 24,),
+                            Text(
+                              "Modalità di consegna",
+                              style: TextStyle(
+                                  color: Constants.DARK_TEXT_COLOR,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: Constants.FONT),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: 8,),
+                            Wrap(
+                              children: _deliveryModesList.map((e) => getTag(e.id, e.description, _filters.deliveryModes),).toList(),
+                            ),
+                            SizedBox(height: 24,),
+                            Text(
+                              "Prezzo massimo",
+                              style: TextStyle(
+                                  color: Constants.DARK_TEXT_COLOR,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: Constants.FONT),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: 8,),
+                          ]
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: SliderTheme(
+                          data: SliderTheme.of(context).copyWith(
+                            inactiveTrackColor: Color(0x66ffa8a8), // Custom Gray Color
+                            activeTrackColor: Constants.SECONDARY_COLOR,
+                            thumbColor: Constants.SECONDARY_COLOR,
+                            overlayColor: Constants.LIGHT_GREY_COLOR,
+                            activeTickMarkColor: Colors.white,
+                            showValueIndicator: ShowValueIndicator.always,
+                            valueIndicatorColor: Constants.SECONDARY_COLOR,
+                            trackHeight: 3
+                          ),
+                          child: Slider(
+                            value: _filters.maxPrice,
+                            min: 0,
+                            max: 100,
+                            label: _filters.maxPrice.round().toString(),
+                            onChanged: (double value) {
+                              setState(() {
+                                _filters.maxPrice = value;
+                              });
+                            },
+                          ),
+                        )
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: const [
+                                Text(
+                                  "€0",
+                                  style: TextStyle(
+                                      color: Constants.LIGHT_GREY_COLOR,
+                                      fontSize: 16,
+                                      fontFamily: Constants.FONT),
+                                ),
+                                Text(
+                                  "€100",
+                                  style: TextStyle(
+                                      color: Constants.LIGHT_GREY_COLOR,
+                                      fontSize: 16,
+                                      fontFamily: Constants.FONT),
                                 ),
                               ],
                             ),
-                            child: TextField(
-                              keyboardType: TextInputType.emailAddress,
-                              cursorColor: Constants.PRIMARY_COLOR,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Constants.FORM_TEXT,
-                              ),
-                              decoration: InputDecoration(
-                                hintText: "Nome modello...",
-                                hintStyle: const TextStyle(
-                                    color: Constants.PLACEHOLDER_COLOR),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                    width: 0,
-                                    style: BorderStyle.none,
-                                  ),
-                                ),
-                                prefixIcon: SvgPicture.asset("assets/images/search.svg", width: 13, fit: BoxFit.scaleDown,),
-                                contentPadding: const EdgeInsets.all(16),
-                                filled: true,
-                                fillColor: Constants.WHITE,
-                              ),
-                              controller: _modelText,
+                            /*SizedBox(height: 32,),
+                            Text(
+                              "Inspirations",
+                              style: TextStyle(
+                                  color: Constants.DARK_TEXT_COLOR,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: Constants.FONT),
+                              textAlign: TextAlign.center,
                             ),
-                          ),
-                          SizedBox(height: 40,),
-                          /*Text(
-                            "Category",
-                            style: TextStyle(
-                                color: Constants.DARK_TEXT_COLOR,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: Constants.FONT),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: 8,),
-                          Wrap(
-                            children: [
-                              getCategoryRadio("Shoulder Bag", false),
-                              getCategoryRadio("Clutch", true),
-                              getCategoryRadio("By Hand", true),
-                              getCategoryRadio("Shoppers", true),
-                              getCategoryRadio("Backpack", true)
-                            ],
-                          ),
-                          SizedBox(height: 24,),*/
-                          Text(
-                            "Condizioni",
-                            style: TextStyle(
-                                color: Constants.DARK_TEXT_COLOR,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: Constants.FONT),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: 8,),
-                          Wrap(
-                            children: [
-                              getTag(1, "Excellent", _filters.conditions),
-                              getTag(2, "Good", _filters.conditions),
-                              getTag(3, "Scarce", _filters.conditions)
-                            ],
-                          ),
-                          SizedBox(height: 24,),
-                          Text(
-                            "Colore",
-                            style: TextStyle(
-                                color: Constants.DARK_TEXT_COLOR,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: Constants.FONT),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: 8,),
-                          Wrap(
-                            children: _colorsList.map((e) => getColorBullet(e.id, HexColor(e.hexadecimal), _filters.colors)).toList(),
-                          ),
-                          SizedBox(height: 24,),
-                          Text(
-                            "Modalità di consegna",
-                            style: TextStyle(
-                                color: Constants.DARK_TEXT_COLOR,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: Constants.FONT),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: 8,),
-                          Wrap(
-                            children: _deliveryModesList.map((e) => getTag(e.id, e.description, _filters.deliveryModes),).toList(),
-                          ),
-                          SizedBox(height: 24,),
-                          Text(
-                            "Prezzo massimo",
-                            style: TextStyle(
-                                color: Constants.DARK_TEXT_COLOR,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: Constants.FONT),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: 8,),
-                        ]
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: SliderTheme(
-                        data: SliderTheme.of(context).copyWith(
-                          inactiveTrackColor: Color(0x66ffa8a8), // Custom Gray Color
-                          activeTrackColor: Constants.SECONDARY_COLOR,
-                          thumbColor: Constants.SECONDARY_COLOR,
-                          overlayColor: Constants.LIGHT_GREY_COLOR,
-                          activeTickMarkColor: Colors.white,
-                          showValueIndicator: ShowValueIndicator.always,
-                          valueIndicatorColor: Constants.SECONDARY_COLOR,
-                          trackHeight: 3
-                        ),
-                        child: Slider(
-                          value: _filters.maxPrice,
-                          min: 0,
-                          max: 100,
-                          label: _filters.maxPrice.round().toString(),
-                          onChanged: (double value) {
-                            setState(() {
-                              _filters.maxPrice = value;
-                            });
-                          },
-                        ),
-                      )
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: const [
-                              Text(
-                                "€0",
-                                style: TextStyle(
-                                    color: Constants.LIGHT_GREY_COLOR,
-                                    fontSize: 16,
-                                    fontFamily: Constants.FONT),
-                              ),
-                              Text(
-                                "€100",
-                                style: TextStyle(
-                                    color: Constants.LIGHT_GREY_COLOR,
-                                    fontSize: 16,
-                                    fontFamily: Constants.FONT),
-                              ),
-                            ],
-                          ),
-                          /*SizedBox(height: 32,),
-                          Text(
-                            "Inspirations",
-                            style: TextStyle(
-                                color: Constants.DARK_TEXT_COLOR,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: Constants.FONT),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: 8,),
-                          Wrap(
-                            children: [
-                              getTag("Holiday", false),
-                              getTag("Wedding", true),
-                              getTag("Wedding", true),
-                              getTag("Wedding", true),
-                              getTag("Wedding", true)
-                            ],
-                          ),*/
-                          SizedBox(height: 32,),
-                          Text(
-                            "Disponibilità",
-                            style: TextStyle(
-                                color: Constants.DARK_TEXT_COLOR,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: Constants.FONT),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: 8,),
-                          Text(
-                            "Da",
-                            style: TextStyle(
-                                color: Constants.TEXT_COLOR,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: Constants.FONT),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: 4,),
-                          InkWell(
-                            onTap: () async {
-                              debugPrint("show date picker");
-                              final DateTime? picked = await showDatePicker(
-                                context: context,
-                                initialDate: _filters.availableFrom,
-                                firstDate: DateTime.now().subtract(Duration(days: 1)),
-                                lastDate: DateTime.now().add(Duration(days: 700)),
-                              );
-
-                              setState(() {
-                                if(picked != null) {
-                                  _filters.availableFrom = picked;
-
-                                  setFromDate(_filters.availableFrom);
-
-                                  if(_filters.availableTo.isBefore(_filters.availableFrom)) {
-                                    _filters.availableTo = _filters.availableFrom;
-                                    setToDate(_filters.availableTo);
-                                  }
-                                }
-                              });
-                            },
-                            child: AbsorbPointer(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Container(
-                                      decoration: const BoxDecoration(
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Color(0x4ca3c4d4),
-                                            spreadRadius: 2,
-                                            blurRadius: 15,
-                                            offset:
-                                            Offset(0, 0), // changes position of shadow
-                                          ),
-                                        ],
-                                      ),
-                                      child: TextField(
-                                        keyboardType: TextInputType.emailAddress,
-                                        cursorColor: Constants.PRIMARY_COLOR,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          color: Constants.FORM_TEXT,
-                                        ),
-                                        readOnly: true,
-                                        decoration: InputDecoration(
-                                          hintText: "gg",
-                                          hintStyle: const TextStyle(color: Constants.PLACEHOLDER_COLOR),
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(12),
-                                            borderSide: const BorderSide(
-                                              width: 0,
-                                              style: BorderStyle.none,
-                                            ),
-                                          ),
-                                          suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
-                                          contentPadding: const EdgeInsets.all(12),
-                                          filled: true,
-                                          fillColor: Constants.WHITE,
-                                        ),
-                                        controller: _fromDayText,
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(width: 8,),
-                                  Expanded(
-                                    child: Container(
-                                      decoration: const BoxDecoration(
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Color(0x4ca3c4d4),
-                                            spreadRadius: 2,
-                                            blurRadius: 15,
-                                            offset:
-                                            Offset(0, 0), // changes position of shadow
-                                          ),
-                                        ],
-                                      ),
-                                      child: TextField(
-                                        keyboardType: TextInputType.emailAddress,
-                                        cursorColor: Constants.PRIMARY_COLOR,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          color: Constants.FORM_TEXT,
-                                        ),
-                                        decoration: InputDecoration(
-                                          hintText: "mm",
-                                          hintStyle: const TextStyle(
-                                              color: Constants.PLACEHOLDER_COLOR),
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(12),
-                                            borderSide: const BorderSide(
-                                              width: 0,
-                                              style: BorderStyle.none,
-                                            ),
-                                          ),
-                                          suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
-                                          contentPadding: const EdgeInsets.all(12),
-                                          filled: true,
-                                          fillColor: Constants.WHITE,
-                                        ),
-                                        controller: _fromMonthText,
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(width: 8,),
-                                  Expanded(
-                                    child: Container(
-                                      decoration: const BoxDecoration(
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Color(0x4ca3c4d4),
-                                            spreadRadius: 2,
-                                            blurRadius: 15,
-                                            offset:
-                                            Offset(0, 0), // changes position of shadow
-                                          ),
-                                        ],
-                                      ),
-                                      child: TextField(
-                                        keyboardType: TextInputType.emailAddress,
-                                        cursorColor: Constants.PRIMARY_COLOR,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          color: Constants.FORM_TEXT,
-                                        ),
-                                        decoration: InputDecoration(
-                                          hintText: "aaaa",
-                                          hintStyle: const TextStyle(
-                                              color: Constants.PLACEHOLDER_COLOR),
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(12),
-                                            borderSide: const BorderSide(
-                                              width: 0,
-                                              style: BorderStyle.none,
-                                            ),
-                                          ),
-                                          suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
-                                          contentPadding: const EdgeInsets.all(12),
-                                          filled: true,
-                                          fillColor: Constants.WHITE,
-                                        ),
-                                        controller: _fromYearText,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            SizedBox(height: 8,),
+                            Wrap(
+                              children: [
+                                getTag("Holiday", false),
+                                getTag("Wedding", true),
+                                getTag("Wedding", true),
+                                getTag("Wedding", true),
+                                getTag("Wedding", true)
+                              ],
+                            ),*/
+                            SizedBox(height: 32,),
+                            Text(
+                              "Disponibilità",
+                              style: TextStyle(
+                                  color: Constants.DARK_TEXT_COLOR,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: Constants.FONT),
+                              textAlign: TextAlign.center,
                             ),
-                          ),
-                          SizedBox(height: 24,),
-                          Text(
-                            "A",
-                            style: TextStyle(
-                                color: Constants.TEXT_COLOR,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: Constants.FONT),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: 4,),
-                          InkWell(
-                            onTap: () async {
-                              debugPrint("show date picker TO");
-                              final DateTime? picked = await showDatePicker(
-                                context: context,
-                                initialDate: _filters.availableTo,
-                                firstDate: DateTime.now(),
-                                lastDate: DateTime.now().add(Duration(days: 700)),
-                              );
+                            SizedBox(height: 8,),
+                            Text(
+                              "Da",
+                              style: TextStyle(
+                                  color: Constants.TEXT_COLOR,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: Constants.FONT),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: 4,),
+                            InkWell(
+                              onTap: () async {
+                                debugPrint("show date picker");
+                                final DateTime? picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: _filters.availableFrom,
+                                  firstDate: DateTime.now().subtract(Duration(days: 1)),
+                                  lastDate: DateTime.now().add(Duration(days: 700)),
+                                );
 
-                              setState(() {
-                                if(picked != null) {
-                                  _filters.availableTo = picked;
+                                setState(() {
+                                  if(picked != null) {
+                                    _filters.availableFrom = picked;
 
-                                  setToDate(_filters.availableTo);
-
-                                  if (_filters.availableFrom.isAfter(
-                                      _filters.availableTo)) {
-                                    debugPrint("Correct date");
-                                    _filters.availableFrom =
-                                        _filters.availableTo;
                                     setFromDate(_filters.availableFrom);
+
+                                    if(_filters.availableTo.isBefore(_filters.availableFrom)) {
+                                      _filters.availableTo = _filters.availableFrom;
+                                      setToDate(_filters.availableTo);
+                                    }
                                   }
-                                }
-                              });
-                            },
-                            child: AbsorbPointer(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Container(
-                                      decoration: const BoxDecoration(
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Color(0x4ca3c4d4),
-                                            spreadRadius: 2,
-                                            blurRadius: 15,
-                                            offset:
-                                            Offset(0, 0), // changes position of shadow
-                                          ),
-                                        ],
-                                      ),
-                                      child: TextField(
-                                        keyboardType: TextInputType.emailAddress,
-                                        cursorColor: Constants.PRIMARY_COLOR,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          color: Constants.FORM_TEXT,
-                                        ),
-                                        decoration: InputDecoration(
-                                          hintText: "gg",
-                                          hintStyle: const TextStyle(
-                                              color: Constants.PLACEHOLDER_COLOR),
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(12),
-                                            borderSide: const BorderSide(
-                                              width: 0,
-                                              style: BorderStyle.none,
+                                });
+                              },
+                              child: AbsorbPointer(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Container(
+                                        decoration: const BoxDecoration(
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Color(0x4ca3c4d4),
+                                              spreadRadius: 2,
+                                              blurRadius: 15,
+                                              offset:
+                                              Offset(0, 0), // changes position of shadow
                                             ),
-                                          ),
-                                          suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
-                                          contentPadding: const EdgeInsets.all(12),
-                                          filled: true,
-                                          fillColor: Constants.WHITE,
+                                          ],
                                         ),
-                                        controller: _toDayText,
+                                        child: TextField(
+                                          keyboardType: TextInputType.emailAddress,
+                                          cursorColor: Constants.PRIMARY_COLOR,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            color: Constants.FORM_TEXT,
+                                          ),
+                                          readOnly: true,
+                                          decoration: InputDecoration(
+                                            hintText: "gg",
+                                            hintStyle: const TextStyle(color: Constants.PLACEHOLDER_COLOR),
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                              borderSide: const BorderSide(
+                                                width: 0,
+                                                style: BorderStyle.none,
+                                              ),
+                                            ),
+                                            suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                            contentPadding: const EdgeInsets.all(12),
+                                            filled: true,
+                                            fillColor: Constants.WHITE,
+                                          ),
+                                          controller: _fromDayText,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  SizedBox(width: 8,),
-                                  Expanded(
-                                    child: Container(
-                                      decoration: const BoxDecoration(
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Color(0x4ca3c4d4),
-                                            spreadRadius: 2,
-                                            blurRadius: 15,
-                                            offset:
-                                            Offset(0, 0), // changes position of shadow
-                                          ),
-                                        ],
-                                      ),
-                                      child: TextField(
-                                        keyboardType: TextInputType.emailAddress,
-                                        cursorColor: Constants.PRIMARY_COLOR,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          color: Constants.FORM_TEXT,
-                                        ),
-                                        decoration: InputDecoration(
-                                          hintText: "mm",
-                                          hintStyle: const TextStyle(
-                                              color: Constants.PLACEHOLDER_COLOR),
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(12),
-                                            borderSide: const BorderSide(
-                                              width: 0,
-                                              style: BorderStyle.none,
+                                    SizedBox(width: 8,),
+                                    Expanded(
+                                      child: Container(
+                                        decoration: const BoxDecoration(
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Color(0x4ca3c4d4),
+                                              spreadRadius: 2,
+                                              blurRadius: 15,
+                                              offset:
+                                              Offset(0, 0), // changes position of shadow
                                             ),
-                                          ),
-                                          suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
-                                          contentPadding: const EdgeInsets.all(12),
-                                          filled: true,
-                                          fillColor: Constants.WHITE,
+                                          ],
                                         ),
-                                        controller: _toMonthText,
+                                        child: TextField(
+                                          keyboardType: TextInputType.emailAddress,
+                                          cursorColor: Constants.PRIMARY_COLOR,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            color: Constants.FORM_TEXT,
+                                          ),
+                                          decoration: InputDecoration(
+                                            hintText: "mm",
+                                            hintStyle: const TextStyle(
+                                                color: Constants.PLACEHOLDER_COLOR),
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                              borderSide: const BorderSide(
+                                                width: 0,
+                                                style: BorderStyle.none,
+                                              ),
+                                            ),
+                                            suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                            contentPadding: const EdgeInsets.all(12),
+                                            filled: true,
+                                            fillColor: Constants.WHITE,
+                                          ),
+                                          controller: _fromMonthText,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  SizedBox(width: 8,),
-                                  Expanded(
-                                    child: Container(
-                                      decoration: const BoxDecoration(
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Color(0x4ca3c4d4),
-                                            spreadRadius: 2,
-                                            blurRadius: 15,
-                                            offset:
-                                            Offset(0, 0), // changes position of shadow
-                                          ),
-                                        ],
-                                      ),
-                                      child: TextField(
-                                        keyboardType: TextInputType.emailAddress,
-                                        cursorColor: Constants.PRIMARY_COLOR,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          color: Constants.FORM_TEXT,
-                                        ),
-                                        decoration: InputDecoration(
-                                          hintText: "aaaa",
-                                          hintStyle: const TextStyle(
-                                              color: Constants.PLACEHOLDER_COLOR),
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(12),
-                                            borderSide: const BorderSide(
-                                              width: 0,
-                                              style: BorderStyle.none,
+                                    SizedBox(width: 8,),
+                                    Expanded(
+                                      child: Container(
+                                        decoration: const BoxDecoration(
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Color(0x4ca3c4d4),
+                                              spreadRadius: 2,
+                                              blurRadius: 15,
+                                              offset:
+                                              Offset(0, 0), // changes position of shadow
                                             ),
-                                          ),
-                                          suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
-                                          contentPadding: const EdgeInsets.all(12),
-                                          filled: true,
-                                          fillColor: Constants.WHITE,
+                                          ],
                                         ),
-                                        controller: _toYearText,
+                                        child: TextField(
+                                          keyboardType: TextInputType.emailAddress,
+                                          cursorColor: Constants.PRIMARY_COLOR,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            color: Constants.FORM_TEXT,
+                                          ),
+                                          decoration: InputDecoration(
+                                            hintText: "aaaa",
+                                            hintStyle: const TextStyle(
+                                                color: Constants.PLACEHOLDER_COLOR),
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                              borderSide: const BorderSide(
+                                                width: 0,
+                                                style: BorderStyle.none,
+                                              ),
+                                            ),
+                                            suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                            contentPadding: const EdgeInsets.all(12),
+                                            filled: true,
+                                            fillColor: Constants.WHITE,
+                                          ),
+                                          controller: _fromYearText,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          SizedBox(height: 32,),
-                          /*Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Show hand withdrawals",
-                                style: TextStyle(
-                                    color: Constants.DARK_TEXT_COLOR,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: Constants.FONT),
-                                textAlign: TextAlign.center,
+                            SizedBox(height: 24,),
+                            Text(
+                              "A",
+                              style: TextStyle(
+                                  color: Constants.TEXT_COLOR,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: Constants.FONT),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: 4,),
+                            InkWell(
+                              onTap: () async {
+                                debugPrint("show date picker TO");
+                                final DateTime? picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: _filters.availableTo,
+                                  firstDate: DateTime.now(),
+                                  lastDate: DateTime.now().add(Duration(days: 700)),
+                                );
+
+                                setState(() {
+                                  if(picked != null) {
+                                    _filters.availableTo = picked;
+
+                                    setToDate(_filters.availableTo);
+
+                                    if (_filters.availableFrom.isAfter(
+                                        _filters.availableTo)) {
+                                      debugPrint("Correct date");
+                                      _filters.availableFrom =
+                                          _filters.availableTo;
+                                      setFromDate(_filters.availableFrom);
+                                    }
+                                  }
+                                });
+                              },
+                              child: AbsorbPointer(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Container(
+                                        decoration: const BoxDecoration(
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Color(0x4ca3c4d4),
+                                              spreadRadius: 2,
+                                              blurRadius: 15,
+                                              offset:
+                                              Offset(0, 0), // changes position of shadow
+                                            ),
+                                          ],
+                                        ),
+                                        child: TextField(
+                                          keyboardType: TextInputType.emailAddress,
+                                          cursorColor: Constants.PRIMARY_COLOR,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            color: Constants.FORM_TEXT,
+                                          ),
+                                          decoration: InputDecoration(
+                                            hintText: "gg",
+                                            hintStyle: const TextStyle(
+                                                color: Constants.PLACEHOLDER_COLOR),
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                              borderSide: const BorderSide(
+                                                width: 0,
+                                                style: BorderStyle.none,
+                                              ),
+                                            ),
+                                            suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                            contentPadding: const EdgeInsets.all(12),
+                                            filled: true,
+                                            fillColor: Constants.WHITE,
+                                          ),
+                                          controller: _toDayText,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 8,),
+                                    Expanded(
+                                      child: Container(
+                                        decoration: const BoxDecoration(
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Color(0x4ca3c4d4),
+                                              spreadRadius: 2,
+                                              blurRadius: 15,
+                                              offset:
+                                              Offset(0, 0), // changes position of shadow
+                                            ),
+                                          ],
+                                        ),
+                                        child: TextField(
+                                          keyboardType: TextInputType.emailAddress,
+                                          cursorColor: Constants.PRIMARY_COLOR,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            color: Constants.FORM_TEXT,
+                                          ),
+                                          decoration: InputDecoration(
+                                            hintText: "mm",
+                                            hintStyle: const TextStyle(
+                                                color: Constants.PLACEHOLDER_COLOR),
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                              borderSide: const BorderSide(
+                                                width: 0,
+                                                style: BorderStyle.none,
+                                              ),
+                                            ),
+                                            suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                            contentPadding: const EdgeInsets.all(12),
+                                            filled: true,
+                                            fillColor: Constants.WHITE,
+                                          ),
+                                          controller: _toMonthText,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 8,),
+                                    Expanded(
+                                      child: Container(
+                                        decoration: const BoxDecoration(
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Color(0x4ca3c4d4),
+                                              spreadRadius: 2,
+                                              blurRadius: 15,
+                                              offset:
+                                              Offset(0, 0), // changes position of shadow
+                                            ),
+                                          ],
+                                        ),
+                                        child: TextField(
+                                          keyboardType: TextInputType.emailAddress,
+                                          cursorColor: Constants.PRIMARY_COLOR,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            color: Constants.FORM_TEXT,
+                                          ),
+                                          decoration: InputDecoration(
+                                            hintText: "aaaa",
+                                            hintStyle: const TextStyle(
+                                                color: Constants.PLACEHOLDER_COLOR),
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                              borderSide: const BorderSide(
+                                                width: 0,
+                                                style: BorderStyle.none,
+                                              ),
+                                            ),
+                                            suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                            contentPadding: const EdgeInsets.all(12),
+                                            filled: true,
+                                            fillColor: Constants.WHITE,
+                                          ),
+                                          controller: _toYearText,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              CupertinoSwitch(
-                                value: _handWithdrawals,
-                                activeColor: Constants.SECONDARY_COLOR,
-                                onChanged: (bool value) { setState(() { _handWithdrawals = value; }); },
-                              ),
-                            ],
-                          ),
-                          Divider(),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Show shipping",
-                                style: TextStyle(
-                                    color: Constants.DARK_TEXT_COLOR,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: Constants.FONT),
-                                textAlign: TextAlign.center,
-                              ),
-                              CupertinoSwitch(
-                                value: _handWithdrawals,
-                                activeColor: Constants.SECONDARY_COLOR,
-                                onChanged: (bool value) { setState(() { _handWithdrawals = value; }); },
-                              ),
-                            ],
-                          ),
-                          Divider(),*/
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Mostra solo nella tua città",
-                                style: TextStyle(
-                                    color: Constants.DARK_TEXT_COLOR,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: Constants.FONT),
-                                textAlign: TextAlign.center,
-                              ),
-                              CupertinoSwitch(
-                                value: _filters.onlySameCity,
-                                activeColor: Constants.SECONDARY_COLOR,
-                                onChanged: (bool value) { setState(() { _filters.onlySameCity = value; }); },
-                              ),
-                            ],
-                          ),
-                          /*Divider(),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Show compulsory insurance",
-                                style: TextStyle(
-                                    color: Constants.DARK_TEXT_COLOR,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: Constants.FONT),
-                                textAlign: TextAlign.center,
-                              ),
-                              CupertinoSwitch(
-                                value: _handWithdrawals,
-                                activeColor: Constants.SECONDARY_COLOR,
-                                onChanged: (bool value) { setState(() { _handWithdrawals = value; }); },
-                              ),
-                            ],
-                          )*/
-                        ],
+                            ),
+                            SizedBox(height: 32,),
+                            /*Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "Show hand withdrawals",
+                                  style: TextStyle(
+                                      color: Constants.DARK_TEXT_COLOR,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: Constants.FONT),
+                                  textAlign: TextAlign.center,
+                                ),
+                                CupertinoSwitch(
+                                  value: _handWithdrawals,
+                                  activeColor: Constants.SECONDARY_COLOR,
+                                  onChanged: (bool value) { setState(() { _handWithdrawals = value; }); },
+                                ),
+                              ],
+                            ),
+                            Divider(),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "Show shipping",
+                                  style: TextStyle(
+                                      color: Constants.DARK_TEXT_COLOR,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: Constants.FONT),
+                                  textAlign: TextAlign.center,
+                                ),
+                                CupertinoSwitch(
+                                  value: _handWithdrawals,
+                                  activeColor: Constants.SECONDARY_COLOR,
+                                  onChanged: (bool value) { setState(() { _handWithdrawals = value; }); },
+                                ),
+                              ],
+                            ),
+                            Divider(),*/
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "Mostra solo nella tua città",
+                                  style: TextStyle(
+                                      color: Constants.DARK_TEXT_COLOR,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: Constants.FONT),
+                                  textAlign: TextAlign.center,
+                                ),
+                                CupertinoSwitch(
+                                  value: _filters.onlySameCity,
+                                  activeColor: Constants.SECONDARY_COLOR,
+                                  onChanged: (bool value) { setState(() { _filters.onlySameCity = value; }); },
+                                ),
+                              ],
+                            ),
+                            /*Divider(),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "Show compulsory insurance",
+                                  style: TextStyle(
+                                      color: Constants.DARK_TEXT_COLOR,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: Constants.FONT),
+                                  textAlign: TextAlign.center,
+                                ),
+                                CupertinoSwitch(
+                                  value: _handWithdrawals,
+                                  activeColor: Constants.SECONDARY_COLOR,
+                                  onChanged: (bool value) { setState(() { _handWithdrawals = value; }); },
+                                ),
+                              ],
+                            )*/
+                          ],
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 40,),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          primary: Constants.SECONDARY_COLOR,
-                          textStyle: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
+                      SizedBox(height: 40,),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            primary: Constants.SECONDARY_COLOR,
+                            textStyle: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
+                        ),
+                        child: Text('Applica'),
+                        onPressed: () {
+                          applyFilters();
+                        },
                       ),
-                      child: Text('Applica'),
-                      onPressed: () {
-                        applyFilters();
-                      },
-                    ),
-                  ],
+                      SizedBox(height: 40,),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ],
+          ),
         ),
-      ),
+        Positioned(
+            top: 16,
+            right: 16,
+            child: InkWell(
+              child: Icon(Icons.close),
+              onTap: () {
+                Navigator.of(context).pop();
+              },
+            )
+        )
+      ],
     );
   }
 }

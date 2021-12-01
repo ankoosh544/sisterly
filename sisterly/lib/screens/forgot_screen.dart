@@ -92,10 +92,10 @@ class ForgotScreenState extends State<ForgotScreen>
                       const Padding(
                         padding: EdgeInsets.only(top: 24),
                         child: Text(
-                          "Forgot password",
+                          "Password dimenticata",
                           style: TextStyle(
                               color: Colors.white,
-                              fontSize: 28,
+                              fontSize: 24,
                               fontWeight: FontWeight.bold,
                               fontFamily: Constants.FONT),
                           textAlign: TextAlign.center,
@@ -126,7 +126,7 @@ class ForgotScreenState extends State<ForgotScreen>
                     children: <Widget>[
                       const SizedBox(height: 16),
                       Text(
-                        "Enter your email address below to reset your password.",
+                        "Inserisci il tuo indirizzo e-mail qui sotto per reimpostare la tua password.",
                         textAlign: TextAlign.left,
                         style: TextStyle(
                           color: Constants.TEXT_COLOR,
@@ -193,7 +193,7 @@ class ForgotScreenState extends State<ForgotScreen>
                                     horizontal: 80, vertical: 14),
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(50))),
-                            child: Text('Confirm'),
+                            child: Text('Conferma'),
                             onPressed: () {
                               forgot();
                             },

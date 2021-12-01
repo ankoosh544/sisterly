@@ -10,5 +10,12 @@
   "generic_success": "Ottimo",
   "generic_warning": "Attenzione",
   "generic_error_retry": "Errore. Riprova.",
-  "generic_save": "Salva"
+  "generic_save": "Salva",
+  "login_email_mandatory": "Inserisci la mail",
+  "login_password_mandatory": "Inserisci la password",
+  "signup_first_name_mandatory": "Inserisci il nome",
+  "signup_last_name_mandatory": "Inserisci il cognome",
+  "signup_phome_mandatory": "Inserisci il cellulare",
+  "signup_email_mandatory": "Inserisci la mail",
+  "signup_password_mandatory": "Inserisci la password"
 }

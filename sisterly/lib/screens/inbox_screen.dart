@@ -174,11 +174,13 @@ class InboxScreenState extends State<InboxScreen>  {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      InkWell(
-                        child: SizedBox(child: SvgPicture.asset("assets/images/back.svg")),
+                      if(Navigator.of(context).canPop()) InkWell(
+                        child: SvgPicture.asset("assets/images/back.svg"),
                         onTap: () {
                           Navigator.of(context).pop();
                         },
+                      ) else const SizedBox(
+                        width: 24,
                       ),
                       const Padding(
                         padding: EdgeInsets.only(top: 24),

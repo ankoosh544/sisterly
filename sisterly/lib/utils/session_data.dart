@@ -3,6 +3,8 @@ import 'package:sisterly/screens/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sisterly/screens/welcome_2_screen.dart';
+import 'package:sisterly/screens/welcome_screen.dart';
 
 import 'constants.dart';
 
@@ -30,7 +32,7 @@ class SessionData {
     preferences.remove(Constants.PREFS_REFRESH_TOKEN);
     preferences.remove(Constants.PREFS_USERID);
 
-    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => LoginScreen()), (_) => false);
+    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => WelcomeScreen()), (_) => false);
   }
 
   clearStorageData() async {

@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:package_info/package_info.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:sisterly/models/account.dart';
 import 'package:sisterly/screens/inbox_screen.dart';
@@ -12,6 +13,7 @@ import 'package:sisterly/screens/sister_advice_screen.dart';
 import 'package:sisterly/screens/splash_screen.dart';
 import 'package:sisterly/screens/verify_screen.dart';
 import 'package:sisterly/screens/welcome_2_screen.dart';
+import 'package:sisterly/screens/welcome_screen.dart';
 import 'package:sisterly/screens/wishlist_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
@@ -35,13 +37,16 @@ class AccountScreenState extends State<AccountScreen>  {
 
   bool _isLoading = false;
   Account? _profile;
+  PackageInfo? _packageInfo;
 
   @override
   void initState() {
     super.initState();
 
-    Future.delayed(Duration.zero, () {
+    Future.delayed(Duration.zero, () async {
       getUser();
+
+      _packageInfo = await PackageInfo.fromPlatform();
     });
   }
 
@@ -277,10 +282,21 @@ class AccountScreenState extends State<AccountScreen>  {
                         InkWell(
                           onTap: () {
                             SessionData().logout(context);
-                            Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => Welcome2Screen()), (_) => false);
                           },
-                            child: getItem("assets/images/review.svg", "Esci")
-                        )
+                            child: getItem("assets/images/logout.svg", "Esci")
+                        ),
+                        SizedBox(height: 8,),
+                        Divider(),
+                        SizedBox(height: 16,),
+                        if(_packageInfo != null) Text(
+                          "Versione " + _packageInfo!.version + " (" + _packageInfo!.buildNumber + ")",
+                          style: TextStyle(
+                              color: Constants.LIGHT_GREY_COLOR,
+                              fontSize: 16,
+                              fontFamily: Constants.FONT
+                          ),
+                        ),
+                        SizedBox(height: 16,),
                       ],
                     ),
                   ),

@@ -82,7 +82,7 @@ class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin 
         setState(() {
           _isLoading = false;
         });
-        ApiManager.showErrorMessage(context, response["code"]);
+        ApiManager.showFreeErrorToast(context, response["detail"]);
       }
     }, (statusCode) {
       setState(() {
@@ -242,7 +242,7 @@ class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin 
                         ),
                         child: TextField(
                           keyboardType: TextInputType.visiblePassword,
-                          obscureText: _showPassword,
+                          obscureText: !_showPassword,
                           cursorColor: Constants.PRIMARY_COLOR,
                           style: const TextStyle(
                             fontSize: 16,
@@ -288,7 +288,7 @@ class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin 
                         children: [
                           InkWell(
                             child: const Text(
-                              "Forgot password?",
+                              "Hai dimenticato la password?",
                               textAlign: TextAlign.left,
                               style: TextStyle(
                                 color: Constants.PRIMARY_COLOR,
