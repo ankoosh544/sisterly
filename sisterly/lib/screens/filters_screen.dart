@@ -9,6 +9,7 @@ import 'package:sisterly/models/product_color.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:sisterly/utils/utils.dart';
+import 'package:sisterly/models/var.dart';
 
 class FiltersScreen extends StatefulWidget {
 
@@ -304,11 +305,9 @@ class _FiltersScreenState extends State<FiltersScreen> {
                             ),
                             SizedBox(height: 8,),
                             Wrap(
-                              children: [
-                                getTag(1, "Eccellente", _filters.conditions),
-                                getTag(2, "Buone", _filters.conditions),
-                                getTag(3, "Scarse", _filters.conditions)
-                              ],
+                              children: productConditions.map((item) {
+                                return getTag(item.id, item.name, _filters.conditions);
+                              }).toList()
                             ),
                             SizedBox(height: 24,),
                             Text(
@@ -336,7 +335,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                             ),
                             SizedBox(height: 8,),
                             Wrap(
-                              children: _deliveryModesList.map((e) => getTag(e.id, e.description, _filters.deliveryModes),).toList(),
+                              children: _deliveryModesList.map((e) => getTag(e.id, getDeliveryTypeName(e.id), _filters.deliveryModes),).toList(),
                             ),
                             SizedBox(height: 24,),
                             Text(

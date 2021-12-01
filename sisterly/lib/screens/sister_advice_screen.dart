@@ -101,7 +101,7 @@ class SisterAdviceScreenState extends State<SisterAdviceScreen> {
                     SizedBox(height: 16,),
                     Center(
                       child: Text(
-                        "Do you want advice from a sister?",
+                        "Vuoi un consiglio da sorella?",
                         style: const TextStyle(
                             color: Constants.SECONDARY_COLOR,
                             fontSize: 16,
@@ -113,7 +113,7 @@ class SisterAdviceScreenState extends State<SisterAdviceScreen> {
                     SizedBox(height: 16,),
                     Center(
                       child: Text(
-                        "Here's how to upload the perfect photo",
+                        "Ecco come caricare la foto perfetta",
                         style: const TextStyle(
                             color: Constants.PRIMARY_COLOR,
                             fontSize: 28,
@@ -124,13 +124,13 @@ class SisterAdviceScreenState extends State<SisterAdviceScreen> {
                       ),
                     ),
                     SizedBox(height: 28,),
-                    getIconTextWidget("assets/images/bright.svg", "1. Choose a bright place to bring out the colors of the bag."),
+                    getIconTextWidget("assets/images/bright.svg", "1. Scegli un posto luminoso per risaltare i colori della borsa."),
                     SizedBox(height: 40,),
-                    getIconTextWidget("assets/images/bg_transp.svg", "2. The app delete the background but you help us by choosing a clean background."),
+                    getIconTextWidget("assets/images/bg_transp.svg", "2. L'app cancella lo sfondo, ma tu aiutaci scegliendo un background “pulito”."),
                     SizedBox(height: 40,),
-                    getIconTextWidget("assets/images/highlights.svg", "3. Remember to highlights any flaws of the bag and show all sides/details."),
+                    getIconTextWidget("assets/images/highlights.svg", "3. Ricordati di evidenziare eventuali difetti della borsa e mostrare tutti i lati/dettagli."),
                     SizedBox(height: 40,),
-                    getIconTextWidget("assets/images/bag.svg", "4. The first photo must always be a full photo of the bag in front."),
+                    getIconTextWidget("assets/images/bag.svg", "4. La prima foto deve sempre essere una foto intera della borsa davanti."),
                     SizedBox(height: 40,),
                   ],
                 ),

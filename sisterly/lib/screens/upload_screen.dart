@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:sisterly/models/brand.dart';
-import 'package:sisterly/models/color.dart';
 import 'package:sisterly/models/delivery_mode.dart';
 import 'package:sisterly/models/generic.dart';
 import 'package:sisterly/models/material.dart';
+import 'package:sisterly/models/product_color.dart';
 import 'package:sisterly/models/var.dart';
 import 'package:sisterly/screens/sister_advice_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
@@ -35,10 +35,11 @@ class UploadScreenState extends State<UploadScreen>  {
   final ImagePicker picker = ImagePicker();
   List<XFile> _images = [];
   final List<Brand> _brands = [];
-  final List<MyColor> _colors = [];
+  final List<ProductColor> _colors = [];
   final List<MyMaterial> _materials = [];
+  final List<DeliveryMode> _deliveryModes = [];
   late Brand _selectedBrand;
-  late MyColor _selectedColor;
+  late ProductColor _selectedColor;
   late MyMaterial _selectedMaterial;
   DeliveryMode _selectedDelivery = deliveryTypes[0];
   Generic _selectedConditions = productConditions[0];
@@ -49,9 +50,13 @@ class UploadScreenState extends State<UploadScreen>  {
   @override
   void initState() {
     super.initState();
-    _getBrands();
-    _getColors();
-    _getMaterials();
+
+    Future.delayed(Duration.zero, () {
+      _getBrands();
+      _getColors();
+      _getMaterials();
+      _getDeliveryModes();
+    });
   }
 
   @override
@@ -59,8 +64,8 @@ class UploadScreenState extends State<UploadScreen>  {
     super.dispose();
   }
 
-  Widget getColorBullet(MyColor c) {
-    Color color = HexColor(c.hex);
+  Widget getColorBullet(ProductColor c) {
+    Color color = HexColor(c.hexadecimal);
     bool selected = c.id != _selectedColor.id;
     return InkWell(
       onTap: () => setState(() => _selectedColor = c),
@@ -86,7 +91,7 @@ class UploadScreenState extends State<UploadScreen>  {
           Stack(
             children: [
               Align(
-                  child: SvgPicture.asset("assets/images/wave_blue.svg"),
+                child: SvgPicture.asset("assets/images/wave_blue.svg"),
                 alignment: Alignment.topRight,
               ),
               SafeArea(
@@ -94,21 +99,29 @@ class UploadScreenState extends State<UploadScreen>  {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
                   child: Row(
-                    children: const [
-                      Center(
-                        child: Padding(
-                          padding: EdgeInsets.only(top: 24),
-                          child: Text(
-                            "Upload",
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: Constants.FONT),
-                            textAlign: TextAlign.center,
-                          ),
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      if(Navigator.of(context).canPop()) InkWell(
+                        child: SvgPicture.asset("assets/images/back.svg"),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                        },
+                      ) else const SizedBox(
+                        width: 24,
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.only(top: 24),
+                        child: Text(
+                          "Upload",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: Constants.FONT),
+                          textAlign: TextAlign.center,
                         ),
                       ),
+                      SizedBox(width: 20,)
                     ],
                   ),
                 ),
@@ -117,14 +130,15 @@ class UploadScreenState extends State<UploadScreen>  {
           ),
           SizedBox(height: 16,),
           Expanded(
-            child: SingleChildScrollView(
-              child: Container(
-                width: MediaQuery.of(context).size.width,
-                decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(30),
-                        topRight: Radius.circular(30))),
+            child: Container(
+              width: MediaQuery.of(context).size.width,
+              padding: const EdgeInsets.only(top: 6),
+              decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30))),
+              child: SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
@@ -132,7 +146,7 @@ class UploadScreenState extends State<UploadScreen>  {
                     children: <Widget>[
                       SizedBox(height: 8),
                       Text(
-                        "Offer a New Bag",
+                        "Aggiungi nuovo prodotto",
                         style: TextStyle(
                             color: Constants.DARK_TEXT_COLOR,
                             fontSize: 20,
@@ -167,7 +181,7 @@ class UploadScreenState extends State<UploadScreen>  {
                                 shape: MaterialStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)))
                               ),
                               child: Text(
-                                  "Upload photos",
+                                  "Carica foto",
                                   style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 16,
@@ -186,7 +200,7 @@ class UploadScreenState extends State<UploadScreen>  {
                                 Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => SisterAdviceScreen()));
                               },
                               child: Text(
-                                  "See photo tips",
+                                  "Vedi consigli",
                                   style: TextStyle(
                                     color: Constants.PRIMARY_COLOR,
                                     fontSize: 14,
@@ -213,7 +227,7 @@ class UploadScreenState extends State<UploadScreen>  {
                       ),
                       SizedBox(height: 32),
                       Text(
-                        "Model Name",
+                        "Nome modello",
                         style: TextStyle(
                             color: Constants.TEXT_COLOR,
                             fontSize: 16,
@@ -241,7 +255,7 @@ class UploadScreenState extends State<UploadScreen>  {
                             color: Constants.FORM_TEXT,
                           ),
                           decoration: InputDecoration(
-                            hintText: "Model name...",
+                            hintText: "Nome modello...",
                             hintStyle: const TextStyle(
                                 color: Constants.PLACEHOLDER_COLOR),
                             border: OutlineInputBorder(
@@ -298,7 +312,7 @@ class UploadScreenState extends State<UploadScreen>  {
                       ),
                       SizedBox(height: 32),
                       Text(
-                        "Material",
+                        "Materiale",
                         style: TextStyle(
                             color: Constants.TEXT_COLOR,
                             fontSize: 16,
@@ -336,7 +350,7 @@ class UploadScreenState extends State<UploadScreen>  {
                       ),
                       SizedBox(height: 32),
                       Text(
-                        "Description",
+                        "Descrizione",
                         style: TextStyle(
                             color: Constants.TEXT_COLOR,
                             fontSize: 16,
@@ -365,7 +379,7 @@ class UploadScreenState extends State<UploadScreen>  {
                           ),
                           maxLines: 4,
                           decoration: InputDecoration(
-                            hintText: "Description...",
+                            hintText: "Descrizione...",
                             hintStyle: const TextStyle(
                                 color: Constants.PLACEHOLDER_COLOR),
                             border: OutlineInputBorder(
@@ -384,7 +398,7 @@ class UploadScreenState extends State<UploadScreen>  {
                       ),
                       SizedBox(height: 32,),
                       Text(
-                        "Color",
+                        "Colore",
                         style: TextStyle(
                             color: Constants.DARK_TEXT_COLOR,
                             fontSize: 20,
@@ -401,7 +415,7 @@ class UploadScreenState extends State<UploadScreen>  {
                       ),
                       SizedBox(height: 32,),
                       Text(
-                        "Delivery",
+                        "Consegna",
                         style: TextStyle(
                             color: Constants.DARK_TEXT_COLOR,
                             fontSize: 16,
@@ -427,8 +441,8 @@ class UploadScreenState extends State<UploadScreen>  {
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<DeliveryMode>(
-                                items: deliveryTypes.map((DeliveryMode val) => DropdownMenuItem<DeliveryMode>(
-                                    child: Text(val.description, style: TextStyle(fontSize: 16)),
+                                items: _deliveryModes.map((DeliveryMode val) => DropdownMenuItem<DeliveryMode>(
+                                    child: Text(getDeliveryTypeName(val.id), style: TextStyle(fontSize: 16)),
                                     value: val
                                   )
                                 ).toList(),
@@ -439,7 +453,7 @@ class UploadScreenState extends State<UploadScreen>  {
                       ),
                       SizedBox(height: 32),
                       Text(
-                        "Conditions",
+                        "Condizioni",
                         style: TextStyle(
                             color: Constants.DARK_TEXT_COLOR,
                             fontSize: 16,
@@ -477,7 +491,7 @@ class UploadScreenState extends State<UploadScreen>  {
                       ),
                       SizedBox(height: 32),
                       Text(
-                        "Bag years",
+                        "Anni",
                         style: TextStyle(
                             color: Constants.DARK_TEXT_COLOR,
                             fontSize: 16,
@@ -515,7 +529,7 @@ class UploadScreenState extends State<UploadScreen>  {
                       ),
                       SizedBox(height: 32),
                       Text(
-                        "Bag size",
+                        "Dimensioni",
                         style: TextStyle(
                             color: Constants.DARK_TEXT_COLOR,
                             fontSize: 16,
@@ -553,7 +567,7 @@ class UploadScreenState extends State<UploadScreen>  {
                       ),
                       SizedBox(height: 32),
                       Text(
-                        "Retail price",
+                        "Prezzo di acquisto",
                         style: TextStyle(
                             color: Constants.TEXT_COLOR,
                             fontSize: 16,
@@ -581,7 +595,7 @@ class UploadScreenState extends State<UploadScreen>  {
                             color: Constants.FORM_TEXT,
                           ),
                           decoration: InputDecoration(
-                            hintText: "Retail price...",
+                            hintText: "Prezzo di acquisto...",
                             hintStyle: const TextStyle(
                                 color: Constants.PLACEHOLDER_COLOR),
                             border: OutlineInputBorder(
@@ -600,7 +614,7 @@ class UploadScreenState extends State<UploadScreen>  {
                       ),
                       SizedBox(height: 32),
                       Text(
-                        "Selling price",
+                        "Prezzo di vendita",
                         style: TextStyle(
                             color: Constants.TEXT_COLOR,
                             fontSize: 16,
@@ -628,7 +642,7 @@ class UploadScreenState extends State<UploadScreen>  {
                             color: Constants.FORM_TEXT,
                           ),
                           decoration: InputDecoration(
-                            hintText: "Selling price...",
+                            hintText: "Prezzo di vendita...",
                             hintStyle: const TextStyle(
                                 color: Constants.PLACEHOLDER_COLOR),
                             border: OutlineInputBorder(
@@ -647,7 +661,7 @@ class UploadScreenState extends State<UploadScreen>  {
                       ),
                       SizedBox(height: 32),
                       Text(
-                        "Offer price",
+                        "Prezzo in offerta",
                         style: TextStyle(
                             color: Constants.TEXT_COLOR,
                             fontSize: 16,
@@ -675,7 +689,7 @@ class UploadScreenState extends State<UploadScreen>  {
                             color: Constants.FORM_TEXT,
                           ),
                           decoration: InputDecoration(
-                            hintText: "Offer price...",
+                            hintText: "Prezzo in offerta...",
                             hintStyle: const TextStyle(
                                 color: Constants.PLACEHOLDER_COLOR),
                             border: OutlineInputBorder(
@@ -693,23 +707,21 @@ class UploadScreenState extends State<UploadScreen>  {
                         ),
                       ),
                       SizedBox(height: 32),
-                      TextButton(
-                        style: ButtonStyle(
-                            backgroundColor: MaterialStateProperty.all(Constants.PRIMARY_COLOR),
-                            padding: MaterialStateProperty.all(EdgeInsets.symmetric(horizontal: 46, vertical: 14)),
-                            shape: MaterialStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)))
+                      Center(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              primary: Constants.SECONDARY_COLOR,
+                              textStyle: const TextStyle(
+                                  fontSize: 16),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 80, vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(50))),
+                          child: Text('Aggiungi il tuo prodotto'),
+                          onPressed: () {
+                            _createProduct();
+                          },
                         ),
-                        child: Text(
-                            "Create product",
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontFamily: Constants.FONT
-                            )
-                        ),
-                        onPressed: () {
-                          _createProduct();
-                        },
                       ),
                       SizedBox(height: 60)
                     ],
@@ -726,6 +738,7 @@ class UploadScreenState extends State<UploadScreen>  {
   _getBrands() {
     ApiManager(context).makeGetRequest('/admin/brand', {}, (res) {
       var data = res["data"];
+      _brands.clear();
       if (data != null) {
         setState(() {
           for (var b in data) {
@@ -741,10 +754,12 @@ class UploadScreenState extends State<UploadScreen>  {
     ApiManager(context).makeGetRequest('/admin/color', {}, (res) {
       var data = res["data"];
       if (data != null) {
+        _colors.clear();
         setState(() {
           for (var b in data) {
-            _colors.add(MyColor.fromJson(b));
+            _colors.add(ProductColor.fromJson(b));
           }
+          debugPrint("_colors: "+_colors.length.toString());
           _selectedColor = _colors[0];
         });
       }
@@ -755,6 +770,7 @@ class UploadScreenState extends State<UploadScreen>  {
     ApiManager(context).makeGetRequest('/admin/material', {}, (res) {
       var data = res["data"];
       if (data != null) {
+        _materials.clear();
         setState(() {
           for (var m in data) {
             _materials.add(MyMaterial.fromJson(m));
@@ -763,6 +779,23 @@ class UploadScreenState extends State<UploadScreen>  {
         });
       }
     }, (res) {});
+  }
+
+  _getDeliveryModes() {
+    ApiManager(context).makeGetRequest('/product/delivery_modes', {}, (res) {
+      var data = res["data"];
+      if (data != null) {
+        _deliveryModes.clear();
+        setState(() {
+          for (var m in data) {
+            _deliveryModes.add(DeliveryMode.fromJson(m));
+          }
+          _selectedDelivery = _deliveryModes[0];
+        });
+      }
+    }, (res) {
+
+    });
   }
 
   _createProduct() {
