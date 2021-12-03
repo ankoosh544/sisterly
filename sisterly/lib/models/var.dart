@@ -25,6 +25,17 @@ List<Generic> bagSizes = [
   Generic(3, 'Grande')
 ];
 
+/*
+Orders status
+1 - WAITING FOR ACCEPTANCE
+2 - WAITING FOR PAYMENT
+3 - PAYMENT IN PROGRESS
+4 - PAID
+5 - BORROWED
+6 - CLOSED
+7 - REJECTED
+ */
+
 getGenericName(id, array) {
   var cond = array.where((element) => element.id == id);
 

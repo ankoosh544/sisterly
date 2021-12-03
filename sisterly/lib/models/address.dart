@@ -6,7 +6,7 @@ class Address {
   final String country;
   final String province;
   final String zip;
-  final String note;
+  final String? note;
   final String city;
   final String? email;
   final String? phone;

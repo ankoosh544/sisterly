@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:sisterly/models/product.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:sisterly/widgets/checkout/checkout_payment_card.dart';
 import 'package:sisterly/widgets/checkout/checkout_product_card.dart';
@@ -8,7 +9,10 @@ import 'package:sisterly/widgets/checkout/checkout_shipping_card.dart';
 import 'chekout_order_confirmed.dart';
 
 class CheckoutConfirmScreen extends StatefulWidget {
-  CheckoutConfirmScreen({Key? key}) : super(key: key);
+
+  final Product product;
+
+  CheckoutConfirmScreen({Key? key, required this.product}) : super(key: key);
 
   @override
   _CheckoutConfirmScreenState createState() => _CheckoutConfirmScreenState();
@@ -64,20 +68,21 @@ class _CheckoutConfirmScreenState extends State<CheckoutConfirmScreen> {
           ),
           SizedBox(height: 16,),
           Expanded(
-            child: SingleChildScrollView(
-              child: Container(
-                width: MediaQuery.of(context).size.width,
-                decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(30),
-                        topRight: Radius.circular(30))),
+            child: Container(
+              padding: const EdgeInsets.only(top: 4),
+              width: MediaQuery.of(context).size.width,
+              decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30))),
+              child: SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CheckoutProductCard(),
+                      CheckoutProductCard(product: widget.product,),
                       SizedBox(height: 10),
                       CheckoutShippingCard(),
                       SizedBox(height: 10),

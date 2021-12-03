@@ -1,38 +1,41 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:intl/intl.dart';
 import 'package:sisterly/models/account.dart';
+import 'package:sisterly/models/offer.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-
+import 'package:sisterly/utils/session_data.dart';
+import 'package:sisterly/widgets/stars_widget.dart';
 import '../utils/constants.dart';
 import "package:sisterly/utils/utils.dart";
 
-enum InboxScreenMode {
-  messages, notifications
+enum OrdersScreenMode {
+  received, sent
 }
 
-class InboxScreen extends StatefulWidget {
+class OrdersScreen extends StatefulWidget {
 
-  const InboxScreen({Key? key}) : super(key: key);
+  const OrdersScreen({Key? key}) : super(key: key);
 
   @override
-  InboxScreenState createState() => InboxScreenState();
+  OrdersScreenState createState() => OrdersScreenState();
 }
 
-class InboxScreenState extends State<InboxScreen>  {
+class OrdersScreenState extends State<OrdersScreen>  {
 
   bool _isLoading = false;
-  List<Product> _conversations = [];
-  InboxScreenMode _mode = InboxScreenMode.messages;
+  List<Offer> _orders = [];
+  OrdersScreenMode _mode = OrdersScreenMode.received;
 
   @override
   void initState() {
     super.initState();
 
     Future.delayed(Duration.zero, () {
-      getConversations();
+      getOrders();
     });
   }
 
@@ -41,23 +44,23 @@ class InboxScreenState extends State<InboxScreen>  {
     super.dispose();
   }
 
-  getConversations() {
+  getOrders() {
     setState(() {
       _isLoading = true;
     });
 
-    ApiManager(context).makeGetRequest('/chat/', {}, (res) {
+    ApiManager(context).makeGetRequest(_mode == OrdersScreenMode.received ? "/product/offers" : "/product/cart", {}, (res) {
       // print(res);
       setState(() {
         _isLoading = false;
       });
 
-      _conversations = [];
+      _orders = [];
 
       var data = res["data"];
       if (data != null) {
         for (var prod in data) {
-          _conversations.add(Product.fromJson(prod));
+          _orders.add(Offer.fromJson(prod));
         }
       }
     }, (res) {
@@ -67,7 +70,7 @@ class InboxScreenState extends State<InboxScreen>  {
     });
   }
 
-  Widget conversationCell(review) {
+  Widget offerCell(Offer offer) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
@@ -87,72 +90,105 @@ class InboxScreenState extends State<InboxScreen>  {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                ClipRRect(
-                    borderRadius: BorderRadius.circular(50.0),
-                    child: Image.asset("assets/images/product.png", width: 50, height: 50, fit: BoxFit.cover,)
-                ),
-                SizedBox(width: 12,),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Beatrice Pedrali",
-                        style: TextStyle(
-                            color: Constants.DARK_TEXT_COLOR,
-                            fontSize: 16,
-                            fontFamily: Constants.FONT
-                        ),
-                      ),
-                      SizedBox(height: 6,),
-                      Wrap(
-                        spacing: 3,
-                        children: [
-                          SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                          SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                          SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                          SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                          SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                          Text(
-                            "5.0",
-                            style: TextStyle(
-                                color: Constants.DARK_TEXT_COLOR,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: Constants.FONT
-                            ),
-                          ),
-                        ],
-                      )
-                    ],
-                  ),
-                ),
-                SizedBox(width: 12,),
-                Text(
-                  "1 day ago",
-                  style: TextStyle(
-                      color: Constants.LIGHT_GREY_COLOR,
-                      fontSize: 14,
-                      fontFamily: Constants.FONT
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 12,),
             Text(
-              "There is now an abundance of readable dummy texts. These are usually used when a text is required purely to fill a space.",
+              "Ordine #" + offer.id.toString(),
               style: TextStyle(
-                  color: Constants.TEXT_COLOR,
+                color: Constants.PRIMARY_COLOR,
+                fontSize: 18,
+                fontFamily: Constants.FONT,
+                fontWeight: FontWeight.bold
+              ),
+            ),
+            SizedBox(height: 4,),
+            Text(
+              "dal " + DateFormat("dd MMM yyyy").format(offer.dateStart) + " al " + DateFormat("dd MMM yyyy").format(offer.dateEnd),
+              style: TextStyle(
+                  color: Constants.LIGHT_GREY_COLOR,
                   fontSize: 14,
                   fontFamily: Constants.FONT
               ),
             ),
+            Divider(),
+            Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(50.0),
+                  child: CachedNetworkImage(
+                    width: 127,
+                    height: 96,
+                    fit: BoxFit.contain,
+                    imageUrl: SessionData().serverUrl + offer.product.images.first,
+                    placeholder: (context, url) => CircularProgressIndicator(),
+                    errorWidget: (context, url, error) => Icon(Icons.error),
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      offer.product.model,
+                      style: TextStyle(
+                          color: Constants.TEXT_COLOR,
+                          fontSize: 16,
+                          fontFamily: Constants.FONT
+                      ),
+                    ),
+                    SizedBox(height: 4,),
+                    Text(
+                      offer.product.brandName,
+                      style: TextStyle(
+                          color: Constants.TEXT_COLOR,
+                          fontSize: 16,
+                          fontFamily: Constants.FONT
+                      ),
+                    ),
+                    SizedBox(height: 12,),
+                    Text(
+                      "${SessionData().currencyFormat.format(offer.product.sellingPrice)} al giorno",
+                      style: TextStyle(
+                          color: Constants.PRIMARY_COLOR,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: Constants.FONT
+                      ),
+                    ),
+                  ],
+                )
+              ],
+            ),
+            if(_mode == OrdersScreenMode.sent && canPay(offer)) Divider(),
+            if(_mode == OrdersScreenMode.sent && canPay(offer)) Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                        primary: Constants.SECONDARY_COLOR,
+                        textStyle: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 14),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50))),
+                    child: Text('Paga ora'),
+                    onPressed: () {
+
+                    },
+                  ),
+                ),
+              ],
+            )
           ],
         ),
       ),
     );
+  }
+
+  canPay(Offer offer) {
+    switch(offer.state.id) {
+      case 2: return true;
+      default: return false;
+    }
   }
 
   @override
@@ -185,7 +221,7 @@ class InboxScreenState extends State<InboxScreen>  {
                       const Padding(
                         padding: EdgeInsets.only(top: 24),
                         child: Text(
-                          "Sister Chats",
+                          "Ordini",
                           style: TextStyle(
                               color: Colors.white,
                               fontSize: 28,
@@ -214,9 +250,7 @@ class InboxScreenState extends State<InboxScreen>  {
                   color: Colors.white,
                   borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(30),
-                      topRight: Radius.circular(30)
-                  )
-              ),
+                      topRight: Radius.circular(30))),
               child: Container(
                 width: MediaQuery.of(context).size.width,
                 child: Padding(
@@ -225,8 +259,8 @@ class InboxScreenState extends State<InboxScreen>  {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       SizedBox(height: 8),
-                      /*Container(
-                        padding: const EdgeInsets.*all(4),
+                      Container(
+                        padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(60),
@@ -245,55 +279,59 @@ class InboxScreenState extends State<InboxScreen>  {
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                   elevation: 0,
-                                  primary: _mode == InboxScreenMode.messages ? Constants.PRIMARY_COLOR : Colors.white,
+                                  primary: _mode == OrdersScreenMode.sent ? Constants.PRIMARY_COLOR : Colors.white,
                                   textStyle: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.normal,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.normal,
                                   ),
                                   padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
                               ),
-                              child: Text('Messaggi', style: TextStyle(color: _mode == InboxScreenMode.messages ? Colors.white : Constants.TEXT_COLOR),),
+                              child: Text('Inviati', style: TextStyle(color: _mode == OrdersScreenMode.sent ? Colors.white : Constants.TEXT_COLOR),),
                               onPressed: () {
                                 setState(() {
-                                  _mode = InboxScreenMode.messages;
+                                  _mode = OrdersScreenMode.sent;
+
+                                  getOrders();
                                 });
                               },
                             ),
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                  primary: _mode == InboxScreenMode.notifications ? Constants.PRIMARY_COLOR : Colors.white,
+                                  primary: _mode == OrdersScreenMode.received ? Constants.PRIMARY_COLOR : Colors.white,
                                   elevation: 0,
                                   textStyle: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.normal,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.normal,
                                   ),
                                   padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
                               ),
-                              child: Text('Notifiche', style: TextStyle(color: _mode == InboxScreenMode.notifications ? Colors.white : Constants.TEXT_COLOR),),
+                              child: Text('Ricevuti', style: TextStyle(color: _mode == OrdersScreenMode.received ? Colors.white : Constants.TEXT_COLOR),),
                               onPressed: () {
                                 setState(() {
-                                  _mode = InboxScreenMode.notifications;
+                                  _mode = OrdersScreenMode.received;
+
+                                  getOrders();
                                 });
                               },
                             ),
                           ],
                         ),
                       ),
-                      SizedBox(height: 16,),*/
-                      Expanded(
-                        child: _isLoading ? Center(child: CircularProgressIndicator()) : _conversations.isNotEmpty ? MediaQuery.removePadding(
-                          context: context,
-                          removeTop: true,
-                          child: ListView.builder(
-                            itemCount: _conversations.length,
-                            itemBuilder: (BuildContext context, int index) {
-                              return conversationCell(_conversations[index]);
-                            }
-                          ),
-                        ) : Text("Non ci sono chat al momento"),
-                      ),
+                      SizedBox(height: 16),
+                      _isLoading ? Center(child: CircularProgressIndicator()) : _orders.isNotEmpty ? MediaQuery.removePadding(
+                        context: context,
+                        removeTop: true,
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: _orders.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            return offerCell(_orders[index]);
+                          }
+                        ),
+                      ) : Center(child: Text("Non ci sono ordini qui")),
                     ],
                   ),
                 ),

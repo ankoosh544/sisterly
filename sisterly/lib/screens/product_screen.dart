@@ -1,23 +1,15 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/screens/checkout_screen.dart';
 import 'package:sisterly/screens/profile_screen.dart';
-import 'package:sisterly/screens/reset_screen.dart';
-import 'package:sisterly/screens/signup_screen.dart';
-import 'package:sisterly/screens/signup_success_screen.dart';
-import 'package:sisterly/screens/verify_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
-import 'package:sisterly/utils/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sisterly/utils/session_data.dart';
-import 'package:sisterly/widgets/custom_app_bar.dart';
-
+import "package:sisterly/utils/utils.dart";
+import 'package:sisterly/widgets/stars_widget.dart';
 import '../utils/constants.dart';
-import 'login_screen.dart';
 
 class ProductScreen extends StatefulWidget {
   final Product product;
@@ -30,10 +22,15 @@ class ProductScreen extends StatefulWidget {
 
 class ProductScreenState extends State<ProductScreen>  {
 
+  List<Product> _productsFavorite = [];
+  
   @override
   void initState() {
     super.initState();
 
+    Future.delayed(Duration.zero, () {
+      getProductsFavorite();
+    });
   }
 
   @override
@@ -66,6 +63,41 @@ class ProductScreenState extends State<ProductScreen>  {
     );
   }
 
+  isFavorite(product) {
+    return _productsFavorite.where((element) => element.id == product.id).isNotEmpty;
+  }
+
+  getProductsFavorite() {
+    ApiManager(context).makeGetRequest('/product/favorite/', {}, (res) {
+      _productsFavorite = [];
+
+      var data = res["data"];
+      if (data != null) {
+        for (var prod in data) {
+          _productsFavorite.add(Product.fromJson(prod));
+        }
+      }
+
+      setState(() {
+
+      });
+    }, (res) {
+
+    });
+  }
+
+  setProductFavorite(product, add) {
+    var params = {
+      "product_id": product.id,
+      "remove": !add
+    };
+    ApiManager(context).makePostRequest('/product/favorite/change/', params, (res) {
+      getProductsFavorite();
+    }, (res) {
+
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -83,9 +115,9 @@ class ProductScreenState extends State<ProductScreen>  {
                         padding: const EdgeInsets.all(20.0),
                         child: CachedNetworkImage(
                           height: 180, fit: BoxFit.fitHeight,
-                          imageUrl: SessionData().serverUrl + widget.product.images[0],
+                          imageUrl: SessionData().serverUrl + (widget.product.images.isNotEmpty ? widget.product.images.first : ""),
                           placeholder: (context, url) => CircularProgressIndicator(),
-                          errorWidget: (context, url, error) => Icon(Icons.error),
+                          errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
                         ),
                       ),
                     ),
@@ -166,22 +198,26 @@ class ProductScreenState extends State<ProductScreen>  {
                       SizedBox(height: 12),*/
                       InkWell(
                         onTap: () {
-                          //TODO set user id
                           Navigator.of(context).push(
-                              MaterialPageRoute(builder: (BuildContext context) => ProfileScreen(id: 1,)));
+                              MaterialPageRoute(builder: (BuildContext context) => ProfileScreen(id: widget.product.owner.id)));
                         },
                         child: Row(
                           children: [
                             ClipRRect(
-                              borderRadius: BorderRadius.circular(60.0),
-                                child: Image.asset("assets/images/product.png", width: 60, height: 60, fit: BoxFit.cover,)
+                              borderRadius: BorderRadius.circular(68.0),
+                              child: CachedNetworkImage(
+                                width: 68, height: 68, fit: BoxFit.cover,
+                                imageUrl: SessionData().serverUrl + (widget.product.owner.image ?? ""),
+                                placeholder: (context, url) => CircularProgressIndicator(),
+                                errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder.svg"),
+                              ),
                             ),
                             SizedBox(width: 12,),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  "Pubblicata da Beatrice P.",
+                                  "Pubblicata da " + widget.product.owner.firstName!.capitalize() + " " + widget.product.owner.lastName!.substring(0, 1).toUpperCase() + ".",
                                   style: TextStyle(
                                       color: Constants.DARK_TEXT_COLOR,
                                       fontSize: 16,
@@ -189,25 +225,21 @@ class ProductScreenState extends State<ProductScreen>  {
                                   ),
                                 ),
                                 SizedBox(height: 4,),
-                                Text(
+                                /*Text(
                                   "Milano",
                                   style: TextStyle(
                                       color: Constants.LIGHT_TEXT_COLOR,
                                       fontSize: 14,
                                       fontFamily: Constants.FONT
                                   ),
-                                ),
+                                ),*/
                                 SizedBox(height: 4,),
                                 Wrap(
                                   spacing: 3,
                                   children: [
-                                    SvgPicture.asset("assets/images/star.svg", width: 10, height: 10,),
-                                    SvgPicture.asset("assets/images/star.svg", width: 10, height: 10,),
-                                    SvgPicture.asset("assets/images/star.svg", width: 10, height: 10,),
-                                    SvgPicture.asset("assets/images/star.svg", width: 10, height: 10,),
-                                    SvgPicture.asset("assets/images/star.svg", width: 10, height: 10,),
+                                    StarsWidget(stars: widget.product.owner.reviewsMedia!.toInt()),
                                     Text(
-                                      "5.0",
+                                      widget.product.owner.reviewsMedia.toString(),
                                       style: TextStyle(
                                           color: Constants.DARK_TEXT_COLOR,
                                           fontSize: 14,
@@ -226,13 +258,13 @@ class ProductScreenState extends State<ProductScreen>  {
                       SizedBox(height: 8,),
                       getInfoRow("Condizioni", widget.product.conditions.toString()),
                       SizedBox(height: 8,),
-                      getInfoRow("Anno", widget.product.year.toString()),
+                      getInfoRow("Anni", widget.product.year.toString()),
                       SizedBox(height: 8,),
                       getInfoRow("Taglia", widget.product.size.toString()),
                       SizedBox(height: 8,),
                       Divider(height: 30,),
                       SizedBox(height: 8,),
-                      Column(
+                      /*Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: const [
                           Text(
@@ -266,12 +298,12 @@ class ProductScreenState extends State<ProductScreen>  {
                           ),
                         ],
                       ),
-                      SizedBox(height: 8,),
-                      Divider(height: 30,),
-                      SizedBox(height: 8,),
+                      SizedBox(height: 8,),*/
+                      //Divider(height: 30,),
+                      //SizedBox(height: 8,),
                       getInfoRow("Materiale", widget.product.materialName),
                       SizedBox(height: 8,),
-                      getInfoRow("Colore", widget.product.colorName),
+                      getInfoRow("Colore", widget.product.colorName.capitalize()),
                       /*SizedBox(height: 8,),
                       getInfoRow("Metal Accessories", "Gold Finish"),
                       SizedBox(height: 8,),
@@ -298,11 +330,15 @@ class ProductScreenState extends State<ProductScreen>  {
                               child: Text('Prenota'),
                               onPressed: () {
                                 Navigator.of(context).push(
-                                    MaterialPageRoute(builder: (BuildContext context) => CheckoutScreen()));
+                                    MaterialPageRoute(builder: (BuildContext context) => CheckoutScreen(product: widget.product,)));
                               },
                             ),
                           ),
-                          SizedBox(width: 12,),
+                        ],
+                      ),
+                      SizedBox(height: 12,),
+                      Row(
+                        children: [
                           Expanded(
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
@@ -314,9 +350,9 @@ class ProductScreenState extends State<ProductScreen>  {
                                   padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
                               ),
-                              child: Text('Wishlist'),
+                              child: Text(isFavorite(widget.product) ? 'Rimuovi dalla Wishlist' : 'Aggiungi alla Wishlist', textAlign: TextAlign.center,),
                               onPressed: () {
-
+                                setProductFavorite(widget.product, !isFavorite(widget.product));
                               },
                             ),
                           ),

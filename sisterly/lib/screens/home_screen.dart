@@ -63,9 +63,9 @@ class HomeScreenState extends State<HomeScreen>  {
                     // child: Image.asset("assets/images/product.png", height: 169,),
                     child: CachedNetworkImage(
                       height: 169,
-                      imageUrl: SessionData().serverUrl + product.images[0],
+                      imageUrl: SessionData().serverUrl + (product.images.isNotEmpty ? product.images.first : ""),
                       placeholder: (context, url) => Center(child: CircularProgressIndicator()),
-                      errorWidget: (context, url, error) => Icon(Icons.error),
+                      errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
                     ),
                   ),
                   Positioned(
@@ -113,10 +113,6 @@ class HomeScreenState extends State<HomeScreen>  {
     );
   }
 
-  isFavorite(product) {
-    return _productsFavorite.where((element) => element.id == product.id).isNotEmpty;
-  }
-
   getProducts() {
     setState(() {
       _isLoading = true;
@@ -142,6 +138,10 @@ class HomeScreenState extends State<HomeScreen>  {
     });
   }
 
+  isFavorite(product) {
+    return _productsFavorite.where((element) => element.id == product.id).isNotEmpty;
+  }
+
   getProductsFavorite() {
     ApiManager(context).makeGetRequest('/product/favorite/', {}, (res) {
       _productsFavorite = [];
@@ -152,6 +152,10 @@ class HomeScreenState extends State<HomeScreen>  {
           _productsFavorite.add(Product.fromJson(prod));
         }
       }
+
+      setState(() {
+
+      });
     }, (res) {
 
     });

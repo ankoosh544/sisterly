@@ -83,9 +83,9 @@ class SearchScreenState extends State<SearchScreen>  {
                     // child: Image.asset("assets/images/product.png", height: 169,),
                     child: CachedNetworkImage(
                       height: 169,
-                      imageUrl: SessionData().serverUrl + product.images[0],
+                      imageUrl: SessionData().serverUrl + (product.images.isNotEmpty ? product.images.first : ""),
                       placeholder: (context, url) => CircularProgressIndicator(),
-                      errorWidget: (context, url, error) => Icon(Icons.error),
+                      errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
                     ),
                   ),
                   Positioned(
@@ -199,6 +199,10 @@ class SearchScreenState extends State<SearchScreen>  {
           _productsFavorite.add(Product.fromJson(prod));
         }
       }
+
+      setState(() {
+
+      });
     }, (res) {
 
     });

@@ -1,14 +1,22 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:sisterly/models/address.dart';
+import 'package:sisterly/models/product.dart';
 import 'package:sisterly/screens/choose_payment_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
+import 'package:sisterly/utils/session_data.dart';
+import 'package:sisterly/utils/utils.dart';
 import 'package:sisterly/widgets/checkout/checkout_product_card.dart';
+import 'package:sisterly/widgets/stars_widget.dart';
 
 class CheckoutScreen extends StatefulWidget {
-  const CheckoutScreen({Key? key}) : super(key: key);
+
+  final Product product;
+
+  const CheckoutScreen({Key? key, required this.product}) : super(key: key);
 
   @override
   _CheckoutScreenState createState() => _CheckoutScreenState();
@@ -22,12 +30,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final TextEditingController _city = TextEditingController();
   final TextEditingController _zip = TextEditingController();
   final TextEditingController _state = TextEditingController();
-  final TextEditingController _country = TextEditingController();
+  final TextEditingController _country = TextEditingController(text: "IT");
   final TextEditingController _email = TextEditingController();
   final TextEditingController _phone = TextEditingController();
-  bool _saveAddress = true;
+
   bool _insurance = true;
   bool _hasAddress = false;
+  bool _saveAddress = true;
   List<Address> _addresses = [];
   Address? _activeAddress;
   bool _addNewAddress = false;
@@ -37,7 +46,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   void initState() {
     super.initState();
-    getAddresses();
+
+    Future.delayed(Duration.zero, () {
+      getAddresses(null);
+    });
   }
 
   @override
@@ -89,27 +101,28 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
           SizedBox(height: 16,),
           Expanded(
-            child: SingleChildScrollView(
-              child: Container(
-                width: MediaQuery.of(context).size.width,
-                decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(30),
-                        topRight: Radius.circular(30))),
+            child: Container(
+              width: MediaQuery.of(context).size.width,
+              padding: const EdgeInsets.only(top: 4),
+              decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30))),
+              child: SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CheckoutProductCard(),
+                      CheckoutProductCard(product: widget.product),
 
                       SizedBox(height: 25),
                       profileBanner(),
 
                       SizedBox(height: 25),
                       Text(
-                        "How do you want to receive your bag?",
+                        "Come vuoi ricevere il prodotto?",
                         style: TextStyle(
                             color: Constants.DARK_TEXT_COLOR,
                             fontSize: 18,
@@ -125,7 +138,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               horizontalTitleGap: 0,
                               contentPadding: EdgeInsets.all(0),
                               title: Text(
-                                'Shipment',
+                                'Spedizione',
                                 style: Theme.of(context)
                                     .textTheme
                                     .subtitle1!
@@ -145,7 +158,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               contentPadding: EdgeInsets.all(0),
                               horizontalTitleGap: 0,
                               title: Text(
-                                'Withdraw',
+                                'Ritiro',
                                 style: Theme.of(context)
                                     .textTheme
                                     .subtitle1!
@@ -161,104 +174,108 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                         ]
                       ),
-
-                      SizedBox(height: 15),
-                      Text(
-                        "Which address do you want to receive?",
-                        style: TextStyle(
-                            color: Constants.DARK_TEXT_COLOR,
-                            fontSize: 18,
-                            fontFamily: Constants.FONT,
-                            fontWeight: FontWeight.bold
-                        ),
-                      ),
-                      SizedBox(height: 15),
-                      if (!_hasAddress || _addNewAddress || _editAddress) Column(
-                        children: [
-                          inputField("Name", _name),
-                          inputField("Address", _address),
-                          inputField("Address 2", _address2),
-                          inputField("City", _city),
-                          inputField("Zip code", _zip),
-                          inputField("State/Province", _state),
-                          inputField("Country", _country),
-                          inputField("Email", _email),
-                          inputField("Phone number", _phone),
-                          const SizedBox(height: 25),
-                          if (!_editAddress) Row(
-                              children: [
-                                Text('Save for for future purchases',
-                                    style: TextStyle(
-                                      color: Constants.TEXT_COLOR,
-                                      fontSize: 16,
-                                      fontFamily: Constants.FONT,
-                                    )
-                                ),
-                                Switch(
-                                  value: _saveAddress,
-                                  onChanged: (value) => setState(() { _saveAddress = value; }),
-                                  activeColor: Constants.SECONDARY_COLOR,
-                                )
-                              ]
-                          ),
-                        ]
-                      ),
-                      if (_editAddress) ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                            primary: Constants.GREEN_SAVE,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
-                        ),
-                        child: Text('Save',
-                            style: TextStyle(
-                              color: Constants.TEXT_COLOR,
-                              fontSize: 16,
-                              fontFamily: Constants.FONT,
-                            )
-                        ),
-                        onPressed: () {
-                          _updateAddress();
-                          setState(() {
-                            _editAddress = false;
-                            _addressToEdit = null;
-                          });
-                        },
-                      ),
-                      if (_hasAddress && !_addNewAddress && !_editAddress) Column(
+                      if(_shipping != 'withdraw') Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: [
-                                if (_activeAddress != null) _renderAddress(_activeAddress!),
-                                for (var a in _addresses) _renderAddress(a)
-                              ]
+                          SizedBox(height: 15),
+                          Text(
+                            "A quale indirizzo vuoi riceverlo?",
+                            style: TextStyle(
+                                color: Constants.DARK_TEXT_COLOR,
+                                fontSize: 18,
+                                fontFamily: Constants.FONT,
+                                fontWeight: FontWeight.bold
                             ),
                           ),
-                          SizedBox(height: 10),
-                          ElevatedButton(
+                          SizedBox(height: 15),
+                          if (!_hasAddress || _addNewAddress || _editAddress) Column(
+                              children: [
+                                inputField("Nome", _name, false),
+                                inputField("Indirizzo", _address, false),
+                                inputField("Indirizzo 2", _address2, false),
+                                inputField("Città", _city, false),
+                                inputField("Codice postale", _zip, false),
+                                inputField("Provincia", _state, false),
+                                inputField("Nazione", _country, true),
+                                inputField("Email", _email, false),
+                                inputField("Cellulare", _phone, false),
+                                const SizedBox(height: 25),
+                                if (!_editAddress) Row(
+                                    children: [
+                                      Text('Salva per acquisti futuri',
+                                          style: TextStyle(
+                                            color: Constants.TEXT_COLOR,
+                                            fontSize: 16,
+                                            fontFamily: Constants.FONT,
+                                          )
+                                      ),
+                                      Switch(
+                                        value: _saveAddress,
+                                        onChanged: (value) => setState(() { _saveAddress = value; }),
+                                        activeColor: Constants.SECONDARY_COLOR,
+                                      )
+                                    ]
+                                ),
+                              ]
+                          ),
+                          if (_editAddress) ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                                primary: Constants.LIGHT_GREY_COLOR2,
+                                primary: Constants.GREEN_SAVE,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
                             ),
-                            child: Text('+ Add New',
-                              style: TextStyle(
-                                color: Constants.TEXT_COLOR,
-                                fontSize: 16,
-                                fontFamily: Constants.FONT,
-                              )
+                            child: Text('Salva',
+                                style: TextStyle(
+                                  color: Constants.TEXT_COLOR,
+                                  fontSize: 16,
+                                  fontFamily: Constants.FONT,
+                                )
                             ),
                             onPressed: () {
+                              _updateAddress();
                               setState(() {
-                                _addNewAddress = true;
+                                _editAddress = false;
+                                _addressToEdit = null;
                               });
                             },
                           ),
-                        ]
+                          if (_hasAddress && !_addNewAddress && !_editAddress) Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                      children: [
+                                        if (_activeAddress != null) _renderAddress(_activeAddress!),
+                                        for (var a in _addresses) _renderAddress(a)
+                                      ]
+                                  ),
+                                ),
+                                SizedBox(height: 10),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                      primary: Constants.LIGHT_GREY_COLOR2,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
+                                  ),
+                                  child: Text('+ Nuovo',
+                                      style: TextStyle(
+                                        color: Constants.TEXT_COLOR,
+                                        fontSize: 16,
+                                        fontFamily: Constants.FONT,
+                                      )
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _addNewAddress = true;
+                                    });
+                                  },
+                                ),
+                              ]
+                          ),
+                        ],
                       ),
                       SizedBox(height: 25),
                       Text(
-                        "Do you want to add insurance coverage for this bag?",
+                        "Vuoi aggiungere l'assicurazione?",
                         style: TextStyle(
                             color: Constants.DARK_TEXT_COLOR,
                             fontSize: 18,
@@ -279,7 +296,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 borderRadius: BorderRadius.circular(20),
                                 color: _insurance ? Constants.SECONDARY_COLOR_LIGHT : Constants.LIGHT_GREY_COLOR2
                               ),
-                              child: Text('Yes (+ € 6.00)',
+                              child: Text('Si (+ € 6.00)',
                                   style: TextStyle(
                                     color: _insurance ? Colors.black : Constants.TEXT_COLOR,
                                     fontSize: 16,
@@ -322,14 +339,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
                           ),
-                          child: Text('Next'),
-                          onPressed: () {
+                          child: Text('Avanti'),
+                          onPressed: () async {
                             if (!_hasAddress || (_saveAddress && _addNewAddress && !_editAddress)) {
-                              saveAddress();
+                              await saveAddress();
+                              getAddresses(() {
+                                next();
+                              });
+                            } else {
+                              next();
                             }
-                            Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChoosePaymentScreen())).then((value) => setState(() {
-                              getAddresses();
-                            }));
                           },
                         ),
                       ),
@@ -345,6 +364,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  next() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChoosePaymentScreen(address: _activeAddress!, shipping: _shipping, insurance: _insurance, product: widget.product)));
+  }
+
   void _handleShipmentRadioChange(String? value) {
     setState(() {
       _shipping = value!;
@@ -355,22 +378,27 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Row(
       children: [
         ClipRRect(
-            borderRadius: BorderRadius.circular(68.0),
-            child: Image.asset("assets/images/product.png", width: 68, height: 68, fit: BoxFit.cover,)
+          borderRadius: BorderRadius.circular(68.0),
+          child: CachedNetworkImage(
+            width: 68, height: 68, fit: BoxFit.cover,
+            imageUrl: SessionData().serverUrl + (widget.product.owner.image ?? ""),
+            placeholder: (context, url) => CircularProgressIndicator(),
+            errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder.svg"),
+          ),
         ),
         SizedBox(width: 12,),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Beatrice Pedrali",
+              widget.product.owner.firstName!.capitalize() + " " + widget.product.owner.lastName!.capitalize(),
               style: TextStyle(
                   color: Constants.DARK_TEXT_COLOR,
                   fontSize: 20,
                   fontFamily: Constants.FONT
               ),
             ),
-            SizedBox(height: 6,),
+            /*SizedBox(height: 6,),
             Text(
               "Milan",
               style: TextStyle(
@@ -378,18 +406,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   fontSize: 15,
                   fontFamily: Constants.FONT
               ),
-            ),
+            ),*/
             SizedBox(height: 6,),
             Wrap(
               spacing: 3,
               children: [
-                SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
+                StarsWidget(stars: widget.product.owner.reviewsMedia!.toInt()),
                 Text(
-                  "5.0",
+                  widget.product.owner.reviewsMedia.toString(),
                   style: TextStyle(
                       color: Constants.DARK_TEXT_COLOR,
                       fontSize: 14,
@@ -404,7 +428,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  Widget inputField(String label, TextEditingController controller) {
+  Widget inputField(String label, TextEditingController controller, bool readOnly) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -452,6 +476,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               fillColor: Constants.WHITE,
             ),
             controller: controller,
+            readOnly: readOnly,
           ),
         ),
       ]
@@ -459,9 +484,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _renderAddress(Address address) {
-    List<String> menu = ['Delete', 'Set active', 'Edit'];
+    List<String> menu = ['Elimina', 'Predefinito', 'Modifica'];
     if (address.active) {
-      menu = ['Edit'];
+      menu = ['Modifica'];
     }
 
     return Container(
@@ -491,7 +516,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         fontFamily: Constants.FONT
                     )
                 ),
-                Text(address.province,
+                Text(address.city + " - " + address.province,
                     style: TextStyle(
                         fontSize: 16,
                         fontFamily: Constants.FONT
@@ -532,25 +557,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   padding: EdgeInsets.all(0),
                   onSelected: (val) {
                     switch (val) {
-                      case 'Delete':
+                      case 'Elimina':
                         _deleteAddress(address);
                         break;
-                      case 'Set active':
+                      case 'Predefinito':
                         _setActiveAddress(address);
                         break;
-                      case 'Edit':
+                      case 'Modifica':
                         setState(() {
                           _addressToEdit = address;
                           _editAddress = true;
                           _name.text = address.name;
                           _address.text = address.address1;
-                          _address2.text = address.address2!;
+                          _address2.text = address.address2 ?? "";
                           _city.text = address.city;
                           _zip.text = address.zip;
                           _state.text = address.province;
                           _country.text = address.country;
-                          // _email.text = address.email;
-                          // _phone.text = address.phone;
+                          _email.text = address.email ?? "";
+                          _phone.text = address.phone ?? "";
                         });
                         break;
                     }
@@ -586,7 +611,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
   
-  getAddresses() {
+  getAddresses(Function? callback) {
     ApiManager(context).makeGetRequest('/client/address', {}, (response) {
       _activeAddress = null;
       _addresses = [];
@@ -598,12 +623,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             _addresses.add(Address.fromJson(address));
           }
         }
+
         if (_addresses.isNotEmpty || _activeAddress != null) {
           setState(() {
             _hasAddress = true;
             _addNewAddress = false;
           });
         }
+
+        setState(() {
+
+        });
+
+        if(callback != null) callback();
       }
     }, (response) {});
   }
@@ -681,7 +713,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         "default": false,
         "active": _addressToEdit!.active
       }, (res) {
-        getAddresses();
+        getAddresses(null);
       }, (res) {});
     }
   }

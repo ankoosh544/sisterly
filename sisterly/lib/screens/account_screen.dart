@@ -1,28 +1,21 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:package_info/package_info.dart';
-import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:sisterly/models/account.dart';
 import 'package:sisterly/screens/inbox_screen.dart';
-import 'package:sisterly/screens/product_screen.dart';
+import 'package:sisterly/screens/offers_screen.dart';
+import 'package:sisterly/screens/orders_screen.dart';
 import 'package:sisterly/screens/profile_screen.dart';
-import 'package:sisterly/screens/reset_screen.dart';
 import 'package:sisterly/screens/reviews_screen.dart';
-import 'package:sisterly/screens/signup_screen.dart';
-import 'package:sisterly/screens/signup_success_screen.dart';
 import 'package:sisterly/screens/sister_advice_screen.dart';
-import 'package:sisterly/screens/splash_screen.dart';
-import 'package:sisterly/screens/verify_screen.dart';
-import 'package:sisterly/screens/welcome_2_screen.dart';
-import 'package:sisterly/screens/welcome_screen.dart';
 import 'package:sisterly/screens/wishlist_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
-import 'package:sisterly/utils/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sisterly/utils/session_data.dart';
 import 'package:share/share.dart';
 import "package:sisterly/utils/utils.dart";
+import 'package:sisterly/widgets/stars_widget.dart';
 import '../utils/constants.dart';
 
 class AccountScreen extends StatefulWidget {
@@ -174,16 +167,16 @@ class AccountScreenState extends State<AccountScreen>  {
                         SizedBox(height: 8),
                         _isLoading ? CircularProgressIndicator() : Row(
                           children: [
-                            if(_profile != null && _profile!.image != null) ClipRRect(
+                            if(_profile != null) ClipRRect(
                                 borderRadius: BorderRadius.circular(68.0),
                                 child: CachedNetworkImage(
                                   width: 68, height: 68, fit: BoxFit.cover,
-                                  imageUrl: _profile!.image!,
+                                  imageUrl: SessionData().serverUrl + (_profile!.image ?? ""),
                                   placeholder: (context, url) => CircularProgressIndicator(),
-                                  errorWidget: (context, url, error) => Icon(Icons.error),
+                                  errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder.svg"),
                                 ),
                             ),
-                            if(_profile != null && _profile!.image != null) SizedBox(width: 12,),
+                            SizedBox(width: 12,),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -199,13 +192,9 @@ class AccountScreenState extends State<AccountScreen>  {
                                 Wrap(
                                   spacing: 3,
                                   children: [
-                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
+                                    if(_profile != null) StarsWidget(stars: _profile!.reviewsMedia!.toInt()),
                                     Text(
-                                      "5.0",
+                                      _profile!.reviewsMedia!.toString(),
                                       style: TextStyle(
                                           color: Constants.DARK_TEXT_COLOR,
                                           fontSize: 14,
@@ -251,7 +240,20 @@ class AccountScreenState extends State<AccountScreen>  {
                             },
                             child: getItem("assets/images/articles_saved.svg", "Lista dei desideri")
                         ),
-                        getItem("assets/images/rent 2.svg", "I miei noleggi"),
+                        InkWell(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (BuildContext context) => OrdersScreen()));
+                            },
+                            child: getItem("assets/images/rent 2.svg", "Ordini")
+                        ),
+                        InkWell(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (BuildContext context) => OffersScreen()));
+                            },
+                            child: getItem("assets/images/rent 2.svg", "Offerte")
+                        ),
                         InkWell(
                             onTap: () {
                               Navigator.of(context).push(

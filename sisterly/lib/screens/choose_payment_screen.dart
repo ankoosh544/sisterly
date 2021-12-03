@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:sisterly/models/address.dart';
+import 'package:sisterly/models/product.dart';
 import 'package:sisterly/screens/checkout_confirm_screen.dart';
 import 'package:sisterly/utils/constants.dart';
 
 class ChoosePaymentScreen extends StatefulWidget {
-  ChoosePaymentScreen({Key? key}) : super(key: key);
+
+  final Address address;
+  final String shipping;
+  final bool insurance;
+  final Product product;
+
+  ChoosePaymentScreen({Key? key, required this.address, required this.shipping, required this.insurance, required this.product}) : super(key: key);
 
   @override
   _ChoosePaymentScreenState createState() => _ChoosePaymentScreenState();
@@ -68,14 +76,15 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
           ),
           SizedBox(height: 16,),
           Expanded(
-            child: SingleChildScrollView(
-              child: Container(
-                width: MediaQuery.of(context).size.width,
-                decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(30),
-                        topRight: Radius.circular(30))),
+            child: Container(
+              padding: const EdgeInsets.only(top: 4),
+              width: MediaQuery.of(context).size.width,
+              decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30))),
+              child: SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
@@ -83,7 +92,7 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
                     children: [
                       SizedBox(height: 25),
                       Text(
-                        "Payment method",
+                        "Metodo di pagamento",
                         style: TextStyle(
                             color: Constants.DARK_TEXT_COLOR,
                             fontSize: 18,
@@ -99,7 +108,7 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
                               contentPadding: EdgeInsets.all(0),
                               dense: true,
                               title: Text(
-                                'Credit card',
+                                'Carta di credito',
                                 style: Theme.of(context)
                                     .textTheme
                                     .subtitle1!
@@ -113,7 +122,7 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
                                   onChanged: _handlePaymentMethodSelection
                               ),
                             ),
-                            ListTile(
+                            /*ListTile(
                               horizontalTitleGap: 0,
                               contentPadding: EdgeInsets.all(0),
                               dense: true,
@@ -148,13 +157,13 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
                                   fillColor: MaterialStateColor.resolveWith((states) => _method == 'applepay' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
                                   onChanged: _handlePaymentMethodSelection
                               ),
-                            ),
+                            ),*/
                           ]
                       ),
 
                       SizedBox(height: 15),
                       Text(
-                        "Card details",
+                        "Dettagli carta",
                         style: TextStyle(
                             color: Constants.DARK_TEXT_COLOR,
                             fontSize: 18,
@@ -164,12 +173,12 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
                       ),
                       if (!_hasCards) Column(
                           children: [
-                            inputField("Name on card", _name),
-                            inputField("Card number", _cardNumber),
+                            inputField("Nome sulla carta", _name),
+                            inputField("Numero carta", _cardNumber),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                SizedBox(width: 200, child: inputField("Expiry date", _date)),
+                                SizedBox(width: 200, child: inputField("Scadenza", _date)),
                                 Container(
                                   constraints: BoxConstraints(maxWidth: 150),
                                     child: inputField("CVV", _cvv)),
@@ -178,7 +187,7 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
                             const SizedBox(height: 25),
                             Row(
                                 children: [
-                                  Text('Save for for future purchases',
+                                  Text('Salva per acquisti futuri',
                                       style: TextStyle(
                                         color: Constants.TEXT_COLOR,
                                         fontSize: 16,
@@ -213,7 +222,7 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
                                   primary: Constants.LIGHT_GREY_COLOR2,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
                               ),
-                              child: Text('+ Add New',
+                              child: Text('+ Nuova',
                                   style: TextStyle(
                                     color: Constants.TEXT_COLOR,
                                     fontSize: 16,
@@ -238,9 +247,9 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
                               padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
                           ),
-                          child: Text('Next'),
+                          child: Text('Avanti'),
                           onPressed: () {
-                            Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => CheckoutConfirmScreen()));
+                            Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => CheckoutConfirmScreen(product: widget.product,)));
                           },
                         ),
                       ),

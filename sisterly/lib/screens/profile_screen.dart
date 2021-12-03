@@ -15,6 +15,7 @@ import 'package:sisterly/utils/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sisterly/utils/session_data.dart';
+import 'package:sisterly/widgets/stars_widget.dart';
 
 import '../utils/constants.dart';
 import 'filters_screen.dart';
@@ -34,7 +35,9 @@ class ProfileScreenState extends State<ProfileScreen>  {
 
   bool _isLoading = false;
   List<Product> _products = [];
+  List<Product> _productsFavorite = [];
   Account? _profile;
+  bool _viewAll = false;
 
   @override
   void initState() {
@@ -104,6 +107,41 @@ class ProfileScreenState extends State<ProfileScreen>  {
     return _profile!.firstName!.capitalize();
   }
 
+  isFavorite(product) {
+    return _productsFavorite.where((element) => element.id == product.id).isNotEmpty;
+  }
+
+  getProductsFavorite() {
+    ApiManager(context).makeGetRequest('/product/favorite/', {}, (res) {
+      _productsFavorite = [];
+
+      var data = res["data"];
+      if (data != null) {
+        for (var prod in data) {
+          _productsFavorite.add(Product.fromJson(prod));
+        }
+      }
+
+      setState(() {
+
+      });
+    }, (res) {
+
+    });
+  }
+
+  setProductFavorite(product, add) {
+    var params = {
+      "product_id": product.id,
+      "remove": !add
+    };
+    ApiManager(context).makePostRequest('/product/favorite/change/', params, (res) {
+      getProductsFavorite();
+    }, (res) {
+
+    });
+  }
+
   Widget productCell(Product product) {
     return InkWell(
       onTap: () {
@@ -139,16 +177,24 @@ class ProfileScreenState extends State<ProfileScreen>  {
                   ),
                   child: CachedNetworkImage(
                     height: 76,
-                    imageUrl: SessionData().serverUrl + product.images[0],
+                    imageUrl: SessionData().serverUrl + (product.images.isNotEmpty ? product.images.first : ""),
                     placeholder: (context, url) => CircularProgressIndicator(),
-                    errorWidget: (context, url, error) => Icon(Icons.error),
+                    errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
                   )
                 ),
                 Positioned(
                   top: 16,
                   right: 16,
-                    child: InkWell(
+                    child: isFavorite(product) ? InkWell(
+                      child: SizedBox(width: 16, height: 16, child: SvgPicture.asset("assets/images/saved.svg")),
+                      onTap: () {
+                        setProductFavorite(product, false);
+                      },
+                    ) : InkWell(
                       child: SizedBox(width: 16, height: 16, child: SvgPicture.asset("assets/images/save.svg")),
+                      onTap: () {
+                        setProductFavorite(product, true);
+                      },
                     )
                 )
               ],
@@ -264,16 +310,16 @@ class ProfileScreenState extends State<ProfileScreen>  {
                         SizedBox(height: 8),
                         _isLoading ? CircularProgressIndicator() : Row(
                           children: [
-                            if(_profile != null && _profile!.image != null) ClipRRect(
+                            ClipRRect(
                               borderRadius: BorderRadius.circular(68.0),
                               child: CachedNetworkImage(
                                 width: 68, height: 68, fit: BoxFit.cover,
-                                imageUrl: _profile!.image!,
+                                imageUrl: SessionData().serverUrl + (_profile!.image ?? ""),
                                 placeholder: (context, url) => CircularProgressIndicator(),
-                                errorWidget: (context, url, error) => Icon(Icons.error),
+                                errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder.svg"),
                               ),
                             ),
-                            if(_profile != null && _profile!.image != null) SizedBox(width: 12,),
+                            SizedBox(width: 12,),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -285,7 +331,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
                                       fontFamily: Constants.FONT
                                   ),
                                 ),
-                                SizedBox(height: 6,),
+                                /*SizedBox(height: 6,),
                                 Text(
                                   "Milano",
                                   style: TextStyle(
@@ -293,18 +339,14 @@ class ProfileScreenState extends State<ProfileScreen>  {
                                       fontSize: 15,
                                       fontFamily: Constants.FONT
                                   ),
-                                ),
+                                ),*/
                                 SizedBox(height: 6,),
                                 Wrap(
                                   spacing: 3,
                                   children: [
-                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
+                                    if(_profile != null) StarsWidget(stars: _profile!.reviewsMedia!.toInt()),
                                     Text(
-                                      "5.0",
+                                      _profile!.reviewsMedia!.toString(),
                                       style: TextStyle(
                                           color: Constants.DARK_TEXT_COLOR,
                                           fontSize: 14,
@@ -318,7 +360,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
                           ],
                         ),
                         SizedBox(height: 24,),
-                        Row(
+                        /*Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Row(
@@ -373,8 +415,8 @@ class ProfileScreenState extends State<ProfileScreen>  {
                               ],
                             ),
                           ],
-                        ),
-                        SizedBox(height: 40,),
+                        ),*/
+                        //SizedBox(height: 40,),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -387,15 +429,22 @@ class ProfileScreenState extends State<ProfileScreen>  {
                                   fontFamily: Constants.FONT
                               ),
                             ),
-                            if(_products.isNotEmpty) Text(
-                              "Vedi tutti",
-                              style: TextStyle(
-                                  color: Constants.SECONDARY_COLOR,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: Constants.FONT,
-                                decoration: TextDecoration.underline
+                            if(_products.isNotEmpty) InkWell(
+                              child: Text(
+                                _viewAll ? "Vedi meno" : "Vedi tutti",
+                                style: TextStyle(
+                                    color: Constants.SECONDARY_COLOR,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: Constants.FONT,
+                                  decoration: TextDecoration.underline
+                                ),
                               ),
+                              onTap: () {
+                                setState(() {
+                                  _viewAll = !_viewAll;
+                                });
+                              },
                             ),
                           ],
                         ),
@@ -411,7 +460,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
                                 childAspectRatio: 0.8 / 1,
                                 crossAxisCount: 2,
                               ),
-                              itemCount: _products.length,
+                              itemCount: _viewAll ? _products.length : (_products.length > 4 ? 4 : _products.length),
                               itemBuilder: (BuildContext context, int index) {
                                 return productCell(_products[index]);
                               }

@@ -143,7 +143,7 @@ class ApiManager {
       });
 
       debugPrint("makeGetRequest response:");
-      debugPrint(response.body);
+      log(response.body);
 
       int statusCode = response.statusCode;
       String json = response.body;
@@ -242,7 +242,7 @@ class ApiManager {
   }
 
   makePutRequest(endpoint, params, success, failure) async {
-    internalMakePutRequest(endpoint, params, SessionData().token, success, failure, true);
+    await internalMakePutRequest(endpoint, params, SessionData().token, success, failure, true);
   }
 
   internalMakePutRequest(endpoint, params, token, success, failure, retry) async {
@@ -286,7 +286,7 @@ class ApiManager {
         success(bodyResponse);
       }
     } catch(ex) {
-      debugPrint("errorTryCatch");
+      debugPrint("errorTryCatch "+ex.toString());
       manageFailure(failure, context, null, json);
     }
   }
@@ -345,6 +345,7 @@ class ApiManager {
       debugPrint("multipartFile postUri: "+postUri.toString()+"  multipartFile.length: "+multipartFile.length.toString());
 
       request.files.add(multipartFile);
+      request.fields["order"] = order.toString();
 
       http.StreamedResponse response = await request.send();
       final json = await response.stream.bytesToString();
@@ -387,13 +388,18 @@ class ApiManager {
     debugPrint("manageFailure " + statusCode.toString() + " json: "+json.toString());
 
     if(json != null) {
-      var response = jsonDecode(json.toString());
-      Map<String, dynamic> rawItem = new Map<String, dynamic>.from(response);
+      try {
+        var response = jsonDecode(json.toString());
+        Map<String, dynamic> rawItem = new Map<String, dynamic>.from(response);
 
-      if (rawItem["status"] == "500" || rawItem["message"] == "INVALID TOKEN") {
-        debugPrint("manageFailure logout due to invalid token");
-        SessionData().logout(context);
-        return;
+        if (rawItem["status"] == "500" ||
+            rawItem["message"] == "INVALID TOKEN") {
+          debugPrint("manageFailure logout due to invalid token");
+          SessionData().logout(context);
+          return;
+        }
+      } catch(ex) {
+        debugPrint("manageFailure calling failure EXCEPTION "+ex.toString());
       }
     }
 

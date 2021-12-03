@@ -1,7 +1,16 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:sisterly/models/product.dart';
 import 'package:sisterly/utils/constants.dart';
+import 'package:sisterly/utils/session_data.dart';
 
 class CheckoutProductCard extends StatelessWidget {
+
+  final Product product;
+
+  const CheckoutProductCard({Key? key, required this.product}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -26,7 +35,12 @@ class CheckoutProductCard extends StatelessWidget {
                 color: Color(0xfff5f5f5),
                 borderRadius: BorderRadius.circular(15)
             ),
-            child: Image.asset("assets/images/product.png", height: 76,),
+            child: CachedNetworkImage(
+              height: 76,
+              imageUrl: SessionData().serverUrl + (product.images.isNotEmpty ? product.images.first : ""),
+              placeholder: (context, url) => Center(child: CircularProgressIndicator()),
+              errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
+            ),
           ),
           Flexible(
             child: Padding(
@@ -34,9 +48,9 @@ class CheckoutProductCard extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
-                    "Chain-Cassette Bottega",
+                    product.model.toString(),
                     textAlign: TextAlign.left,
                     style: TextStyle(
                       color: Constants.TEXT_COLOR,
@@ -46,7 +60,7 @@ class CheckoutProductCard extends StatelessWidget {
                   ),
                   SizedBox(height: 12),
                   Text(
-                    "€30 per day",
+                    "${SessionData().currencyFormat.format(product.sellingPrice)} al giorno",
                     textAlign: TextAlign.left,
                     style: TextStyle(
                       color: Constants.PRIMARY_COLOR,
