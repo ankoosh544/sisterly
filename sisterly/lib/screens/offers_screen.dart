@@ -3,11 +3,13 @@ import 'package:intl/intl.dart';
 import 'package:sisterly/models/account.dart';
 import 'package:sisterly/models/offer.dart';
 import 'package:sisterly/models/product.dart';
+import 'package:sisterly/screens/choose_payment_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sisterly/utils/session_data.dart';
+import 'package:sisterly/widgets/header_widget.dart';
 import 'package:sisterly/widgets/stars_widget.dart';
 import '../utils/constants.dart';
 import "package:sisterly/utils/utils.dart";
@@ -60,7 +62,10 @@ class OffersScreenState extends State<OffersScreen>  {
       var data = res["data"];
       if (data != null) {
         for (var prod in data) {
-          _offers.add(Offer.fromJson(prod));
+          var offer = Offer.fromJson(prod);
+          if(isOffer(offer)) {
+            _offers.add(offer);
+          }
         }
       }
     }, (res) {
@@ -144,7 +149,7 @@ class OffersScreenState extends State<OffersScreen>  {
                     ),
                     SizedBox(height: 12,),
                     Text(
-                      "${SessionData().currencyFormat.format(offer.product.sellingPrice)} al giorno",
+                      "${Utils.formatCurrency(offer.product.sellingPrice)} al giorno",
                       style: TextStyle(
                           color: Constants.PRIMARY_COLOR,
                           fontSize: 18,
@@ -198,16 +203,80 @@ class OffersScreenState extends State<OffersScreen>  {
                   ),
                 ),
               ],
-            )
+            ),
+            if(_mode == OffersScreenMode.received && canProcess(offer)) Divider(),
+            if(_mode == OffersScreenMode.sent && canPay(offer)) Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                        primary: Constants.SECONDARY_COLOR,
+                        textStyle: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 14),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50))),
+                    child: Text('Paga ora'),
+                    onPressed: () {
+                      payNow(offer);
+                    },
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            Center(
+              child: Text(
+                getOfferStatusName(offer),
+                style: TextStyle(
+                    color: Constants.TEXT_COLOR,
+                    fontSize: 16,
+                    fontFamily: Constants.FONT,
+                  fontWeight: FontWeight.bold
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
+  String getOfferStatusName(Offer offer) {
+    switch(offer.state.id) {
+      case 1: return "In attesa di accettazione";
+      case 2: return "In attesa di pagamento";
+      case 3: return "Pagamento in corso";
+      case 4: return "Pagato";
+      case 5: return "Preso in prestito";
+      case 6: return "Chiuso";
+      case 7: return "Rifiutato";
+      default: return "";
+    }
+  }
+
   canProcess(Offer offer) {
     switch(offer.state.id) {
       case 1: return true;
+      default: return false;
+    }
+  }
+
+  canPay(Offer offer) {
+    switch(offer.state.id) {
+      case 2: return true;
+      default: return false;
+    }
+  }
+
+  isOffer(Offer offer) {
+    switch(offer.state.id) {
+      case 1: return true;
+      case 2: return true;
+      case 3: return true;
+      case 7: return true;
       default: return false;
     }
   }
@@ -222,11 +291,13 @@ class OffersScreenState extends State<OffersScreen>  {
       "result": false
     };
 
-    ApiManager(context).makeGetRequest("/product/" + offer.product.id.toString() + "/offer/", params, (res) {
+    ApiManager(context).makePostRequest("/product/" + offer.product.id.toString() + "/offer/", params, (res) {
       // print(res);
       setState(() {
         _isLoading = false;
       });
+
+      ApiManager.showFreeSuccessMessage(context, "Offerta rifiutata!");
 
       getOffers();
     }, (res) {
@@ -246,13 +317,38 @@ class OffersScreenState extends State<OffersScreen>  {
       "result": true
     };
 
-    ApiManager(context).makeGetRequest("/product/" + offer.product.id.toString() + "/offer/", params, (res) {
+    ApiManager(context).makePostRequest("/product/" + offer.product.id.toString() + "/offer/", params, (res) {
       // print(res);
       setState(() {
         _isLoading = false;
       });
 
+      ApiManager.showFreeSuccessMessage(context, "Offerta accettata! Attendi che il cliente effettui il pagamento");
+
       getOffers();
+    }, (res) {
+      setState(() {
+        _isLoading = false;
+      });
+    });
+  }
+
+  payNow(Offer offer) {
+    setState(() {
+      _isLoading = true;
+    });
+
+    var params = {
+      "insurance": false
+    };
+
+    ApiManager(context).makePostRequest("/product/order/" + offer.id.toString() + "/checkout", params, (res) {
+      // print(res);
+      setState(() {
+        _isLoading = false;
+      });
+
+      Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChoosePaymentScreen(offer: offer)));
     }, (res) {
       setState(() {
         _isLoading = false;
@@ -266,52 +362,7 @@ class OffersScreenState extends State<OffersScreen>  {
       backgroundColor: Constants.PRIMARY_COLOR,
       body: Column(
         children: [
-          Stack(
-            children: [
-              Align(
-                  child: SvgPicture.asset("assets/images/wave_blue.svg"),
-                alignment: Alignment.topRight,
-              ),
-              SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      if(Navigator.of(context).canPop()) InkWell(
-                        child: SvgPicture.asset("assets/images/back.svg"),
-                        onTap: () {
-                          Navigator.of(context).pop();
-                        },
-                      ) else const SizedBox(
-                        width: 24,
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.only(top: 24),
-                        child: Text(
-                          "Offerte",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: Constants.FONT),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      SizedBox(width: 20,)
-                      /*InkWell(
-                        child: SizedBox(width: 17, height: 19, child: SvgPicture.asset("assets/images/menu.svg", width: 17, height: 19, fit: BoxFit.scaleDown,)),
-                        onTap: () {
-
-                        },
-                      ),*/
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
+          HeaderWidget(title: "Offerte"),
           SizedBox(height: 16,),
           Expanded(
             child: Container(
@@ -389,18 +440,22 @@ class OffersScreenState extends State<OffersScreen>  {
                         ),
                       ),
                       SizedBox(height: 16),
-                      _isLoading ? Center(child: CircularProgressIndicator()) : _offers.isNotEmpty ? MediaQuery.removePadding(
-                        context: context,
-                        removeTop: true,
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _offers.length,
-                          itemBuilder: (BuildContext context, int index) {
-                            return offerCell(_offers[index]);
-                          }
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: _isLoading ? Center(child: CircularProgressIndicator()) : _offers.isNotEmpty ? MediaQuery.removePadding(
+                            context: context,
+                            removeTop: true,
+                            child: ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _offers.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                return offerCell(_offers[index]);
+                              }
+                            ),
+                          ) : Center(child: Text("Non ci sono offerte qui")),
                         ),
-                      ) : Center(child: Text("Non ci sono offerte qui")),
+                      ),
                     ],
                   ),
                 ),

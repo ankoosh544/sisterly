@@ -8,6 +8,8 @@ import 'package:sisterly/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sisterly/utils/session_data.dart';
+import 'package:sisterly/utils/utils.dart';
+import 'package:sisterly/widgets/header_widget.dart';
 
 import '../utils/constants.dart';
 
@@ -56,6 +58,7 @@ class HomeScreenState extends State<HomeScreen>  {
                 children: [
                   Container(
                     width: double.infinity,
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: Color(0xfff5f5f5),
                       borderRadius: BorderRadius.circular(15)
@@ -69,15 +72,15 @@ class HomeScreenState extends State<HomeScreen>  {
                     ),
                   ),
                   Positioned(
-                    top: 16,
-                    right: 16,
+                    top: 12,
+                    right: 12,
                       child: isFavorite(product) ? InkWell(
-                        child: SizedBox(width: 16, height: 16, child: SvgPicture.asset("assets/images/saved.svg")),
+                        child: SizedBox(width: 18, height: 18, child: SvgPicture.asset("assets/images/saved.svg")),
                         onTap: () {
                           setProductFavorite(product, false);
                         },
                       ) : InkWell(
-                        child: SizedBox(width: 16, height: 16, child: SvgPicture.asset("assets/images/save.svg")),
+                        child: SizedBox(width: 18, height: 18, child: SvgPicture.asset("assets/images/save.svg")),
                         onTap: () {
                           setProductFavorite(product, true);
                         },
@@ -97,7 +100,7 @@ class HomeScreenState extends State<HomeScreen>  {
               ),
               SizedBox(height: 8,),
               Text(
-                "${SessionData().currencyFormat.format(product.sellingPrice)} al giorno",
+                "${Utils.formatCurrency(product.sellingPrice)} al giorno",
                 textAlign: TextAlign.left,
                 style: TextStyle(
                   color: Constants.PRIMARY_COLOR,
@@ -179,68 +182,39 @@ class HomeScreenState extends State<HomeScreen>  {
       backgroundColor: Constants.PRIMARY_COLOR,
       body: Column(
         children: [
-          Stack(
-            children: [
-              Align(
-                  child: SvgPicture.asset("assets/images/wave_blue.svg"),
-                alignment: Alignment.topRight,
-              ),
-              SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      InkWell(
-                        child: Container(
-                          width: 42,
-                          height: 42,
-                          padding: const EdgeInsets.all(0),
-                          decoration: BoxDecoration(
-                            color: Color(0xff337a9d),
-                            borderRadius: BorderRadius.circular(42)
-                          ),
-                          child: SizedBox(width: 70, height: 40, child: SvgPicture.asset("assets/images/saved_white.svg", width: 19, height: 19, fit: BoxFit.scaleDown))
-                        ),
-                        onTap: () {
-                          Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => WishlistScreen()));
-                        },
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.only(top: 24),
-                        child: Text(
-                          "Home",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: Constants.FONT),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      InkWell(
-                        child: Container(
-                            width: 42,
-                            height: 42,
-                            padding: const EdgeInsets.all(0),
-                            decoration: BoxDecoration(
-                                color: Color(0xff337a9d),
-                                borderRadius: BorderRadius.circular(42)
-                            ),
-                            child: SizedBox(width: 17, height: 19, child: SvgPicture.asset("assets/images/nfc.svg", width: 17, height: 19, fit: BoxFit.scaleDown,))
-                        ),
-                        onTap: () {
-                          Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => NfcScreen()));
-                        },
-                      ),
-                    ],
+          HeaderWidget(
+              title: "Home",
+            leftWidget: InkWell(
+              child: Container(
+                  width: 42,
+                  height: 42,
+                  padding: const EdgeInsets.all(0),
+                  decoration: BoxDecoration(
+                      color: Color(0xff337a9d),
+                      borderRadius: BorderRadius.circular(42)
                   ),
-                ),
+                  child: SizedBox(width: 70, height: 40, child: SvgPicture.asset("assets/images/saved_white.svg", width: 19, height: 19, fit: BoxFit.scaleDown))
               ),
-            ],
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => WishlistScreen()));
+              },
+            ),
+            rightWidget: InkWell(
+              child: Container(
+                  width: 42,
+                  height: 42,
+                  padding: const EdgeInsets.all(0),
+                  decoration: BoxDecoration(
+                      color: Color(0xff337a9d),
+                      borderRadius: BorderRadius.circular(42)
+                  ),
+                  child: SizedBox(width: 17, height: 19, child: SvgPicture.asset("assets/images/nfc.svg", width: 17, height: 19, fit: BoxFit.scaleDown,))
+              ),
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => NfcScreen()));
+              },
+            ),
           ),
-          SizedBox(height: 16,),
           Expanded(
             child: Container(
               width: MediaQuery.of(context).size.width,

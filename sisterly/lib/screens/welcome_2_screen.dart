@@ -16,7 +16,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class Welcome2Screen extends StatefulWidget {
 
-  const Welcome2Screen({Key? key}) : super(key: key);
+  final bool showLogin;
+
+  const Welcome2Screen({Key? key, this.showLogin = true}) : super(key: key);
 
   @override
   Welcome2ScreenState createState() => Welcome2ScreenState();
@@ -91,6 +93,22 @@ class Welcome2ScreenState extends State<Welcome2Screen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        if(Navigator.of(context).canPop()) InkWell(
+                          child: Container(padding: const EdgeInsets.all(12), child: SvgPicture.asset("assets/images/back_black.svg")),
+                          onTap: () {
+                            Navigator.of(context).pop();
+                          },
+                        ) else const SizedBox(
+                          width: 24,
+                        ),
+                        const SizedBox(
+                          width: 24,
+                        )
+                      ],
+                    ),
                     SizedBox(height: 32,),
                     Center(
                       child: SvgPicture.asset("assets/images/sisterly_logo.svg",
@@ -105,7 +123,7 @@ class Welcome2ScreenState extends State<Welcome2Screen> {
                     SizedBox(height: 40,),
                     getIconTextWidget("rent", "Metti in affitto le borse che non usi e inizia a guadagnare, in modo comodo e sicuro."),
                     SizedBox(height: 40,),
-                    Row(
+                    if(widget.showLogin) Row(
                       children: [
                         Expanded(
                           child: OutlinedButton(

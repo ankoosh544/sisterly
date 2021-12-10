@@ -2,9 +2,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:intl/intl.dart';
 import 'package:sisterly/models/address.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/screens/choose_payment_screen.dart';
+import 'package:sisterly/screens/offer_success_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:sisterly/utils/session_data.dart';
@@ -34,6 +36,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final TextEditingController _email = TextEditingController();
   final TextEditingController _phone = TextEditingController();
 
+  final TextEditingController _fromDayText = TextEditingController();
+  final TextEditingController _fromMonthText = TextEditingController();
+  final TextEditingController _fromYearText = TextEditingController();
+  final TextEditingController _toDayText = TextEditingController();
+  final TextEditingController _toMonthText = TextEditingController();
+  final TextEditingController _toYearText = TextEditingController();
+
   bool _insurance = true;
   bool _hasAddress = false;
   bool _saveAddress = true;
@@ -42,14 +51,30 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   bool _addNewAddress = false;
   bool _editAddress = false;
   Address? _addressToEdit;
+  DateTime _availableFrom = DateTime.now();
+  DateTime _availableTo = DateTime.now().add(Duration(days: 7));
 
   @override
   void initState() {
     super.initState();
 
     Future.delayed(Duration.zero, () {
+      setFromDate(_availableFrom);
+      setToDate(_availableTo);
       getAddresses(null);
     });
+  }
+
+  setFromDate(DateTime date) {
+    _fromDayText.text = date.day.toString();
+    _fromMonthText.text = date.month.toString();
+    _fromYearText.text = date.year.toString();
+  }
+
+  setToDate(DateTime date) {
+    _toDayText.text = date.day.toString();
+    _toMonthText.text = date.month.toString();
+    _toYearText.text = date.year.toString();
   }
 
   @override
@@ -83,7 +108,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       const Padding(
                         padding: EdgeInsets.only(top: 24),
                         child: Text(
-                          "Checkout",
+                          "Offerta",
                           style: TextStyle(
                               color: Colors.white,
                               fontSize: 28,
@@ -327,7 +352,339 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           )
                         ]
                       ),
+                      SizedBox(height: 35),
+                      Text(
+                        "Da",
+                        style: TextStyle(
+                            color: Constants.DARK_TEXT_COLOR,
+                            fontSize: 18,
+                            fontFamily: Constants.FONT,
+                            fontWeight: FontWeight.bold
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 4,),
+                      InkWell(
+                        onTap: () async {
+                          debugPrint("show date picker");
+                          final DateTime? picked = await showDatePicker(
+                            context: context,
+                            initialDate: _availableFrom,
+                            firstDate: DateTime.now().subtract(Duration(days: 1)),
+                            lastDate: DateTime.now().add(Duration(days: 700)),
+                          );
 
+                          setState(() {
+                            if(picked != null) {
+                              _availableFrom = picked;
+
+                              setFromDate(_availableFrom);
+
+                              if(_availableTo.isBefore(_availableFrom)) {
+                                _availableTo = _availableFrom;
+                                setToDate(_availableTo);
+                              }
+                            }
+                          });
+                        },
+                        child: AbsorbPointer(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Color(0x4ca3c4d4),
+                                        spreadRadius: 2,
+                                        blurRadius: 15,
+                                        offset:
+                                        Offset(0, 0), // changes position of shadow
+                                      ),
+                                    ],
+                                  ),
+                                  child: TextField(
+                                    keyboardType: TextInputType.emailAddress,
+                                    cursorColor: Constants.PRIMARY_COLOR,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      color: Constants.FORM_TEXT,
+                                    ),
+                                    readOnly: true,
+                                    decoration: InputDecoration(
+                                      hintText: "gg",
+                                      hintStyle: const TextStyle(color: Constants.PLACEHOLDER_COLOR),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: const BorderSide(
+                                          width: 0,
+                                          style: BorderStyle.none,
+                                        ),
+                                      ),
+                                      suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                      contentPadding: const EdgeInsets.all(12),
+                                      filled: true,
+                                      fillColor: Constants.WHITE,
+                                    ),
+                                    controller: _fromDayText,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 8,),
+                              Expanded(
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Color(0x4ca3c4d4),
+                                        spreadRadius: 2,
+                                        blurRadius: 15,
+                                        offset:
+                                        Offset(0, 0), // changes position of shadow
+                                      ),
+                                    ],
+                                  ),
+                                  child: TextField(
+                                    keyboardType: TextInputType.emailAddress,
+                                    cursorColor: Constants.PRIMARY_COLOR,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      color: Constants.FORM_TEXT,
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: "mm",
+                                      hintStyle: const TextStyle(
+                                          color: Constants.PLACEHOLDER_COLOR),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: const BorderSide(
+                                          width: 0,
+                                          style: BorderStyle.none,
+                                        ),
+                                      ),
+                                      suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                      contentPadding: const EdgeInsets.all(12),
+                                      filled: true,
+                                      fillColor: Constants.WHITE,
+                                    ),
+                                    controller: _fromMonthText,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 8,),
+                              Expanded(
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Color(0x4ca3c4d4),
+                                        spreadRadius: 2,
+                                        blurRadius: 15,
+                                        offset:
+                                        Offset(0, 0), // changes position of shadow
+                                      ),
+                                    ],
+                                  ),
+                                  child: TextField(
+                                    keyboardType: TextInputType.emailAddress,
+                                    cursorColor: Constants.PRIMARY_COLOR,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      color: Constants.FORM_TEXT,
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: "aaaa",
+                                      hintStyle: const TextStyle(
+                                          color: Constants.PLACEHOLDER_COLOR),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: const BorderSide(
+                                          width: 0,
+                                          style: BorderStyle.none,
+                                        ),
+                                      ),
+                                      suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                      contentPadding: const EdgeInsets.all(12),
+                                      filled: true,
+                                      fillColor: Constants.WHITE,
+                                    ),
+                                    controller: _fromYearText,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 24,),
+                      Text(
+                        "A",
+                        style: TextStyle(
+                            color: Constants.DARK_TEXT_COLOR,
+                            fontSize: 18,
+                            fontFamily: Constants.FONT,
+                            fontWeight: FontWeight.bold
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 4,),
+                      InkWell(
+                        onTap: () async {
+                          debugPrint("show date picker TO");
+                          final DateTime? picked = await showDatePicker(
+                            context: context,
+                            initialDate: _availableTo,
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime.now().add(Duration(days: 700)),
+                          );
+
+                          setState(() {
+                            if(picked != null) {
+                              _availableTo = picked;
+
+                              setToDate(_availableTo);
+
+                              if (_availableFrom.isAfter(
+                                  _availableTo)) {
+                                debugPrint("Correct date");
+                                _availableFrom =
+                                    _availableTo;
+                                setFromDate(_availableFrom);
+                              }
+                            }
+                          });
+                        },
+                        child: AbsorbPointer(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Color(0x4ca3c4d4),
+                                        spreadRadius: 2,
+                                        blurRadius: 15,
+                                        offset:
+                                        Offset(0, 0), // changes position of shadow
+                                      ),
+                                    ],
+                                  ),
+                                  child: TextField(
+                                    keyboardType: TextInputType.emailAddress,
+                                    cursorColor: Constants.PRIMARY_COLOR,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      color: Constants.FORM_TEXT,
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: "gg",
+                                      hintStyle: const TextStyle(
+                                          color: Constants.PLACEHOLDER_COLOR),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: const BorderSide(
+                                          width: 0,
+                                          style: BorderStyle.none,
+                                        ),
+                                      ),
+                                      suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                      contentPadding: const EdgeInsets.all(12),
+                                      filled: true,
+                                      fillColor: Constants.WHITE,
+                                    ),
+                                    controller: _toDayText,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 8,),
+                              Expanded(
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Color(0x4ca3c4d4),
+                                        spreadRadius: 2,
+                                        blurRadius: 15,
+                                        offset:
+                                        Offset(0, 0), // changes position of shadow
+                                      ),
+                                    ],
+                                  ),
+                                  child: TextField(
+                                    keyboardType: TextInputType.emailAddress,
+                                    cursorColor: Constants.PRIMARY_COLOR,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      color: Constants.FORM_TEXT,
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: "mm",
+                                      hintStyle: const TextStyle(
+                                          color: Constants.PLACEHOLDER_COLOR),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: const BorderSide(
+                                          width: 0,
+                                          style: BorderStyle.none,
+                                        ),
+                                      ),
+                                      suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                      contentPadding: const EdgeInsets.all(12),
+                                      filled: true,
+                                      fillColor: Constants.WHITE,
+                                    ),
+                                    controller: _toMonthText,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 8,),
+                              Expanded(
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Color(0x4ca3c4d4),
+                                        spreadRadius: 2,
+                                        blurRadius: 15,
+                                        offset:
+                                        Offset(0, 0), // changes position of shadow
+                                      ),
+                                    ],
+                                  ),
+                                  child: TextField(
+                                    keyboardType: TextInputType.emailAddress,
+                                    cursorColor: Constants.PRIMARY_COLOR,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      color: Constants.FORM_TEXT,
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: "aaaa",
+                                      hintStyle: const TextStyle(
+                                          color: Constants.PLACEHOLDER_COLOR),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: const BorderSide(
+                                          width: 0,
+                                          style: BorderStyle.none,
+                                        ),
+                                      ),
+                                      suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                      contentPadding: const EdgeInsets.all(12),
+                                      filled: true,
+                                      fillColor: Constants.WHITE,
+                                    ),
+                                    controller: _toYearText,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                       SizedBox(height: 35),
                       Center(
                         child: ElevatedButton(
@@ -365,7 +722,32 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   next() {
-    Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChoosePaymentScreen(address: _activeAddress!, shipping: _shipping, insurance: _insurance, product: widget.product)));
+    /*setState(() {
+      _isLoading = true;
+    });*/
+
+    var params = {
+      "price": widget.product.sellingPrice.toString(),
+      "date_start": DateFormat("yyyy-MM-dd").format(_availableFrom),
+      "date_end": DateFormat("yyyy-MM-dd").format(_availableTo),
+      "delivery_mode": _shipping == 'shipment' ? 2 : 1
+    };
+
+    if(_activeAddress != null && _shipping == 'shipment') {
+      params["address_id"] = _activeAddress!.id.toString();
+    }
+
+    ApiManager(context).makePutRequest("/product/" + widget.product.id.toString() + "/offer/make/", params, (res) {
+      Navigator.of(context).push(
+          MaterialPageRoute(builder: (BuildContext context) => OfferSuccessScreen()));
+    }, (res) {
+      ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+      /*setState(() {
+        _isLoading = false;
+      });*/
+    });
+
+    //Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChoosePaymentScreen(address: _activeAddress!, shipping: _shipping, insurance: _insurance, product: widget.product)));
   }
 
   void _handleShipmentRadioChange(String? value) {

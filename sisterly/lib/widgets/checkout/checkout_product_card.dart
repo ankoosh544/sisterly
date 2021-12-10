@@ -4,6 +4,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:sisterly/utils/session_data.dart';
+import 'package:sisterly/utils/utils.dart';
 
 class CheckoutProductCard extends StatelessWidget {
 
@@ -60,7 +61,7 @@ class CheckoutProductCard extends StatelessWidget {
                   ),
                   SizedBox(height: 12),
                   Text(
-                    "${SessionData().currencyFormat.format(product.sellingPrice)} al giorno",
+                    "${Utils.formatCurrency(product.sellingPrice)} al giorno",
                     textAlign: TextAlign.left,
                     style: TextStyle(
                       color: Constants.PRIMARY_COLOR,

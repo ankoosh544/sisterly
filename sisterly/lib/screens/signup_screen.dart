@@ -465,7 +465,7 @@ class SignupScreenState extends State<SignupScreen>  {
                                         style: TextStyle(color: Constants.PRIMARY_COLOR, fontSize: 16, fontWeight: FontWeight.bold, fontFamily: Constants.FONT),
                                         recognizer: TapGestureRecognizer()
                                           ..onTap = () {
-                                            String url ="https://www.therapyou.it/terms-and-contitions/";
+                                            String url = "https://sisterly-assets.s3.eu-central-1.amazonaws.com/T%26C+Sisterly+rev1.pdf";
                                             launch(url);
                                           },
                                       ),

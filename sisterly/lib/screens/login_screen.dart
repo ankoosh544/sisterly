@@ -66,8 +66,7 @@ class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin 
 
     _emailFilter.text = _emailFilter.text.toLowerCase().trim();
 
-    ApiManager(context).login(_emailFilter.text.trim(), _passwordFilter.text,
-        (response) async {
+    ApiManager(context).login(_emailFilter.text.trim(), _passwordFilter.text, (response) async {
       if (response["access"] != null) {
         debugPrint("login success");
 
@@ -82,7 +81,7 @@ class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin 
         setState(() {
           _isLoading = false;
         });
-        ApiManager.showFreeErrorToast(context, response["detail"]);
+        ApiManager.showFreeErrorToast(context, response["errors"]);
       }
     }, (statusCode) {
       setState(() {

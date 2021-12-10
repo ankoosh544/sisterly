@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:sisterly/utils/session_data.dart';
 import 'package:sisterly/widgets/empty_layout.dart';
 import 'package:sisterly/widgets/error_layout.dart';
 import 'package:sisterly/widgets/progress_indicator.dart';
@@ -11,6 +12,12 @@ import 'package:url_launcher/url_launcher.dart';
 class Utils {
 
   Utils();
+
+  static formatCurrency(value) {
+    var val = SessionData().currencyFormat.format(value);
+    val = val.replaceAll(",00", "");
+    return val;
+  }
 
   static capitalize(String s) {
     return s[0].toUpperCase() + s.substring(1);

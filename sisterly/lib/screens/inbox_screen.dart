@@ -5,6 +5,7 @@ import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:sisterly/widgets/header_widget.dart';
 
 import '../utils/constants.dart';
 import "package:sisterly/utils/utils.dart";
@@ -161,53 +162,7 @@ class InboxScreenState extends State<InboxScreen>  {
       backgroundColor: Constants.PRIMARY_COLOR,
       body: Column(
         children: [
-          Stack(
-            children: [
-              Align(
-                  child: SvgPicture.asset("assets/images/wave_blue.svg"),
-                alignment: Alignment.topRight,
-              ),
-              SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      if(Navigator.of(context).canPop()) InkWell(
-                        child: SvgPicture.asset("assets/images/back.svg"),
-                        onTap: () {
-                          Navigator.of(context).pop();
-                        },
-                      ) else const SizedBox(
-                        width: 24,
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.only(top: 24),
-                        child: Text(
-                          "Sister Chats",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: Constants.FONT),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      SizedBox(width: 20,)
-                      /*InkWell(
-                        child: SizedBox(width: 17, height: 19, child: SvgPicture.asset("assets/images/menu.svg", width: 17, height: 19, fit: BoxFit.scaleDown,)),
-                        onTap: () {
-
-                        },
-                      ),*/
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16,),
+          HeaderWidget(title: "Sisterly Talks"),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(

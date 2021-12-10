@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/screens/product_screen.dart';
@@ -11,9 +12,13 @@ import 'package:sisterly/utils/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sisterly/utils/session_data.dart';
+import 'package:sisterly/utils/utils.dart';
 import 'package:sisterly/widgets/custom_app_bar.dart';
+import 'package:sisterly/widgets/header_widget.dart';
 
 import '../utils/constants.dart';
+import 'checkout_screen.dart';
 import 'login_screen.dart';
 
 class WishlistScreen extends StatefulWidget {
@@ -28,6 +33,7 @@ class WishlistScreenState extends State<WishlistScreen>  {
 
   List<Product> _productsFavorite = [];
   bool _isLoading = false;
+  bool _viewAll = false;
 
   @override
   void initState() {
@@ -66,11 +72,23 @@ class WishlistScreenState extends State<WishlistScreen>  {
     super.dispose();
   }
 
-  Widget productCell() {
+  setProductFavorite(product, add) {
+    var params = {
+      "product_id": product.id,
+      "remove": !add
+    };
+    ApiManager(context).makePostRequest('/product/favorite/change/', params, (res) {
+      getProductsFavorite();
+    }, (res) {
+
+    });
+  }
+
+  Widget productCell(Product product) {
     return InkWell(
       onTap: () {
-        // Navigator.of(context).push(
-        //     MaterialPageRoute(builder: (BuildContext context) => ProductScreen()));
+        Navigator.of(context).push(
+             MaterialPageRoute(builder: (BuildContext context) => ProductScreen(product)));
       },
       child: Container(
         margin: const EdgeInsets.all(8),
@@ -99,24 +117,42 @@ class WishlistScreenState extends State<WishlistScreen>  {
                     color: Color(0xfff5f5f5),
                     borderRadius: BorderRadius.circular(15)
                   ),
-                  child: Image.asset("assets/images/product.png", height: 76,),
+                  child: CachedNetworkImage(
+                    height: 76,
+                    imageUrl: SessionData().serverUrl + (product.images.isNotEmpty ? product.images.first : ""),
+                    placeholder: (context, url) => Center(child: CircularProgressIndicator()),
+                    errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
+                  )
                 ),
                 Positioned(
-                  top: 16,
-                  right: 16,
+                  top: 10,
+                  right: 10,
                     child: InkWell(
-                      child: SizedBox(width: 16, height: 16, child: SvgPicture.asset("assets/images/save.svg")),
+                      onTap: () {
+                        setProductFavorite(product, false);
+                      },
+                      child: SizedBox(width: 24, height: 24, child: SvgPicture.asset("assets/images/cancel.svg")),
                     )
                 )
               ],
             ),
             Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: EdgeInsets.all(8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
-                    "Chain-Cassette Bottega Veneta",
+                    product.model,
+                    textAlign: TextAlign.left,
+                    style: TextStyle(
+                      color: Constants.TEXT_COLOR,
+                      fontFamily: Constants.FONT,
+                      fontSize: 16,
+                    ),
+                  ),
+                  SizedBox(height: 4,),
+                  Text(
+                    product.brandName,
                     textAlign: TextAlign.left,
                     style: TextStyle(
                       color: Constants.TEXT_COLOR,
@@ -126,7 +162,7 @@ class WishlistScreenState extends State<WishlistScreen>  {
                   ),
                   SizedBox(height: 12,),
                   Text(
-                    "€30 per day",
+                    "${Utils.formatCurrency(product.sellingPrice)} al giorno",
                     textAlign: TextAlign.left,
                     style: TextStyle(
                         color: Constants.PRIMARY_COLOR,
@@ -135,9 +171,35 @@ class WishlistScreenState extends State<WishlistScreen>  {
                         fontWeight: FontWeight.bold
                     ),
                   ),
+                  SizedBox(height: 8,),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              primary: Constants.PRIMARY_COLOR,
+                              textStyle: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold
+                              ),
+                              side: const BorderSide(color: Constants.PRIMARY_COLOR, width: 1),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(50),
+                              )
+                          ),
+                          child: Text('Prenota'),
+                          onPressed: () {
+                            Navigator.of(context).push(
+                                MaterialPageRoute(builder: (BuildContext context) => CheckoutScreen(product: product,)));
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -150,50 +212,9 @@ class WishlistScreenState extends State<WishlistScreen>  {
       backgroundColor: Constants.PRIMARY_COLOR,
       body: Column(
         children: [
-          Stack(
-            children: [
-              Align(
-                  child: SvgPicture.asset("assets/images/wave_blue.svg"),
-                alignment: Alignment.topRight,
-              ),
-              SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      InkWell(
-                        child: SizedBox(child: SvgPicture.asset("assets/images/back.svg")),
-                        onTap: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.only(top: 24),
-                        child: Text(
-                          "Wishlist",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: Constants.FONT),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      InkWell(
-                        child: SizedBox(width: 17, height: 19, child: SvgPicture.asset("assets/images/menu.svg", width: 17, height: 19, fit: BoxFit.scaleDown,)),
-                        onTap: () {
-
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+          HeaderWidget(
+            title: "Wishlist"
           ),
-          SizedBox(height: 16,),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(
@@ -209,7 +230,7 @@ class WishlistScreenState extends State<WishlistScreen>  {
                   child: Column(
                     children: [
                       Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 0),
                           child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: <Widget>[
@@ -221,7 +242,7 @@ class WishlistScreenState extends State<WishlistScreen>  {
                                       crossAxisAlignment: WrapCrossAlignment.center,
                                       children: [
                                         Text(
-                                          "Lista dei desideri",
+                                          "Wishlist",
                                           style: TextStyle(
                                               color: Constants.DARK_TEXT_COLOR,
                                               fontSize: 20,
@@ -240,15 +261,22 @@ class WishlistScreenState extends State<WishlistScreen>  {
                                         ),
                                       ],
                                     ),
-                                    if(_productsFavorite.isNotEmpty) Text(
-                                      "See All",
-                                      style: TextStyle(
-                                          color: Constants.SECONDARY_COLOR,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          fontFamily: Constants.FONT,
-                                          decoration: TextDecoration.underline
+                                    if(_productsFavorite.isNotEmpty) InkWell(
+                                      child: Text(
+                                        _viewAll ? "Vedi meno" : "Vedi tutti",
+                                        style: TextStyle(
+                                            color: Constants.SECONDARY_COLOR,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            fontFamily: Constants.FONT,
+                                            decoration: TextDecoration.underline
+                                        ),
                                       ),
+                                      onTap: () {
+                                        setState(() {
+                                          _viewAll = !_viewAll;
+                                        });
+                                      },
                                     ),
                                   ],
                                 ),
@@ -263,12 +291,12 @@ class WishlistScreenState extends State<WishlistScreen>  {
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                  childAspectRatio: 0.8 / 1,
+                                  childAspectRatio: 0.61 / 1,
                                   crossAxisCount: 2,
                                 ),
-                                itemCount: _productsFavorite.length,
+                                itemCount: _viewAll ? _productsFavorite.length : (_productsFavorite.length > 4 ? 4 : _productsFavorite.length),
                                 itemBuilder: (BuildContext context, int index) {
-                                  return productCell();
+                                  return productCell(_productsFavorite[index]);
                                 }
                             ),
                           ) : Text("Non ci sono prodotti nella tua lista preferiti")

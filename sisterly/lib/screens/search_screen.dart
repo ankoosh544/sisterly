@@ -10,6 +10,8 @@ import 'package:sisterly/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sisterly/utils/session_data.dart';
+import 'package:sisterly/utils/utils.dart';
+import 'package:sisterly/widgets/header_widget.dart';
 
 import '../utils/constants.dart';
 import 'filters_screen.dart';
@@ -42,7 +44,7 @@ class SearchScreenState extends State<SearchScreen>  {
   }
 
   showFilters() async {
-    _filters = await showModalBottomSheet(
+    var results = await showModalBottomSheet(
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
@@ -51,6 +53,12 @@ class SearchScreenState extends State<SearchScreen>  {
             child: FiltersScreen(filters: _filters,)
         )
     );
+
+    if(results == null) {
+      _filters = new Filters();
+    } else {
+      _filters = results;
+    }
 
     getProducts();
   }
@@ -117,7 +125,7 @@ class SearchScreenState extends State<SearchScreen>  {
               ),
               SizedBox(height: 8,),
               Text(
-                "${SessionData().currencyFormat.format(product.sellingPrice)} al giorno",
+                "${Utils.formatCurrency(product.sellingPrice)} al giorno",
                 textAlign: TextAlign.left,
                 style: TextStyle(
                   color: Constants.PRIMARY_COLOR,
@@ -159,6 +167,8 @@ class SearchScreenState extends State<SearchScreen>  {
     if(_filters.onlySameCity) {
       params["same_city"] = true;
     }
+
+    params["max_price"] = _filters.maxPrice;
 
     params["start"] = 0;
     params["count"] = 2000;
@@ -226,68 +236,39 @@ class SearchScreenState extends State<SearchScreen>  {
       backgroundColor: Constants.PRIMARY_COLOR,
       body: Column(
         children: [
-          Stack(
-            children: [
-              Align(
-                  child: SvgPicture.asset("assets/images/wave_blue.svg"),
-                alignment: Alignment.topRight,
-              ),
-              SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      InkWell(
-                        child: Container(
-                          width: 42,
-                          height: 42,
-                          padding: const EdgeInsets.all(0),
-                          decoration: BoxDecoration(
-                            color: Color(0xff337a9d),
-                            borderRadius: BorderRadius.circular(42)
-                          ),
-                          child: SizedBox(width: 70, height: 40, child: SvgPicture.asset("assets/images/saved_white.svg", width: 19, height: 19, fit: BoxFit.scaleDown))
-                        ),
-                        onTap: () {
-                          Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => WishlistScreen()));
-                        },
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.only(top: 24),
-                        child: Text(
-                          "Prodotti",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: Constants.FONT),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      InkWell(
-                        child: Container(
-                            width: 42,
-                            height: 42,
-                            padding: const EdgeInsets.all(0),
-                            decoration: BoxDecoration(
-                                color: Color(0xff337a9d),
-                                borderRadius: BorderRadius.circular(42)
-                            ),
-                            child: SizedBox(width: 17, height: 19, child: SvgPicture.asset("assets/images/search_white.svg", width: 17, height: 19, fit: BoxFit.scaleDown,))
-                        ),
-                        onTap: () {
-                          showFilters();
-                        },
-                      ),
-                    ],
+          HeaderWidget(
+            title: "Prodotti",
+            leftWidget: InkWell(
+              child: Container(
+                  width: 42,
+                  height: 42,
+                  padding: const EdgeInsets.all(0),
+                  decoration: BoxDecoration(
+                      color: Color(0xff337a9d),
+                      borderRadius: BorderRadius.circular(42)
                   ),
-                ),
+                  child: SizedBox(width: 70, height: 40, child: SvgPicture.asset("assets/images/saved_white.svg", width: 19, height: 19, fit: BoxFit.scaleDown))
               ),
-            ],
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => WishlistScreen()));
+              },
+            ),
+            rightWidget: InkWell(
+              child: Container(
+                  width: 42,
+                  height: 42,
+                  padding: const EdgeInsets.all(0),
+                  decoration: BoxDecoration(
+                      color: Color(0xff337a9d),
+                      borderRadius: BorderRadius.circular(42)
+                  ),
+                  child: SizedBox(width: 17, height: 19, child: SvgPicture.asset("assets/images/search_white.svg", width: 17, height: 19, fit: BoxFit.scaleDown,))
+              ),
+              onTap: () {
+                showFilters();
+              },
+            ),
           ),
-          SizedBox(height: 16,),
           Expanded(
             child: Container(
               width: MediaQuery.of(context).size.width,
@@ -302,6 +283,34 @@ class SearchScreenState extends State<SearchScreen>  {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
+                      if(_filters.areSet()) InkWell(
+                        onTap: () {
+                          setState(() {
+                            _filters = Filters();
+                          });
+
+                          getProducts();
+                        },
+                        child: Align(
+                          child: Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              SvgPicture.asset("assets/images/cancel.svg"),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child: Text(
+                                  "Rimuovi filtri",
+                                  style: TextStyle(
+                                    color: Constants.SECONDARY_COLOR,
+                                    fontFamily: Constants.FONT
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          alignment: Alignment.topRight,
+                        ),
+                      ),
                       for (var prod in _products) productCell(prod)
                     ],
                   ),

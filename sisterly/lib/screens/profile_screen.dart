@@ -15,6 +15,7 @@ import 'package:sisterly/utils/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sisterly/utils/session_data.dart';
+import 'package:sisterly/widgets/header_widget.dart';
 import 'package:sisterly/widgets/stars_widget.dart';
 
 import '../utils/constants.dart';
@@ -178,7 +179,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
                   child: CachedNetworkImage(
                     height: 76,
                     imageUrl: SessionData().serverUrl + (product.images.isNotEmpty ? product.images.first : ""),
-                    placeholder: (context, url) => CircularProgressIndicator(),
+                    placeholder: (context, url) => Center(child: CircularProgressIndicator()),
                     errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
                   )
                 ),
@@ -215,7 +216,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
                   ),
                   SizedBox(height: 10,),
                   Text(
-                    "${SessionData().currencyFormat.format(product.sellingPrice)} al giorno",
+                    "${Utils.formatCurrency(product.sellingPrice)} al giorno",
                     textAlign: TextAlign.left,
                     style: TextStyle(
                         color: Constants.PRIMARY_COLOR,
@@ -239,59 +240,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
       backgroundColor: Constants.PRIMARY_COLOR,
       body: Column(
         children: [
-          Stack(
-            children: [
-              Align(
-                  child: SvgPicture.asset("assets/images/wave_blue.svg"),
-                alignment: Alignment.topRight,
-              ),
-              SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      InkWell(
-                        child: SizedBox(child: SvgPicture.asset("assets/images/back.svg")),
-                        onTap: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.only(top: 24),
-                        child: Text(
-                          "Dettagli Profilo",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: Constants.FONT),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      SizedBox(width: 20,)
-                      /*InkWell(
-                        child: SizedBox(width: 17, height: 19, child: SvgPicture.asset("assets/images/menu.svg", width: 17, height: 19, fit: BoxFit.scaleDown,)),
-                        onTap: () {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            builder: (context) => FractionallySizedBox(
-                                heightFactor: 0.85,
-                                child: FiltersScreen()
-                            )
-                          );
-                        },
-                      ),*/
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16,),
+          HeaderWidget(title: "Dettagli Profilo"),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(

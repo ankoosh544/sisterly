@@ -28,7 +28,7 @@ class Offer {
   factory Offer.fromJson(Map<String, dynamic> json) {
     Offer prod = Offer(
       json["id"],
-      Account.fromJson(json["user_id"]),
+      Account.fromJson(json["user"]),
       Product.fromJson(json["product"]),
       State.fromJson(json["state"]),
       json["price"],

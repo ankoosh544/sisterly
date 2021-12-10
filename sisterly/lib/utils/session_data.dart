@@ -17,9 +17,10 @@ class SessionData {
   String? token;
   String? language;
 
-  var currencyFormat = NumberFormat.currency(symbol: "€", locale: "it_IT");
+  var currencyFormat = NumberFormat.currency(symbol: "€", locale: "it_IT", customPattern: "€###.0#");
 
-  var serverUrl = "https://api.v1.sisterly.it";
+  var serverUrl = "https://api.v1.sisterly.it"; //stage
+  //var serverUrl = "https://api.sisterly.it"; //prod
 
   SessionData._internal() {
     // init things inside this

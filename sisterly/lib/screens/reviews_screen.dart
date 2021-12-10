@@ -5,6 +5,9 @@ import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:sisterly/utils/session_data.dart';
+import 'package:sisterly/widgets/header_widget.dart';
+import 'package:sisterly/widgets/stars_widget.dart';
 
 import '../utils/constants.dart';
 import "package:sisterly/utils/utils.dart";
@@ -22,6 +25,7 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
   bool _isLoading = false;
   List<Product> _reviews = [];
   Account? _profile;
+  bool _viewAll = false;
 
   @override
   void initState() {
@@ -185,51 +189,7 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
       backgroundColor: Constants.PRIMARY_COLOR,
       body: Column(
         children: [
-          Stack(
-            children: [
-              Align(
-                  child: SvgPicture.asset("assets/images/wave_blue.svg"),
-                alignment: Alignment.topRight,
-              ),
-              SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      InkWell(
-                        child: SizedBox(child: SvgPicture.asset("assets/images/back.svg")),
-                        onTap: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.only(top: 24),
-                        child: Text(
-                          "Recensioni",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: Constants.FONT),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      SizedBox(width: 20,)
-                      /*InkWell(
-                        child: SizedBox(width: 17, height: 19, child: SvgPicture.asset("assets/images/menu.svg", width: 17, height: 19, fit: BoxFit.scaleDown,)),
-                        onTap: () {
-
-                        },
-                      ),*/
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16,),
+          HeaderWidget(title: "Recensioni"),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(
@@ -248,16 +208,16 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
                         SizedBox(height: 8),
                         _isLoading ? CircularProgressIndicator() : Row(
                           children: [
-                            if(_profile != null && _profile!.image != null) ClipRRect(
+                            ClipRRect(
                               borderRadius: BorderRadius.circular(68.0),
                               child: CachedNetworkImage(
                                 width: 68, height: 68, fit: BoxFit.cover,
-                                imageUrl: _profile!.image!,
+                                imageUrl: SessionData().serverUrl + (_profile!.image ?? ""),
                                 placeholder: (context, url) => CircularProgressIndicator(),
-                                errorWidget: (context, url, error) => Icon(Icons.error),
+                                errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder.svg"),
                               ),
                             ),
-                            if(_profile != null && _profile!.image != null) SizedBox(width: 12,),
+                            SizedBox(width: 12,),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -269,26 +229,22 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
                                       fontFamily: Constants.FONT
                                   ),
                                 ),
-                                SizedBox(height: 6,),
+                                /*SizedBox(height: 6,),
                                 Text(
-                                  "Milan",
+                                  "Milano",
                                   style: TextStyle(
                                       color: Constants.LIGHT_TEXT_COLOR,
                                       fontSize: 15,
                                       fontFamily: Constants.FONT
                                   ),
-                                ),
+                                ),*/
                                 SizedBox(height: 6,),
                                 Wrap(
                                   spacing: 3,
                                   children: [
-                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                                    SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
+                                    if(_profile != null) StarsWidget(stars: _profile!.reviewsMedia!.toInt()),
                                     Text(
-                                      "5.0",
+                                      _profile!.reviewsMedia!.toString(),
                                       style: TextStyle(
                                           color: Constants.DARK_TEXT_COLOR,
                                           fontSize: 14,
@@ -301,7 +257,7 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
                             )
                           ],
                         ),
-                        SizedBox(height: 24,),
+                        /*SizedBox(height: 24,),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -357,7 +313,7 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
                               ],
                             ),
                           ],
-                        ),
+                        ),*/
                         SizedBox(height: 40,),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -371,15 +327,22 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
                                   fontFamily: Constants.FONT
                               ),
                             ),
-                            if(_reviews.isNotEmpty) Text(
-                              "See All",
-                              style: TextStyle(
-                                  color: Constants.SECONDARY_COLOR,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: Constants.FONT,
-                                decoration: TextDecoration.underline
+                            if(_reviews.isNotEmpty) InkWell(
+                              child: Text(
+                                _viewAll ? "Vedi meno" : "Vedi tutte",
+                                style: TextStyle(
+                                    color: Constants.SECONDARY_COLOR,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: Constants.FONT,
+                                    decoration: TextDecoration.underline
+                                ),
                               ),
+                              onTap: () {
+                                setState(() {
+                                  _viewAll = !_viewAll;
+                                });
+                              },
                             ),
                           ],
                         ),
@@ -389,7 +352,7 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
                           child: ListView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
-                            itemCount: _reviews.length,
+                              itemCount: _viewAll ? _reviews.length : (_reviews.length > 4 ? 4 : _reviews.length),
                             itemBuilder: (BuildContext context, int index) {
                               return reviewCell(_reviews[index]);
                             }

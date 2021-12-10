@@ -116,16 +116,16 @@ class ProductScreenState extends State<ProductScreen>  {
                         child: CachedNetworkImage(
                           height: 180, fit: BoxFit.fitHeight,
                           imageUrl: SessionData().serverUrl + (widget.product.images.isNotEmpty ? widget.product.images.first : ""),
-                          placeholder: (context, url) => CircularProgressIndicator(),
+                          placeholder: (context, url) => Center(child: CircularProgressIndicator()),
                           errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
                         ),
                       ),
                     ),
                     Positioned(
-                      left: 24,
-                      top: 16,
+                      left: 16,
+                      top: 8,
                       child: InkWell(
-                        child: SvgPicture.asset("assets/images/back_black.svg"),
+                        child: Container(padding: const EdgeInsets.all(12), child: SvgPicture.asset("assets/images/back_black.svg")),
                         onTap: () {
                           Navigator.of(context).pop();
                         },
@@ -176,7 +176,7 @@ class ProductScreenState extends State<ProductScreen>  {
                             ],
                           ),
                           Text(
-                            "${SessionData().currencyFormat.format(widget.product.sellingPrice)} al giorno",
+                            "${Utils.formatCurrency(widget.product.sellingPrice)}",
                             style: TextStyle(
                                 color: Constants.PRIMARY_COLOR,
                                 fontSize: 25,
@@ -208,7 +208,7 @@ class ProductScreenState extends State<ProductScreen>  {
                               child: CachedNetworkImage(
                                 width: 68, height: 68, fit: BoxFit.cover,
                                 imageUrl: SessionData().serverUrl + (widget.product.owner.image ?? ""),
-                                placeholder: (context, url) => CircularProgressIndicator(),
+                                placeholder: (context, url) => Center(child: CircularProgressIndicator()),
                                 errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder.svg"),
                               ),
                             ),
@@ -310,7 +310,7 @@ class ProductScreenState extends State<ProductScreen>  {
                       getInfoRow("Height", "18cm"),
                       SizedBox(height: 8,),
                       getInfoRow("Width", "26cm"),*/
-                      SizedBox(height: 24,),
+                      SizedBox(height: 40,),
                       Row(
                         children: [
                           Expanded(
@@ -327,10 +327,9 @@ class ProductScreenState extends State<ProductScreen>  {
                                     borderRadius: BorderRadius.circular(50),
                                   )
                               ),
-                              child: Text('Prenota'),
+                              child: Text(isFavorite(widget.product) ? 'Rimuovi dalla Wishlist' : 'Aggiungi alla Wishlist', textAlign: TextAlign.center,),
                               onPressed: () {
-                                Navigator.of(context).push(
-                                    MaterialPageRoute(builder: (BuildContext context) => CheckoutScreen(product: widget.product,)));
+                                setProductFavorite(widget.product, !isFavorite(widget.product));
                               },
                             ),
                           ),
@@ -350,14 +349,15 @@ class ProductScreenState extends State<ProductScreen>  {
                                   padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
                               ),
-                              child: Text(isFavorite(widget.product) ? 'Rimuovi dalla Wishlist' : 'Aggiungi alla Wishlist', textAlign: TextAlign.center,),
+                              child: Text('Prenota'),
                               onPressed: () {
-                                setProductFavorite(widget.product, !isFavorite(widget.product));
+                                Navigator.of(context).push(
+                                    MaterialPageRoute(builder: (BuildContext context) => CheckoutScreen(product: widget.product,)));
                               },
                             ),
                           ),
                         ],
-                      )
+                      ),
                     ],
                   ),
                 ),

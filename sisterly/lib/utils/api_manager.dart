@@ -27,6 +27,7 @@ class ApiManager {
     var params = {
       "email": email,
       "password": password,
+      "username_email": email
     };
 
     makePostRequest("/client/token", params, success, failure);
@@ -39,6 +40,7 @@ class ApiManager {
       "first_name": firstName,
       "last_name": lastName,
       "phone": phone,
+      "username": email
     };
 
     makePostRequest("/client/register", params, success, failure);
@@ -112,7 +114,7 @@ class ApiManager {
   }
 
   String encodeMap(Map data) {
-    return data.keys.map((key) => "${Uri.encodeComponent(key)}=${Uri.encodeComponent(data[key])}").join("&");
+    return data.keys.map((key) => "${Uri.encodeComponent(key)}=${Uri.encodeComponent(data[key].toString())}").join("&");
   }
 
   makeGetRequest(endpoint, params, success, failure) async {
@@ -447,6 +449,20 @@ class ApiManager {
         });
   }
 
+  static showFreeSuccessMessage(context, String text) {
+    if(context == null) return;
+
+    CustomAlert.show(context,
+        title: AppLocalizations.of(context).translate("generic_success"),
+        subtitle: text,
+        style: CustomAlertStyle.success,
+        onPress: (bool isConfirm) {
+          Navigator.of(context, rootNavigator: true).pop();
+
+          return false;
+        });
+  }
+
   static showErrorMessage(context, String textKey) {
     if(context == null) return;
 
@@ -454,6 +470,21 @@ class ApiManager {
         confirmButtonColor: Colors.red,
         title: AppLocalizations.of(context).translate("generic_warning"),
         subtitle: AppLocalizations.of(context).translate(textKey),
+        style: CustomAlertStyle.error,
+        onPress: (bool isConfirm) {
+          Navigator.of(context, rootNavigator: true).pop();
+
+          return false;
+        });
+  }
+
+  static showFreeErrorMessage(context, String text) {
+    if(context == null) return;
+
+    CustomAlert.show(context,
+        confirmButtonColor: Colors.red,
+        title: AppLocalizations.of(context).translate("generic_warning"),
+        subtitle: text,
         style: CustomAlertStyle.error,
         onPress: (bool isConfirm) {
           Navigator.of(context, rootNavigator: true).pop();

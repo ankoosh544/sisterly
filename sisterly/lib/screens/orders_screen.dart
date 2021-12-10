@@ -8,6 +8,7 @@ import 'package:sisterly/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sisterly/utils/session_data.dart';
+import 'package:sisterly/widgets/header_widget.dart';
 import 'package:sisterly/widgets/stars_widget.dart';
 import '../utils/constants.dart';
 import "package:sisterly/utils/utils.dart";
@@ -60,7 +61,10 @@ class OrdersScreenState extends State<OrdersScreen>  {
       var data = res["data"];
       if (data != null) {
         for (var prod in data) {
-          _orders.add(Offer.fromJson(prod));
+          var order = Offer.fromJson(prod);
+          if(isOrder(order)) {
+            _orders.add(order);
+          }
         }
       }
     }, (res) {
@@ -68,6 +72,15 @@ class OrdersScreenState extends State<OrdersScreen>  {
         _isLoading = false;
       });
     });
+  }
+
+  isOrder(Offer offer) {
+    switch(offer.state.id) {
+      case 4: return true;
+      case 5: return true;
+      case 6: return true;
+      default: return false;
+    }
   }
 
   Widget offerCell(Offer offer) {
@@ -144,7 +157,7 @@ class OrdersScreenState extends State<OrdersScreen>  {
                     ),
                     SizedBox(height: 12,),
                     Text(
-                      "${SessionData().currencyFormat.format(offer.product.sellingPrice)} al giorno",
+                      "${Utils.formatCurrency(offer.product.sellingPrice)} al giorno",
                       style: TextStyle(
                           color: Constants.PRIMARY_COLOR,
                           fontSize: 18,
@@ -197,53 +210,7 @@ class OrdersScreenState extends State<OrdersScreen>  {
       backgroundColor: Constants.PRIMARY_COLOR,
       body: Column(
         children: [
-          Stack(
-            children: [
-              Align(
-                  child: SvgPicture.asset("assets/images/wave_blue.svg"),
-                alignment: Alignment.topRight,
-              ),
-              SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      if(Navigator.of(context).canPop()) InkWell(
-                        child: SvgPicture.asset("assets/images/back.svg"),
-                        onTap: () {
-                          Navigator.of(context).pop();
-                        },
-                      ) else const SizedBox(
-                        width: 24,
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.only(top: 24),
-                        child: Text(
-                          "Ordini",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: Constants.FONT),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      SizedBox(width: 20,)
-                      /*InkWell(
-                        child: SizedBox(width: 17, height: 19, child: SvgPicture.asset("assets/images/menu.svg", width: 17, height: 19, fit: BoxFit.scaleDown,)),
-                        onTap: () {
-
-                        },
-                      ),*/
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16,),
+          HeaderWidget(title: "Ordini"),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(
@@ -320,18 +287,22 @@ class OrdersScreenState extends State<OrdersScreen>  {
                         ),
                       ),
                       SizedBox(height: 16),
-                      _isLoading ? Center(child: CircularProgressIndicator()) : _orders.isNotEmpty ? MediaQuery.removePadding(
-                        context: context,
-                        removeTop: true,
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _orders.length,
-                          itemBuilder: (BuildContext context, int index) {
-                            return offerCell(_orders[index]);
-                          }
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: _isLoading ? Center(child: CircularProgressIndicator()) : _orders.isNotEmpty ? MediaQuery.removePadding(
+                            context: context,
+                            removeTop: true,
+                            child: ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _orders.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                return offerCell(_orders[index]);
+                              }
+                            ),
+                          ) : Center(child: Text("Non ci sono ordini qui")),
                         ),
-                      ) : Center(child: Text("Non ci sono ordini qui")),
+                      ),
                     ],
                   ),
                 ),

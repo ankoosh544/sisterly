@@ -263,7 +263,7 @@ abstract class CustomAlert {
   static CustomAlertDialogState? _state;
 
   static void show(BuildContext context,
-      {Curve? curve,
+      {Curve curve = Curves.easeIn,
       String? title,
       String? subtitle,
       bool showCancelButton = false,
@@ -299,7 +299,7 @@ abstract class CustomAlert {
                 child: Scaffold(
                   backgroundColor: Colors.transparent,
                   body: CustomAlertDialog(
-                      curve: curve!,
+                      curve: curve,
                       options:options
                   ),
                 ),

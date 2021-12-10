@@ -7,6 +7,8 @@ import 'package:sisterly/screens/orders_screen.dart';
 import 'package:sisterly/screens/profile_screen.dart';
 import 'package:sisterly/screens/reviews_screen.dart';
 import 'package:sisterly/screens/sister_advice_screen.dart';
+import 'package:sisterly/screens/welcome_2_screen.dart';
+import 'package:sisterly/screens/welcome_screen.dart';
 import 'package:sisterly/screens/wishlist_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
@@ -15,6 +17,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sisterly/utils/session_data.dart';
 import 'package:share/share.dart';
 import "package:sisterly/utils/utils.dart";
+import 'package:sisterly/widgets/header_widget.dart';
 import 'package:sisterly/widgets/stars_widget.dart';
 import '../utils/constants.dart';
 
@@ -116,39 +119,7 @@ class AccountScreenState extends State<AccountScreen>  {
       backgroundColor: Constants.PRIMARY_COLOR,
       body: Column(
         children: [
-          Stack(
-            children: [
-              Align(
-                  child: SvgPicture.asset("assets/images/wave_blue.svg"),
-                alignment: Alignment.topRight,
-              ),
-              SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-                  child: Row(
-                    children: const [
-                      Center(
-                        child: Padding(
-                          padding: EdgeInsets.only(top: 24),
-                          child: Text(
-                            "Il tuo profilo",
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: Constants.FONT),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16,),
+          HeaderWidget(title: "Il tuo profilo"),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(
@@ -193,7 +164,7 @@ class AccountScreenState extends State<AccountScreen>  {
                                   spacing: 3,
                                   children: [
                                     if(_profile != null) StarsWidget(stars: _profile!.reviewsMedia!.toInt()),
-                                    Text(
+                                    if(_profile != null) Text(
                                       _profile!.reviewsMedia!.toString(),
                                       style: TextStyle(
                                           color: Constants.DARK_TEXT_COLOR,
@@ -228,7 +199,7 @@ class AccountScreenState extends State<AccountScreen>  {
                         InkWell(
                             onTap: () {
                               Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (BuildContext context) => SisterAdviceScreen()));
+                                  MaterialPageRoute(builder: (BuildContext context) => Welcome2Screen(showLogin: false)));
                             },
                             child: getItem("assets/images/guidebook.svg", "Guida Sisterly")
                         ),
@@ -238,7 +209,7 @@ class AccountScreenState extends State<AccountScreen>  {
                               Navigator.of(context).push(
                                   MaterialPageRoute(builder: (BuildContext context) => WishlistScreen()));
                             },
-                            child: getItem("assets/images/articles_saved.svg", "Lista dei desideri")
+                            child: getItem("assets/images/articles_saved.svg", "Wishlist")
                         ),
                         InkWell(
                             onTap: () {
@@ -263,7 +234,7 @@ class AccountScreenState extends State<AccountScreen>  {
                         ),
                         InkWell(
                           onTap: () {
-                            Share.share('check out my website https://example.com');
+                            Share.share('Hey sister! Più siamo e più borse abbiamo! Unisciti a Sisterly e diventa una di noi');
                           },
                             child: getItem("assets/images/invite.svg", "Invita una Sister")
                         ),

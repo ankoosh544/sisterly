@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:sisterly/models/address.dart';
-import 'package:sisterly/models/product.dart';
-import 'package:sisterly/screens/checkout_confirm_screen.dart';
+import 'package:sisterly/models/credit_card.dart';
+import 'package:sisterly/models/offer.dart';
+import 'package:sisterly/screens/payment_status_screen.dart';
+import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 
 class ChoosePaymentScreen extends StatefulWidget {
 
-  final Address address;
-  final String shipping;
-  final bool insurance;
-  final Product product;
+  final Offer offer;
 
-  ChoosePaymentScreen({Key? key, required this.address, required this.shipping, required this.insurance, required this.product}) : super(key: key);
+  ChoosePaymentScreen({Key? key, required this.offer}) : super(key: key);
 
   @override
   _ChoosePaymentScreenState createState() => _ChoosePaymentScreenState();
@@ -21,11 +20,77 @@ class ChoosePaymentScreen extends StatefulWidget {
 class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
   String _method = 'credit';
   bool _hasCards = true;
-  final TextEditingController _name = TextEditingController();
   final TextEditingController _cardNumber = TextEditingController();
   final TextEditingController _date = TextEditingController();
   final TextEditingController _cvv = TextEditingController();
-  bool _saveAddress = true;
+  bool _saveCard = true;
+  List<CreditCard> _cards = [];
+  CreditCard? _activeCard;
+  bool _addNewCard = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.delayed(Duration.zero, () {
+      getCards(null);
+    });
+  }
+
+  getCards(Function? callback) {
+    ApiManager(context).makeGetRequest('/client/cards', {}, (response) {
+      _activeCard = null;
+      _cards = [];
+      if (response["data"] != null) {
+        for (var card in response["data"]) {
+          if (card["active"] && _activeCard == null) {
+            _activeCard = CreditCard.fromJson(card);
+          } else if(card["active"]) {
+            _cards.add(CreditCard.fromJson(card));
+          }
+        }
+
+        if (_cards.isNotEmpty || _activeCard != null) {
+          setState(() {
+            _hasCards = true;
+            _addNewCard = false;
+          });
+        }
+
+        setState(() {
+
+        });
+
+        if(callback != null) callback();
+      }
+    }, (response) {});
+  }
+
+  saveCard() {
+    if (_date.text.isNotEmpty && _cardNumber.text.isNotEmpty && _cvv.text.isNotEmpty) {
+      ApiManager(context).makePutRequest('/client/cards', {
+        "card_number": _cardNumber.text,
+        "expiration_date": _date.text,
+        "cvx": _cvv.text,
+      }, (res) {
+        debugPrint("create card success");
+        getCards(null);
+      }, (res) {
+        ApiManager.showFreeErrorMessage(context, "Carta non valida");
+      });
+    }
+  }
+
+  _setActiveCard(CreditCard card, bool active) async {
+    try {
+      card.active = active;
+      await ApiManager(context).makePostRequest('/client/cards', card, (res) {}, (res) {});
+
+      getCards(null);
+    } catch(e) {
+      //
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -171,20 +236,20 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
                             fontWeight: FontWeight.bold
                         ),
                       ),
-                      if (!_hasCards) Column(
+                      if (!_hasCards || _addNewCard) Column(
                           children: [
-                            inputField("Nome sulla carta", _name),
+                            //inputField("Nome sulla carta", _name),
                             inputField("Numero carta", _cardNumber),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                SizedBox(width: 200, child: inputField("Scadenza", _date)),
+                                SizedBox(width: MediaQuery.of(context).size.width / 2.1, child: inputField("Scadenza", _date)),
                                 Container(
                                   constraints: BoxConstraints(maxWidth: 150),
                                     child: inputField("CVV", _cvv)),
                               ],
                             ),
-                            const SizedBox(height: 25),
+                            /*const SizedBox(height: 25),
                             Row(
                                 children: [
                                   Text('Salva per acquisti futuri',
@@ -195,12 +260,12 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
                                       )
                                   ),
                                   Switch(
-                                    value: _saveAddress,
-                                    onChanged: (value) => setState(() { _saveAddress = value; }),
+                                    value: _saveCard,
+                                    onChanged: (value) => setState(() { _saveCard = value; }),
                                     activeColor: Constants.SECONDARY_COLOR,
                                   )
                                 ]
-                            ),
+                            ),*/
                           ]
                       ),
                       SizedBox(height: 15),
@@ -211,8 +276,8 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
                               scrollDirection: Axis.horizontal,
                               child: Row(
                                   children: [
-                                    _renderCard(true),
-                                    _renderCard(false)
+                                    if (_activeCard != null) _renderCard(_activeCard!),
+                                    for (var a in _cards) _renderCard(a)
                                   ]
                               ),
                             ),
@@ -230,7 +295,9 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
                                   )
                               ),
                               onPressed: () {
-
+                                setState(() {
+                                  _addNewCard = true;
+                                });
                               },
                             ),
                           ]
@@ -248,8 +315,15 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
                           ),
                           child: Text('Avanti'),
-                          onPressed: () {
-                            Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => CheckoutConfirmScreen(product: widget.product,)));
+                          onPressed: () async {
+                            if (!_hasCards || (_saveCard && _addNewCard)) {
+                              await saveCard();
+                              getCards(() {
+                                next();
+                              });
+                            } else {
+                              next();
+                            }
                           },
                         ),
                       ),
@@ -263,6 +337,31 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
         ],
       ),
     );
+  }
+
+  next() {
+    if(_activeCard == null) return;
+
+    var params = {
+      "id": _activeCard!.id.toString(),
+      "is_card": true
+    };
+
+    ApiManager(context).makePutRequest("/payment/make/" + widget.offer.id.toString(), params, (res) {
+      if(res["data"] != null && res["data"]["code"] != null) {
+        Navigator.of(context).push(
+            MaterialPageRoute(builder: (BuildContext context) => PaymentStatusScreen(offer: widget.offer, code: res["data"]["code"])));
+      } else {
+        ApiManager.showFreeErrorMessage(context, "Pagamento fallito");
+      }
+    }, (res) {
+      ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+      /*setState(() {
+        _isLoading = false;
+      });*/
+    });
+
+    //Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChoosePaymentScreen(address: _activeAddress!, shipping: _shipping, insurance: _insurance, product: widget.product)));
   }
   
   _handlePaymentMethodSelection(String? method) {
@@ -326,13 +425,20 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
     );
   }
 
-  Widget _renderCard(bool active) {
+  Widget _renderCard(CreditCard card) {
+    List<String> menu = [];
+    if (card.active) {
+      menu = ['Disattiva'];
+    } else {
+      menu = ['Attiva'];
+    }
+
     return Container(
       padding: EdgeInsets.all(25),
       margin: EdgeInsets.only(right: 20),
       decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(25),
-          color: active ? Constants.SECONDARY_COLOR_LIGHT : Constants.LIGHT_GREY_COLOR2
+          color: card.active ? Constants.SECONDARY_COLOR_LIGHT : Constants.LIGHT_GREY_COLOR2
       ),
       child: IntrinsicHeight(
         child: Row(
@@ -344,21 +450,21 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
                 children: [
                   SvgPicture.asset("assets/images/visa.svg", width: 40),
                   SizedBox(height: 20),
-                  Text('Nome cognome',
+                  /*Text('Nome cognome',
                       style: TextStyle(
                           fontSize: 16,
                           fontFamily: Constants.FONT,
                           fontWeight: FontWeight.bold
                       )
-                  ),
-                  Text('**** **** **** 1234',
+                  ),*/
+                  Text(card.alias.toString(),
                       style: TextStyle(
                           fontSize: 16,
                           fontFamily: Constants.FONT
                       )
                   ),
                   SizedBox(height: 20),
-                  Text('EXP 04/36',
+                  Text('EXP ' + card.expirationDate.substring(0, 2) + "/" + card.expirationDate.substring(2, 4),
                       style: TextStyle(
                           fontSize: 16,
                           fontFamily: Constants.FONT
@@ -370,13 +476,35 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
               Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    InkWell(
-                      child: SizedBox(width: 17, height: 19, child: SvgPicture.asset("assets/images/menu.svg", width: 17, height: 19, fit: BoxFit.scaleDown, color: Colors.black)),
-                      onTap: () {
+                    PopupMenuButton<String>(
+                      child: Container(
+                        alignment: Alignment.centerRight,
+                        child: Icon(
+                          Icons.more_vert,
+                        ),
+                      ),
+                      padding: EdgeInsets.all(0),
+                      onSelected: (val) {
+                        switch (val) {
+                          case 'Attiva':
+                            _setActiveCard(card, true);
+                            break;
+                          case 'Disattiva':
+                            _setActiveCard(card, false);
+                            break;
+                        }
+                      },
+                      itemBuilder: (BuildContext context) {
+                        return menu.map((String choice) {
+                          return PopupMenuItem<String>(
+                            value: choice,
+                            child: Text(choice),
+                          );
+                        }).toList();
                       },
                     ),
                     Visibility(
-                      visible: active,
+                      visible: card.active,
                       child: InkWell(
                         child: Container(
                             width: 20,

@@ -1,23 +1,13 @@
-import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:sisterly/screens/account_screen.dart';
 import 'package:sisterly/screens/home_screen.dart';
 import 'package:sisterly/screens/inbox_screen.dart';
-import 'package:sisterly/screens/reset_screen.dart';
 import 'package:sisterly/screens/search_screen.dart';
-import 'package:sisterly/screens/signup_screen.dart';
-import 'package:sisterly/screens/signup_success_screen.dart';
 import 'package:sisterly/screens/upload_screen.dart';
-import 'package:sisterly/screens/verify_screen.dart';
-import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
-import 'package:sisterly/utils/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sisterly/widgets/custom_app_bar.dart';
 
 import '../utils/constants.dart';
-import 'login_screen.dart';
 
 class TabScreen extends StatefulWidget {
 
@@ -51,8 +41,9 @@ class TabScreenState extends State<TabScreen>  {
         debugPrint("index "+index.toString()+"  selectedTab: "+selectedTab.toString());
       },
       child: Container(
-        padding: const EdgeInsets.all(0),
-        child: SvgPicture.asset(selectedTab == index ? iconActive : icon),
+        //color: Colors.red,
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+        child: SvgPicture.asset(selectedTab == index ? iconActive : icon, height: 20,),
       ),
     );
   }
@@ -73,9 +64,9 @@ class TabScreenState extends State<TabScreen>  {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      floatingActionButtonLocation: FloatingActionButtonLocation.miniCenterFloat,
+      floatingActionButtonLocation: FloatingActionButtonLocation.miniCenterDocked,
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 0.0),
+        padding: const EdgeInsets.only(bottom: 20.0),
         child: FloatingActionButton(
           backgroundColor: Constants.SECONDARY_COLOR,
           child: SvgPicture.asset("assets/images/plus.svg"),
@@ -86,15 +77,19 @@ class TabScreenState extends State<TabScreen>  {
           },
         ),
       ),
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(child: getChild()),
-          SafeArea(
-            top: false,
+          Padding(
+            padding: const EdgeInsets.only(bottom: 90.0),
+            child: getChild(),
+          ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
               decoration: BoxDecoration(
-                color: Colors.white,
+                //color: Colors.blueAccent,
                 boxShadow: [
                   BoxShadow(
                     color: Colors.grey.withOpacity(0.2),
@@ -104,15 +99,41 @@ class TabScreenState extends State<TabScreen>  {
                   ),
                 ],
               ),
-              height: 50,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              height: 90,
+              child: Stack(
                 children: [
-                  getTabItem("assets/images/home.svg", "assets/images/home_active.svg", 0),
-                  getTabItem("assets/images/search.svg", "assets/images/search_active.svg", 1),
-                  SizedBox(),
-                  getTabItem("assets/images/mail.svg", "assets/images/mail_active.svg", 2),
-                  getTabItem("assets/images/account.svg", "assets/images/account_active.svg", 3),
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    top: 60,
+                    child: Container(
+                      color: Colors.white,
+                      width: double.infinity,
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 13,
+                    left: 0,
+                    right: 0,
+                    child: SvgPicture.asset("assets/images/shape_shadow.svg", height: 90, fit: BoxFit.fill,),
+                  ),
+                  SafeArea(
+                    top: false,
+                    child: Container(
+                      padding: const EdgeInsets.only(left: 16, right: 16, top: 24),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          getTabItem("assets/images/home.svg", "assets/images/home_active.svg", 0),
+                          getTabItem("assets/images/search.svg", "assets/images/search_active.svg", 1),
+                          SizedBox(width: 32,),
+                          getTabItem("assets/images/mail.svg", "assets/images/mail_active.svg", 2),
+                          getTabItem("assets/images/account.svg", "assets/images/account_active.svg", 3),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:sisterly/screens/login_screen.dart';
 import 'package:sisterly/screens/welcome_2_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
@@ -28,9 +29,10 @@ class WelcomeScreenState extends State<WelcomeScreen> {
   @override
   void initState() {
     super.initState();
-    Timer.run(() {
+    Timer.run(() async {
       debugPrint("welcome screen initState");
 
+      final status = await AppTrackingTransparency.requestTrackingAuthorization();
     });
   }
 
