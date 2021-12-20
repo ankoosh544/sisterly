@@ -4,8 +4,8 @@ import 'generic.dart';
 
 List<DeliveryMode> deliveryTypes = [
   DeliveryMode(1, 'Di persona'),
-  DeliveryMode(2, 'Fattorino'),
-  DeliveryMode(12, 'Fattorino o di persona')
+  DeliveryMode(3, 'Corriere'),
+  DeliveryMode(13, 'Di persona o corriere'),
 ];
 
 List<Generic> productConditions = [

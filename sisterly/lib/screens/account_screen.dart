@@ -1,6 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:package_info/package_info.dart';
 import 'package:sisterly/models/account.dart';
+import 'package:sisterly/screens/documents_screen.dart';
+import 'package:sisterly/screens/edit_profile_screen.dart';
 import 'package:sisterly/screens/inbox_screen.dart';
 import 'package:sisterly/screens/offers_screen.dart';
 import 'package:sisterly/screens/orders_screen.dart';
@@ -113,6 +116,62 @@ class AccountScreenState extends State<AccountScreen>  {
     );
   }
 
+  Widget getSwitchItem(String icon, String label) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(60),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.3),
+                    spreadRadius: 0,
+                    blurRadius: 6,
+                    offset: Offset(0, 0), // changes position of shadow
+                  ),
+                ],
+              ),
+              child: SvgPicture.asset(icon, width: 15, fit: BoxFit.scaleDown,)
+          ),
+          SizedBox(width: 18,),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                  color: Constants.TEXT_COLOR,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: Constants.FONT
+              ),
+            ),
+          ),
+          if(_profile != null) CupertinoSwitch(
+            value: _profile!.holidayMode!,
+            activeColor: Constants.SECONDARY_COLOR,
+            onChanged: (bool value) {
+              var params = {
+                "set_holiday_mode": value
+              };
+              ApiManager(context).makePostRequest('/client/holiday_mode', params, (res) {
+                // print(res);
+                //ApiManager.showFreeSuccessMessage(context, "Profilo salvato");
+
+                getUser();
+              }, (res) {
+
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -203,7 +262,24 @@ class AccountScreenState extends State<AccountScreen>  {
                             },
                             child: getItem("assets/images/guidebook.svg", "Guida Sisterly")
                         ),
-                        /*getItem("assets/images/edit.svg", "Edit Your Profile"),*/
+                        InkWell(
+                            onTap: () async {
+                              await Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (BuildContext context) => EditProfileScreen()));
+
+                              getUser();
+                            },
+                            child: getItem("assets/images/edit.svg", "Modifica il tuo Profilo")
+                        ),
+                        InkWell(
+                            onTap: () async {
+                              await Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (BuildContext context) => DocumentsScreen()));
+
+                              getUser();
+                            },
+                            child: getItem("assets/images/edit.svg", "Carica documenti")
+                        ),
                         InkWell(
                             onTap: () {
                               Navigator.of(context).push(
@@ -223,18 +299,17 @@ class AccountScreenState extends State<AccountScreen>  {
                               Navigator.of(context).push(
                                   MaterialPageRoute(builder: (BuildContext context) => OffersScreen()));
                             },
-                            child: getItem("assets/images/rent 2.svg", "Offerte")
+                            child: getItem("assets/images/offers.svg", "Offerte")
                         ),
-                        InkWell(
+                        /*InkWell(
                             onTap: () {
-                              Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (BuildContext context) => InboxScreen()));
+
                             },
-                            child: getItem("assets/images/chat.svg", "Sister Chats")
-                        ),
+                            child: getItem("assets/images/chat.svg", "Sister Talks")
+                        ),*/
                         InkWell(
                           onTap: () {
-                            Share.share('Hey sister! Più siamo e più borse abbiamo! Unisciti a Sisterly e diventa una di noi');
+                            Share.share('Hey sister! Più siamo e più borse abbiamo! Unisciti a Sisterly e diventa una di noi. https://sisterly.page.link/sisterly');
                           },
                             child: getItem("assets/images/invite.svg", "Invita una Sister")
                         ),
@@ -243,7 +318,7 @@ class AccountScreenState extends State<AccountScreen>  {
                             Navigator.of(context).push(
                                 MaterialPageRoute(builder: (BuildContext context) => ProfileScreen(id: null,)));
                           },
-                            child: getItem("assets/images/offer.svg", "I tuoi prodotti")
+                            child: getItem("assets/images/bags.svg", "I tuoi prodotti")
                         ),
                         InkWell(
                           onTap: () {
@@ -251,6 +326,13 @@ class AccountScreenState extends State<AccountScreen>  {
                                 MaterialPageRoute(builder: (BuildContext context) => ReviewsScreen()));
                           },
                             child: getItem("assets/images/review.svg", "Le tue recensioni")
+                        ),
+                        InkWell(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (BuildContext context) => ReviewsScreen()));
+                            },
+                            child: getSwitchItem("assets/images/vacation.svg", "Modalità Vacanza")
                         ),
                         InkWell(
                           onTap: () {

@@ -1,11 +1,15 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:sisterly/models/address.dart';
 import 'package:sisterly/models/brand.dart';
 import 'package:sisterly/models/delivery_mode.dart';
 import 'package:sisterly/models/generic.dart';
 import 'package:sisterly/models/material.dart';
+import 'package:sisterly/models/product.dart';
 import 'package:sisterly/models/product_color.dart';
 import 'package:sisterly/models/var.dart';
 import 'package:sisterly/screens/product_success_screen.dart';
@@ -14,6 +18,7 @@ import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:sisterly/utils/session_data.dart';
 import 'package:sisterly/utils/utils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sisterly/widgets/header_widget.dart';
@@ -22,7 +27,9 @@ import '../utils/constants.dart';
 
 class UploadScreen extends StatefulWidget {
 
-  const UploadScreen({Key? key}) : super(key: key);
+  final Product? editProduct;
+
+  const UploadScreen({Key? key, this.editProduct}) : super(key: key);
 
   @override
   UploadScreenState createState() => UploadScreenState();
@@ -32,7 +39,8 @@ class UploadScreenState extends State<UploadScreen>  {
 
   final TextEditingController _modelText = TextEditingController();
   final TextEditingController _descriptionText = TextEditingController();
-  final TextEditingController _selling = TextEditingController();
+  final TextEditingController _sellingPrice = TextEditingController();
+  final TextEditingController _dailyPrice = TextEditingController();
   final ImagePicker picker = ImagePicker();
   List<XFile> _images = [];
   final List<Brand> _brands = [];
@@ -42,13 +50,15 @@ class UploadScreenState extends State<UploadScreen>  {
   late Brand _selectedBrand;
   late ProductColor _selectedColor;
   late MyMaterial _selectedMaterial;
-  DeliveryMode? _selectedDelivery;
+  DeliveryMode? _selectedDelivery = deliveryTypes[0];
   Generic _selectedConditions = productConditions[0];
   Generic _selectedBagYears = bagYears[0];
   Generic _selectedBagSize = bagSizes[0];
-  final List<String> _uploads = [];
+  List<String> _imageUrls = [];
   String? _mediaId;
   bool _isUploading = false;
+  bool _usePriceAlgo = false;
+  bool _useDiscount = false;
 
   /* Address management */
   final TextEditingController _name = TextEditingController();
@@ -74,12 +84,16 @@ class UploadScreenState extends State<UploadScreen>  {
     super.initState();
 
     Future.delayed(Duration.zero, () {
+      debugPrint("deliveryTypes: "+jsonEncode(deliveryTypes));
+
       _getMediaId();
       _getBrands();
       _getColors();
       _getMaterials();
       _getDeliveryModes();
-      _getAddresses(null);
+      _getAddresses(() {
+        populateEditProduct();
+      });
     });
   }
 
@@ -88,9 +102,37 @@ class UploadScreenState extends State<UploadScreen>  {
     super.dispose();
   }
 
+  populateEditProduct() {
+    if(widget.editProduct != null) {
+      if(_brands.isNotEmpty && _materials.isNotEmpty && _colors.isNotEmpty) {
+        debugPrint("populateEditProduct edit product");
+        _modelText.text = widget.editProduct!.model;
+        _selectedBrand = _brands.firstWhere((element) => element.id == widget.editProduct!.brandId);
+        _selectedMaterial = _materials.firstWhere((element) => element.id == widget.editProduct!.materialId);
+        _descriptionText.text = widget.editProduct!.description ?? "";
+        _selectedColor = _colors.firstWhere((element) => element.id == widget.editProduct!.colorId);
+        if(widget.editProduct!.deliveryType != null) _selectedDelivery = deliveryTypes.firstWhere((element) => element.id == widget.editProduct!.deliveryType!.id);
+        _selectedConditions = productConditions.firstWhere((element) => element.id == widget.editProduct!.conditionsId);
+        _selectedBagYears = bagYears.firstWhere((element) => element.id == widget.editProduct!.yearId);
+        _dailyPrice.text = widget.editProduct!.priceOffer.toString();
+        _sellingPrice.text = widget.editProduct!.sellingPrice.toString();
+
+        _imageUrls = widget.editProduct!.images;
+
+        debugPrint("_imageUrls: "+_imageUrls.length.toString());
+      }
+    }
+
+    setState(() {
+
+    });
+  }
+
   _getMediaId() {
     ApiManager(context).makePutRequest('/client/media', {}, (res) {
       _mediaId = res["data"]["id"];
+
+      populateEditProduct();
 
       setState(() {
 
@@ -114,6 +156,18 @@ class UploadScreenState extends State<UploadScreen>  {
           child: selected ? SizedBox() : SvgPicture.asset("assets/images/check_color.svg", width: 13, height: 10, fit: BoxFit.scaleDown)
       ),
     );
+  }
+
+  Future<bool> checkAndRequestCameraPermissions() async {
+    PermissionStatus permission = await Permission.camera.status;
+    if (permission != PermissionStatus.granted) {
+      Map<Permission, PermissionStatus> statuses = await [
+        Permission.camera
+      ].request();
+      return statuses[Permission.camera] == PermissionStatus.granted;
+    } else {
+      return true;
+    }
   }
 
   @override
@@ -183,7 +237,29 @@ class UploadScreenState extends State<UploadScreen>  {
                                 )
                               ),
                               onPressed: () async {
-                                _images = (await picker.pickMultiImage())!;
+                                ImageSource? source = await showDialog<ImageSource>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                      content: Text("Scegli immagine da"),
+                                      actions: [
+                                        FlatButton(
+                                          child: Text("Scatta ora"),
+                                          onPressed: () => Navigator.pop(context, ImageSource.camera),
+                                        ),
+                                        FlatButton(
+                                          child: Text("Galleria"),
+                                          onPressed: () => Navigator.pop(context, ImageSource.gallery),
+                                        ),
+                                      ]
+                                  ),
+                                );
+
+                                if(source == ImageSource.camera) {
+                                  _images = [(await picker.pickImage(source: ImageSource.camera))!];
+                                } else {
+                                  _images = (await picker.pickMultiImage())!;
+                                }
+
                                 _upload();
                                 setState(() {});
                               },
@@ -206,18 +282,29 @@ class UploadScreenState extends State<UploadScreen>  {
                               ),
                             ),
                             SizedBox(height: 10),
-                            if (_images.isNotEmpty) GridView.count(
+                            if (_imageUrls.isNotEmpty) GridView.count(
                               shrinkWrap: true,
                               crossAxisCount: 4,
                               mainAxisSpacing: 5.0,
                               crossAxisSpacing: 5.0,
                               physics: NeverScrollableScrollPhysics(),
                               children: [
-                                  for (var img in _images)
+                                  /*for (var img in _images)
                                     ClipRRect(
                                         child: Image.file(File(img.path), fit: BoxFit.cover),
                                       borderRadius: BorderRadius.circular(12),
-                                    )
+                                    )*/
+
+                                for (var img in _imageUrls)
+                                  ClipRRect(
+                                    child: CachedNetworkImage(
+                                      imageUrl: SessionData().serverUrl + img,
+                                      fit: BoxFit.cover,
+                                      placeholder: (context, url) => Center(child: CircularProgressIndicator()),
+                                      errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  )
                               ]
                             ),
                             SizedBox(height: 10)
@@ -370,7 +457,7 @@ class UploadScreenState extends State<UploadScreen>  {
                           ],
                         ),
                         child: TextField(
-                          keyboardType: TextInputType.text,
+                          keyboardType: TextInputType.multiline,
                           cursorColor: Constants.PRIMARY_COLOR,
                           style: const TextStyle(
                             fontSize: 16,
@@ -378,7 +465,7 @@ class UploadScreenState extends State<UploadScreen>  {
                           ),
                           maxLines: 4,
                           decoration: InputDecoration(
-                            hintText: "Descrizione...",
+                            hintText: "Esempio: descrizione delle condizioni, spiegazione di eventuali imperfezioni, a cosa stare attenti nell’utilizzo ecc",
                             hintStyle: const TextStyle(
                                 color: Constants.PLACEHOLDER_COLOR),
                             border: OutlineInputBorder(
@@ -440,10 +527,10 @@ class UploadScreenState extends State<UploadScreen>  {
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<DeliveryMode>(
-                                items: _deliveryModes.map((DeliveryMode val) => DropdownMenuItem<DeliveryMode>(
-                                    child: Text(getDeliveryTypeName(val.id), style: TextStyle(fontSize: 16)),
+                                items: deliveryTypes.map((DeliveryMode val) => DropdownMenuItem<DeliveryMode>(
+                                    child: Text(val.description, style: TextStyle(fontSize: 16)),
                                     value: val
-                                  )
+                                )
                                 ).toList(),
                                 onChanged: (val) => setState(() => _selectedDelivery = val!),
                                 value: _selectedDelivery
@@ -566,7 +653,7 @@ class UploadScreenState extends State<UploadScreen>  {
                       ),
                       SizedBox(height: 32),
                       Text(
-                        "Prezzo per 3 giorni",
+                        "Prezzo al giorno",
                         style: TextStyle(
                             color: Constants.TEXT_COLOR,
                             fontSize: 16,
@@ -594,7 +681,7 @@ class UploadScreenState extends State<UploadScreen>  {
                             color: Constants.FORM_TEXT,
                           ),
                           decoration: InputDecoration(
-                            hintText: "Prezzo per 3 giorni...",
+                            hintText: "Prezzo al giorno...",
                             hintStyle: const TextStyle(
                                 color: Constants.PLACEHOLDER_COLOR),
                             border: OutlineInputBorder(
@@ -608,8 +695,133 @@ class UploadScreenState extends State<UploadScreen>  {
                             filled: true,
                             fillColor: Constants.WHITE,
                           ),
-                          controller: _selling,
+                          controller: _dailyPrice,
                         ),
+                      ),
+                      SizedBox(height: 32),
+                      Text(
+                        "Prezzo di acquisto",
+                        style: TextStyle(
+                            color: Constants.TEXT_COLOR,
+                            fontSize: 16,
+                            fontFamily: Constants.FONT
+                        ),
+                      ),
+                      SizedBox(height: 8,),
+                      Container(
+                        decoration: const BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(0x4ca3c4d4),
+                              spreadRadius: 8,
+                              blurRadius: 12,
+                              offset:
+                              Offset(0, 0), // changes position of shadow
+                            ),
+                          ],
+                        ),
+                        child: TextField(
+                          keyboardType: TextInputType.number,
+                          cursorColor: Constants.PRIMARY_COLOR,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Constants.FORM_TEXT,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: "Prezzo di acquisto...",
+                            hintStyle: const TextStyle(
+                                color: Constants.PLACEHOLDER_COLOR),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                width: 0,
+                                style: BorderStyle.none,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.all(16),
+                            filled: true,
+                            fillColor: Constants.WHITE,
+                          ),
+                          controller: _sellingPrice,
+                        ),
+                      ),
+                      SizedBox(height: 32,),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Transform.scale(
+                            scale: 1.2,
+                            child: Theme(
+                              data: Theme.of(context).copyWith(
+                                unselectedWidgetColor: Color(0xff92a0a7),
+                              ),
+                              child: Checkbox(
+                                  value: _useDiscount,
+                                  activeColor: Constants.PRIMARY_COLOR,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _useDiscount = value!;
+                                    });
+                                  }
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _useDiscount = !_useDiscount;
+                                });
+                              },
+                              child: Text("Vuoi partecipare alle promozion in Sisterly?",
+                                style: TextStyle(
+                                    color: Constants.TEXT_COLOR,
+                                    fontSize: 16,
+                                    fontFamily: Constants.FONT
+                                ),
+                              ),
+                            )
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 32,),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Transform.scale(
+                            scale: 1.2,
+                            child: Theme(
+                              data: Theme.of(context).copyWith(
+                                unselectedWidgetColor: Color(0xff92a0a7),
+                              ),
+                              child: Checkbox(
+                                  value: _usePriceAlgo,
+                                  activeColor: Constants.PRIMARY_COLOR,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _usePriceAlgo = value!;
+                                    });
+                                  }
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _usePriceAlgo = !_usePriceAlgo;
+                                });
+                              },
+                              child: Text("Vuoi che Sisterly calcoli il prezzo per te per noleggi più lunghi?",
+                                style: TextStyle(
+                                    color: Constants.TEXT_COLOR,
+                                    fontSize: 16,
+                                    fontFamily: Constants.FONT
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       SizedBox(height: 32),
                       Text(
@@ -736,6 +948,8 @@ class UploadScreenState extends State<UploadScreen>  {
           _selectedBrand = _brands[0];
         });
       }
+
+      populateEditProduct();
     }, (res) {});
   }
 
@@ -752,6 +966,8 @@ class UploadScreenState extends State<UploadScreen>  {
           _selectedColor = _colors[0];
         });
       }
+
+      populateEditProduct();
     }, (res) {});
   }
 
@@ -767,6 +983,8 @@ class UploadScreenState extends State<UploadScreen>  {
           _selectedMaterial = _materials[0];
         });
       }
+
+      populateEditProduct();
     }, (res) {});
   }
 
@@ -779,9 +997,11 @@ class UploadScreenState extends State<UploadScreen>  {
           for (var m in data) {
             _deliveryModes.add(DeliveryMode.fromJson(m));
           }
-          _selectedDelivery = _deliveryModes[0];
+          //_selectedDelivery = _deliveryModes[0];
         });
       }
+
+      populateEditProduct();
     }, (res) {
 
     });
@@ -799,17 +1019,17 @@ class UploadScreenState extends State<UploadScreen>  {
       return;
     }
 
-    /*if(_retail.text.isEmpty) {
-      ApiManager.showFreeErrorToast(context, "Inserisci valore del prodotto");
-      return;
-    }*/
-
-    if(_selling.text.isEmpty) {
-      ApiManager.showFreeErrorToast(context, "Inserisci il prezzo di vendita");
+    if(_dailyPrice.text.isEmpty) {
+      ApiManager.showFreeErrorToast(context, "Inserisci il prezzo al giorno");
       return;
     }
 
-    if (!(_modelText.text.isEmpty || _descriptionText.text.isEmpty || _selling.text.isEmpty || _selectedDelivery == null)) {
+    if(_sellingPrice.text.isEmpty) {
+      ApiManager.showFreeErrorToast(context, "Inserisci il prezzo di acquisto");
+      return;
+    }
+
+    if (!(_modelText.text.isEmpty || _descriptionText.text.isEmpty || _sellingPrice.text.isEmpty || _dailyPrice.text.isEmpty || _selectedDelivery == null)) {
       ApiManager(context).makePutRequest('/product/', {
         "model": _modelText.text,
         "media_pk": _mediaId,
@@ -819,13 +1039,15 @@ class UploadScreenState extends State<UploadScreen>  {
         "conditions": _selectedConditions.id,
         "year": _selectedBagYears.id,
         "size": _selectedBagSize.id,
-        "price_retail": double.parse(_selling.text),
-        "price_offer": double.parse(_selling.text),
-        "selling_price": double.parse(_selling.text),
+        "price_retail": double.parse(_dailyPrice.text),
+        "price_offer": double.parse(_dailyPrice.text),
+        "selling_price": double.parse(_sellingPrice.text),
         "delivery_type": _selectedDelivery!.id,
         "delivery_kit_pk": _activeAddress!.id,
         "description": _descriptionText.text,
-        "maximum_loan_days": -1
+        "maximum_loan_days": -1,
+        "use_discount": _useDiscount,
+        "use_price_algorithm": _usePriceAlgo
       }, (res) {
         Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (BuildContext context) => ProductSuccessScreen()), (_) => false);
@@ -841,7 +1063,10 @@ class UploadScreenState extends State<UploadScreen>  {
       debugPrint("uploading " + _images.length.toString() + " images");
         int i = 1;
         for (var photo in _images) {
-          ApiManager(context).makeUploadRequest(context, '/client/media/$_mediaId/images', photo.path, i++, (res) {
+          var params = {
+            "order": i++
+          };
+          ApiManager(context).makeUploadRequest(context, "PUT", '/client/media/$_mediaId/images', photo.path, params, (res) {
             debugPrint('Photo uploaded');
             setState(() {
               _isUploading = false;

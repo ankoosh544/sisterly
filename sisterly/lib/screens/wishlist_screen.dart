@@ -162,7 +162,7 @@ class WishlistScreenState extends State<WishlistScreen>  {
                   ),
                   SizedBox(height: 12,),
                   Text(
-                    "${Utils.formatCurrency(product.sellingPrice)} al giorno",
+                    "${Utils.formatCurrency(product.priceOffer)} al giorno",
                     textAlign: TextAlign.left,
                     style: TextStyle(
                         color: Constants.PRIMARY_COLOR,

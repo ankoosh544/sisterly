@@ -242,7 +242,7 @@ class VerifyPhoneScreenState extends State<VerifyPhoneScreen>  {
                                     horizontal: 80, vertical: 14),
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(50))),
-                            child: Text('Verify'),
+                            child: Text('Verifica'),
                             onPressed: () {
                               verify();
                             },

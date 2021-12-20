@@ -62,7 +62,7 @@ class ProductSuccessScreenState extends State<ProductSuccessScreen> {
                 ),
               ),
               const SizedBox(height: 40),
-              const Text("Il tuo prodotto è stato pubblicato!",
+              const Text("Sei pronta a diventare una Lender Sister?  A breve riceverai il Lender Kit con all’interno il tag nfc che dovrai inserire nella tua borsa, poi dovrai mandarci un video per verificare la corretta applicazione e solo così la tua offerta sarà visibile a tutte le sisters!",
                   style: TextStyle(
                     color: Constants.TEXT_COLOR,
                     fontSize: 16,

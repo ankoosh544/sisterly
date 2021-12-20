@@ -316,6 +316,10 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
                           ),
                           child: Text('Avanti'),
                           onPressed: () async {
+                            if(!_hasCards && !_addNewCard) {
+                              return;
+                            }
+
                             if (!_hasCards || (_saveCard && _addNewCard)) {
                               await saveCard();
                               getCards(() {
@@ -397,7 +401,6 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
               ],
             ),
             child: TextField(
-              keyboardType: TextInputType.emailAddress,
               cursorColor: Constants.PRIMARY_COLOR,
               style: const TextStyle(
                 fontSize: 16,

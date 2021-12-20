@@ -99,15 +99,31 @@ class HomeScreenState extends State<HomeScreen>  {
                 ),
               ),
               SizedBox(height: 8,),
-              Text(
-                "${Utils.formatCurrency(product.sellingPrice)} al giorno",
-                textAlign: TextAlign.left,
-                style: TextStyle(
-                  color: Constants.PRIMARY_COLOR,
-                  fontSize: 18,
-                    fontFamily: Constants.FONT,
-                  fontWeight: FontWeight.bold
-                ),
+              Wrap(
+                children: [
+                  Text(
+                    "${Utils.formatCurrency(product.sellingPrice)}",
+                    textAlign: TextAlign.left,
+                    style: TextStyle(
+                        color: Constants.PRIMARY_COLOR,
+                        fontSize: 18,
+                        fontFamily: Constants.FONT,
+                        fontWeight: FontWeight.bold,
+                        decoration: TextDecoration.lineThrough,
+                    ),
+                  ),
+                  SizedBox(width: 8,),
+                  Text(
+                    "${Utils.formatCurrency(product.priceOffer)} al giorno",
+                    textAlign: TextAlign.left,
+                    style: TextStyle(
+                      color: Constants.PRIMARY_COLOR,
+                      fontSize: 18,
+                        fontFamily: Constants.FONT,
+                      fontWeight: FontWeight.bold
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -225,12 +241,17 @@ class HomeScreenState extends State<HomeScreen>  {
                       topRight: Radius.circular(30))),
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
-                child: _isLoading ? Center(child: CircularProgressIndicator()) : SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      for (var prod in _products) productCell(prod)
-                    ],
+                child: _isLoading ? Center(child: CircularProgressIndicator()) : RefreshIndicator(
+                  onRefresh: () async {
+                    getProducts();
+                    getProductsFavorite();
+                  },
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(0),
+                    itemCount: _products.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return productCell(_products[index]);
+                    }
                   ),
                 ),
               ),

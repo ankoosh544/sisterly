@@ -45,7 +45,7 @@ class SignupSuccessScreenState extends State<SignupSuccessScreen> {
                 child: SizedBox(),
               ),
               Text(
-                "Success!",
+                "Complimenti!",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Constants.PRIMARY_COLOR,
@@ -54,7 +54,7 @@ class SignupSuccessScreenState extends State<SignupSuccessScreen> {
                 ),
               ),
               const SizedBox(height: 40),
-              const Text("You account has been created.",
+              const Text("Il tuo account è stato creato. Riceverai una mail di conferma per attivarlo.",
                   style: TextStyle(
                     color: Constants.TEXT_COLOR,
                     fontSize: 16,

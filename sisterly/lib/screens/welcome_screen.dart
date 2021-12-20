@@ -46,6 +46,22 @@ class WelcomeScreenState extends State<WelcomeScreen> {
       Navigator.of(context).pushAndRemoveUntil(new MaterialPageRoute(builder: (BuildContext context) => Welcome2Screen()), (_) => false);
     });
   }
+
+  getTopMargin() {
+    if(MediaQuery.of(context).size.height < 700) {
+      return 60.0;
+    }
+
+    return 120.0;
+  }
+
+  getLogoSize() {
+    if(MediaQuery.of(context).size.height < 700) {
+      return 190.0;
+    }
+
+    return 221.0;
+  }
   
   @override
   Widget build(BuildContext context) {
@@ -65,11 +81,11 @@ class WelcomeScreenState extends State<WelcomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  SizedBox(height: 120,),
+                  SizedBox(height: getTopMargin(),),
                   Center(
                     child: SvgPicture.asset("assets/images/sisterly_logo.svg",
-                      width: 221,
-                      height: 223,
+                      width: getLogoSize(),
+                      height: getLogoSize(),
                     ),
                   ),
                   SizedBox(height: 70,),
@@ -85,7 +101,7 @@ class WelcomeScreenState extends State<WelcomeScreen> {
                   Wrap(
                     children: const [
                       Text(
-                        "Benvenuto in ",
+                        "Benvenuto/a in ",
                         style: TextStyle(
                             color: Constants.PRIMARY_COLOR,
                             fontSize: 25,
@@ -105,7 +121,7 @@ class WelcomeScreenState extends State<WelcomeScreen> {
                   ),
                   const SizedBox(height: 24,),
                   const Text(
-                    "La prima piattaforma di noleggio borse di lusso tra utenti.",
+                    "La prima piattaforma di noleggio di borse di lusso tra utenti.",
                     style: TextStyle(
                         color: Constants.PRIMARY_COLOR,
                         fontSize: 16,

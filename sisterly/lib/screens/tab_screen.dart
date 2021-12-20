@@ -66,7 +66,7 @@ class TabScreenState extends State<TabScreen>  {
       backgroundColor: Colors.white,
       floatingActionButtonLocation: FloatingActionButtonLocation.miniCenterDocked,
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 20.0),
+        padding: const EdgeInsets.only(bottom: 20),
         child: FloatingActionButton(
           backgroundColor: Constants.SECONDARY_COLOR,
           child: SvgPicture.asset("assets/images/plus.svg"),
@@ -99,7 +99,7 @@ class TabScreenState extends State<TabScreen>  {
                   ),
                 ],
               ),
-              height: 90,
+              height: MediaQuery.of(context).padding.bottom > 0 ? 90 : 75,
               child: Stack(
                 children: [
                   Positioned(

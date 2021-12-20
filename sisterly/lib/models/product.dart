@@ -1,3 +1,5 @@
+import 'package:sisterly/models/delivery_mode.dart';
+import 'package:sisterly/models/delivery_mode_offer.dart';
 import 'package:sisterly/models/var.dart';
 
 import 'account.dart';
@@ -14,18 +16,44 @@ class Product {
   final String colorName;
   final String colorHex;
   final int materialId;
+  final String? description;
   final String materialName;
   final double priceRetail;
   final double priceOffer;
   final double sellingPrice;
   final String? conditions;
+  final int? conditionsId;
   final String? size;
+  final int? sizeId;
   final String? year;
+  final int? yearId;
+  final DeliveryMode? deliveryType;
 
-  Product(this.id, this.model, this.owner, this.brandId, this.brandName, this.colorId, this.colorName, this.colorHex, this.materialId, this.materialName, this.priceRetail, this.priceOffer, this.sellingPrice, this.conditions, this.size, this.year);
+  Product(
+      this.id,
+      this.model,
+      this.owner,
+      this.description,
+      this.brandId,
+      this.brandName,
+      this.colorId,
+      this.colorName,
+      this.colorHex,
+      this.materialId,
+      this.materialName,
+      this.priceRetail,
+      this.priceOffer,
+      this.sellingPrice,
+      this.conditions,
+      this.conditionsId,
+      this.size,
+      this.sizeId,
+      this.year,
+      this.yearId,
+      this.deliveryType);
 
   static getArrayDesc(item) {
-    if(item.isNotEmpty && item.length > 1) {
+    if (item.isNotEmpty && item.length > 1) {
       return item[1];
     }
 
@@ -37,6 +65,7 @@ class Product {
         json["id"],
         json["model"],
         Account.fromJson(json["owner"]),
+        json["description"],
         json["brand"]["id"],
         json["brand"]["name"],
         json["color"]["id"],
@@ -48,9 +77,12 @@ class Product {
         json["price_offer"],
         json["selling_price"],
         getGenericName(json["conditions"]["id"], productConditions),
+        json["conditions"]["id"],
         getGenericName(json["size"]["id"], bagSizes),
-        getGenericName(json["year"]["id"], bagYears)
-    );
+        json["size"]["id"],
+        getGenericName(json["year"]["id"], bagYears),
+        json["year"]["id"],
+        DeliveryMode.fromJson(json["delivery_type"]));
 
     var media = json["media"];
 

@@ -168,14 +168,14 @@ class _FiltersScreenState extends State<FiltersScreen> {
         });
       },
       child: Container(
-        width: 24,
-        height: 24,
+        width: 30,
+        height: 30,
         margin: const EdgeInsets.only(right: 12, bottom: 8),
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(30)
         ),
-        child: selected.contains(id) ? SizedBox() : SvgPicture.asset("assets/images/check_color.svg", width: 13, height: 10, fit: BoxFit.scaleDown)
+        child: selected.contains(id) ? SvgPicture.asset("assets/images/check_color.svg", width: 13, height: 10, fit: BoxFit.scaleDown) : SizedBox()
       ),
     );
   }
@@ -248,7 +248,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                                 ],
                               ),
                               child: TextField(
-                                keyboardType: TextInputType.emailAddress,
+                                keyboardType: TextInputType.text,
                                 cursorColor: Constants.PRIMARY_COLOR,
                                 style: const TextStyle(
                                   fontSize: 16,
@@ -310,14 +310,39 @@ class _FiltersScreenState extends State<FiltersScreen> {
                               }).toList()
                             ),
                             SizedBox(height: 24,),
-                            Text(
-                              "Colore",
-                              style: TextStyle(
-                                  color: Constants.DARK_TEXT_COLOR,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: Constants.FONT),
-                              textAlign: TextAlign.center,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "Colore",
+                                  style: TextStyle(
+                                      color: Constants.DARK_TEXT_COLOR,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: Constants.FONT),
+                                  textAlign: TextAlign.center,
+                                ),
+                                InkWell(
+                                  child: Text(
+                                    _filters.colors.isNotEmpty ? "Deseleziona tutti" : "Seleziona tutti",
+                                    style: TextStyle(
+                                        color: Constants.GREY,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: Constants.FONT),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  onTap: () {
+                                    setState(() {
+                                      if(_filters.colors.isNotEmpty) {
+                                        _filters.colors = [];
+                                      } else {
+                                        _filters.colors = _colorsList.map((e) => e.id).toList();
+                                      }
+                                    });
+                                  },
+                                )
+                              ],
                             ),
                             SizedBox(height: 8,),
                             Wrap(
@@ -483,7 +508,6 @@ class _FiltersScreenState extends State<FiltersScreen> {
                                           ],
                                         ),
                                         child: TextField(
-                                          keyboardType: TextInputType.emailAddress,
                                           cursorColor: Constants.PRIMARY_COLOR,
                                           style: const TextStyle(
                                             fontSize: 16,
@@ -524,7 +548,6 @@ class _FiltersScreenState extends State<FiltersScreen> {
                                           ],
                                         ),
                                         child: TextField(
-                                          keyboardType: TextInputType.emailAddress,
                                           cursorColor: Constants.PRIMARY_COLOR,
                                           style: const TextStyle(
                                             fontSize: 16,
@@ -565,7 +588,6 @@ class _FiltersScreenState extends State<FiltersScreen> {
                                           ],
                                         ),
                                         child: TextField(
-                                          keyboardType: TextInputType.emailAddress,
                                           cursorColor: Constants.PRIMARY_COLOR,
                                           style: const TextStyle(
                                             fontSize: 16,
@@ -650,7 +672,6 @@ class _FiltersScreenState extends State<FiltersScreen> {
                                           ],
                                         ),
                                         child: TextField(
-                                          keyboardType: TextInputType.emailAddress,
                                           cursorColor: Constants.PRIMARY_COLOR,
                                           style: const TextStyle(
                                             fontSize: 16,
@@ -691,7 +712,6 @@ class _FiltersScreenState extends State<FiltersScreen> {
                                           ],
                                         ),
                                         child: TextField(
-                                          keyboardType: TextInputType.emailAddress,
                                           cursorColor: Constants.PRIMARY_COLOR,
                                           style: const TextStyle(
                                             fontSize: 16,
@@ -732,7 +752,6 @@ class _FiltersScreenState extends State<FiltersScreen> {
                                           ],
                                         ),
                                         child: TextField(
-                                          keyboardType: TextInputType.emailAddress,
                                           cursorColor: Constants.PRIMARY_COLOR,
                                           style: const TextStyle(
                                             fontSize: 16,

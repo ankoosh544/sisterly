@@ -405,7 +405,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     ],
                                   ),
                                   child: TextField(
-                                    keyboardType: TextInputType.emailAddress,
                                     cursorColor: Constants.PRIMARY_COLOR,
                                     style: const TextStyle(
                                       fontSize: 16,
@@ -446,7 +445,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     ],
                                   ),
                                   child: TextField(
-                                    keyboardType: TextInputType.emailAddress,
                                     cursorColor: Constants.PRIMARY_COLOR,
                                     style: const TextStyle(
                                       fontSize: 16,
@@ -487,7 +485,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     ],
                                   ),
                                   child: TextField(
-                                    keyboardType: TextInputType.emailAddress,
                                     cursorColor: Constants.PRIMARY_COLOR,
                                     style: const TextStyle(
                                       fontSize: 16,
@@ -573,7 +570,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     ],
                                   ),
                                   child: TextField(
-                                    keyboardType: TextInputType.emailAddress,
                                     cursorColor: Constants.PRIMARY_COLOR,
                                     style: const TextStyle(
                                       fontSize: 16,
@@ -614,7 +610,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     ],
                                   ),
                                   child: TextField(
-                                    keyboardType: TextInputType.emailAddress,
                                     cursorColor: Constants.PRIMARY_COLOR,
                                     style: const TextStyle(
                                       fontSize: 16,
@@ -655,7 +650,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     ],
                                   ),
                                   child: TextField(
-                                    keyboardType: TextInputType.emailAddress,
                                     cursorColor: Constants.PRIMARY_COLOR,
                                     style: const TextStyle(
                                       fontSize: 16,
@@ -730,7 +724,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       "price": widget.product.sellingPrice.toString(),
       "date_start": DateFormat("yyyy-MM-dd").format(_availableFrom),
       "date_end": DateFormat("yyyy-MM-dd").format(_availableTo),
-      "delivery_mode": _shipping == 'shipment' ? 2 : 1
+      "delivery_mode": _shipping == 'shipment' ? 3 : 1
     };
 
     if(_activeAddress != null && _shipping == 'shipment') {
@@ -836,7 +830,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ],
           ),
           child: TextField(
-            keyboardType: TextInputType.emailAddress,
+            keyboardType: TextInputType.text,
             cursorColor: Constants.PRIMARY_COLOR,
             style: const TextStyle(
               fontSize: 16,

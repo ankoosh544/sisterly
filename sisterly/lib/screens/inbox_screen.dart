@@ -162,7 +162,7 @@ class InboxScreenState extends State<InboxScreen>  {
       backgroundColor: Constants.PRIMARY_COLOR,
       body: Column(
         children: [
-          HeaderWidget(title: "Sisterly Talks"),
+          HeaderWidget(title: "Sisterly Chats"),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(

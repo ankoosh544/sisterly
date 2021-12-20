@@ -33,14 +33,14 @@ class ApiManager {
     makePostRequest("/client/token", params, success, failure);
   }
 
-  signup(email, password, firstName, lastName, phone, success, failure) async {
+  signup(email, username, password, firstName, lastName, phone, success, failure) async {
     var params = {
       "email": email,
       "password": password,
       "first_name": firstName,
       "last_name": lastName,
       "phone": phone,
-      "username": email
+      "username": username
     };
 
     makePostRequest("/client/register", params, success, failure);
@@ -57,7 +57,7 @@ class ApiManager {
       "refresh": refreshToken
     };
 
-    await makePostRequest("/client/token/refresh", params, success, failure);
+    await internalMakePostRequest("/client/token/refresh", SessionData().token, params, success, failure, false);
   }
 
   makePostRequest(endpoint, params, success, failure) async {
@@ -92,17 +92,26 @@ class ApiManager {
         debugPrint("internalMakePostRequest " + url + " invalid token");
         failure(401);
       } else if((bodyResponse["status"] != null && bodyResponse["status"].toString() == "401" && retry) || bodyResponse["code"] == "token_not_valid"){
-        debugPrint("makePostRequest: refreshToken");
-        retry = false;
-        var preferences = await SharedPreferences.getInstance();
-        var token = preferences.getString(Constants.PREFS_REFRESH_TOKEN);
-        refreshToken(token, (response) async {
+        debugPrint("makePostRequest: refreshToken retry "+retry.toString());
+
+        if(retry) {
+          debugPrint("refresh");
           var preferences = await SharedPreferences.getInstance();
-          preferences.setString(Constants.PREFS_TOKEN, response["access"]);
-          preferences.setString(Constants.PREFS_REFRESH_TOKEN, response["refresh"]);
-          SessionData().token = response["access"];
-          internalMakeGetRequest(endpoint, params, SessionData().token, success, failure, false);
-        }, failure);
+          var token = preferences.getString(Constants.PREFS_REFRESH_TOKEN);
+          refreshToken(token, (response) async {
+            var preferences = await SharedPreferences.getInstance();
+            preferences.setString(Constants.PREFS_TOKEN, response["access"]);
+            preferences.setString(Constants.PREFS_REFRESH_TOKEN, response["refresh"]);
+            SessionData().token = response["access"];
+            internalMakePostRequest(endpoint, params, SessionData().token, success, failure, false);
+          }, () {
+            failure(401);
+
+            SessionData().logout(context);
+          });
+        } else {
+          failure(401);
+        }
       } else {
         debugPrint("internalMakePostRequest " + url + " success. Body: " + body);
         success(bodyResponse);
@@ -164,11 +173,15 @@ class ApiManager {
           var preferences = await SharedPreferences.getInstance();
           var token = preferences.getString(Constants.PREFS_REFRESH_TOKEN);
           refreshToken(token, (response) async {
-            var preferences = await SharedPreferences.getInstance();
-            preferences.setString(Constants.PREFS_TOKEN, response["access"]);
-            preferences.setString(Constants.PREFS_REFRESH_TOKEN, response["refresh"]);
-            SessionData().token = response["access"];
-            internalMakeGetRequest(endpoint, params, SessionData().token, success, failure, false);
+            if(response != null && response["access"] != null) {
+              var preferences = await SharedPreferences.getInstance();
+              preferences.setString(Constants.PREFS_TOKEN, response["access"]);
+              preferences.setString(Constants.PREFS_REFRESH_TOKEN, response["refresh"]);
+              SessionData().token = response["access"];
+              internalMakeGetRequest(endpoint, params, SessionData().token, success, failure, false);
+            } else {
+              SessionData().logout(context);
+            }
           }, failure);
         } else {
           debugPrint("makeGetRequest "+endpoint+" success");
@@ -326,9 +339,9 @@ class ApiManager {
     }
   }
 
-  makeUploadRequest(context, endpoint, filePath, order, success, failure) async {
+  makeUploadRequest(context, method, endpoint, filePath, params, success, failure) async {
     final postUri = Uri.parse(SessionData().serverUrl + endpoint);
-    http.MultipartRequest request = http.MultipartRequest('PUT', postUri);
+    http.MultipartRequest request = http.MultipartRequest(method, postUri);
 
     request.headers.addAll({
       "Authorization": "Bearer ${SessionData().token!}",
@@ -347,7 +360,11 @@ class ApiManager {
       debugPrint("multipartFile postUri: "+postUri.toString()+"  multipartFile.length: "+multipartFile.length.toString());
 
       request.files.add(multipartFile);
-      request.fields["order"] = order.toString();
+      //request.fields["order"] = order.toString();
+
+      if(params != null) {
+        params.forEach((k,v) => request.fields[k] = v.toString());
+      }
 
       http.StreamedResponse response = await request.send();
       final json = await response.stream.bytesToString();

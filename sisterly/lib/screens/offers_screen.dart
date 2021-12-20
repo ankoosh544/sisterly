@@ -124,9 +124,10 @@ class OffersScreenState extends State<OffersScreen>  {
                     fit: BoxFit.contain,
                     imageUrl: SessionData().serverUrl + offer.product.images.first,
                     placeholder: (context, url) => CircularProgressIndicator(),
-                    errorWidget: (context, url, error) => Icon(Icons.error),
+                    errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg",),
                   ),
                 ),
+                SizedBox(width: 8,),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -149,7 +150,7 @@ class OffersScreenState extends State<OffersScreen>  {
                     ),
                     SizedBox(height: 12,),
                     Text(
-                      "${Utils.formatCurrency(offer.product.sellingPrice)} al giorno",
+                      "${Utils.formatCurrency(offer.product.priceOffer)} al giorno",
                       style: TextStyle(
                           color: Constants.PRIMARY_COLOR,
                           fontSize: 18,

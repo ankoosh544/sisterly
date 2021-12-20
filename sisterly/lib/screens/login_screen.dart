@@ -1,3 +1,4 @@
+import 'package:sisterly/models/account.dart';
 import 'package:sisterly/screens/tab_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
@@ -94,10 +95,26 @@ class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin 
 
   loginSuccess() async {
     setState(() {
-      _isLoading = false;
+      _isLoading = true;
     });
     await ApiManager(context).loadLanguage();
-    Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => TabScreen()), (_) => false);
+
+    ApiManager(context).makeGetRequest('/client/properties', {}, (res) {
+      setState(() async {
+        _isLoading = false;
+        Account account = Account.fromJson(res["data"]);
+
+        var preferences = await SharedPreferences.getInstance();
+        preferences.setInt(Constants.PREFS_USERID, account.id!);
+        SessionData().userId = account.id;
+
+        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => TabScreen()), (_) => false);
+      });
+    }, (res) {
+      setState(() {
+        _isLoading = false;
+      });
+    });
   }
 
   forgot() {
@@ -175,7 +192,7 @@ class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin 
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       const SizedBox(height: 25),
-                      const Text("Email",
+                      const Text("Email / Username",
                           style: TextStyle(
                             color: Constants.TEXT_COLOR,
                             fontSize: 16,
@@ -201,8 +218,14 @@ class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin 
                             fontSize: 16,
                             color: Constants.FORM_TEXT,
                           ),
+                          onChanged: (value) {
+                            _emailFilter.value =
+                                TextEditingValue(
+                                    text: value.toLowerCase(),
+                                    selection: _emailFilter.selection);
+                          },
                           decoration: InputDecoration(
-                            hintText: "Email",
+                            hintText: "Email / Username",
                             hintStyle: const TextStyle(
                                 color: Constants.PLACEHOLDER_COLOR),
                             border: OutlineInputBorder(

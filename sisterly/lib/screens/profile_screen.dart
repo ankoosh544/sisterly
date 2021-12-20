@@ -59,7 +59,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
     setState(() {
       _isLoading = true;
     });
-    ApiManager(context).makeGetRequest('/client/properties', {}, (res) {
+    ApiManager(context).makeGetRequest(widget.id != null ? '/client/' + widget.id.toString() : '/client/properties', {}, (res) {
       // print(res);
       setState(() {
         _isLoading = false;
@@ -216,7 +216,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
                   ),
                   SizedBox(height: 10,),
                   Text(
-                    "${Utils.formatCurrency(product.sellingPrice)} al giorno",
+                    "${Utils.formatCurrency(product.priceOffer)} al giorno",
                     textAlign: TextAlign.left,
                     style: TextStyle(
                         color: Constants.PRIMARY_COLOR,

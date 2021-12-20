@@ -157,7 +157,7 @@ class OrdersScreenState extends State<OrdersScreen>  {
                     ),
                     SizedBox(height: 12,),
                     Text(
-                      "${Utils.formatCurrency(offer.product.sellingPrice)} al giorno",
+                      "${Utils.formatCurrency(offer.product.priceOffer)} al giorno",
                       style: TextStyle(
                           color: Constants.PRIMARY_COLOR,
                           fontSize: 18,

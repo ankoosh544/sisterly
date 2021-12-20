@@ -26,6 +26,8 @@
 	<true/>
 	<key>NFCReaderUsageDescription</key>
 	<string>Usiamo l'nfc per permetterti di aprire rapidamente i prodotti</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Utilizziamo la fotocamera per scattare le foto dei nuovi prodotti</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Utilizziamo la libreria foto per caricare nuovi prodotti</string>
 	<key>NSUserTrackingUsageDescription</key>

@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:sisterly/models/account.dart';
 import 'package:sisterly/screens/home_screen.dart';
 import 'package:sisterly/screens/login_screen.dart';
 import 'package:sisterly/screens/tab_screen.dart';
@@ -103,7 +104,20 @@ class SplashScreenState extends State<SplashScreen> {
   }
 
   access() {
-    Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => TabScreen()), (_) => false);
+    ApiManager(context).makeGetRequest('/client/properties', {}, (res) {
+      setState(() async {
+        Account account = Account.fromJson(res["data"]);
+
+        var preferences = await SharedPreferences.getInstance();
+        preferences.setInt(Constants.PREFS_USERID, account.id!);
+        SessionData().userId = account.id;
+
+        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => TabScreen()), (_) => false);
+      });
+    }, (res) {
+
+    });
+
   }
   
   @override

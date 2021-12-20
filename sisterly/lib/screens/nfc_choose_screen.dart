@@ -13,13 +13,13 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../utils/constants.dart';
 
-class NfcScreen extends StatefulWidget {
+class NfcChooseScreen extends StatefulWidget {
 
   @override
-  NfcScreenState createState() => NfcScreenState();
+  NfcChooseScreenState createState() => NfcChooseScreenState();
 }
 
-class NfcScreenState extends State<NfcScreen> {
+class NfcChooseScreenState extends State<NfcChooseScreen> {
 
   String _errorMessage = "";
 
@@ -28,93 +28,14 @@ class NfcScreenState extends State<NfcScreen> {
     super.initState();
 
     Future.delayed(Duration.zero, () async {
-      bool isAvailable = await NfcManager.instance.isAvailable();
 
-      debugPrint("nfc isAvailable: "+isAvailable.toString());
-
-      startScan();
     });
-  }
-
-  startScan() {
-    NfcManager.instance.startSession(
-      onDiscovered: (tag) async {
-        try {
-          debugPrint("on discovererd");
-          final result = await handleTag(tag);
-            if (result == null) {
-              debugPrint("on discovererd result NULL");
-              return;
-            }
-
-            debugPrint("on discovererd OK. STOP session. "+result.toString());
-            await NfcManager.instance.stopSession();
-          //setState(() => _alertMessage = result);
-        } catch (e) {
-          debugPrint("on discovererd EXCEPTION "+e.toString());
-          await NfcManager.instance.stopSession().catchError((_) { /* no op */ });
-          //setState(() => _errorMessage = '$e');
-        }
-      },
-    ).catchError((e) => setState(() => _errorMessage = '$e'));
   }
 
   @override
   void dispose() {
-    NfcManager.instance.stopSession().catchError((_) { /* no op */ });
     super.dispose();
   }
-
-  Future<String?> handleTag(NfcTag tag) async {
-    final tech = Ndef.from(tag);
-
-    if (tech == null) {
-      debugPrint("tag "+tech.toString());
-
-      throw('Tag is not ndef formatable.');
-    }
-
-    if (tech is Ndef) {
-      final cachedMessage = tech.cachedMessage;
-      final canMakeReadOnly = tech.additionalData['canMakeReadOnly'] as bool?;
-      final type = tech.additionalData['type'] as String?;
-      debugPrint("tech is ndef "+('${cachedMessage?.byteLength ?? 0} / ${tech.maxSize} bytes'));
-      debugPrint("isWritable: "+tech.isWritable.toString());
-
-      if (cachedMessage != null) {
-        var orderId = "";
-        var userId = "";
-
-        Iterable.generate(cachedMessage.records.length).forEach((i) {
-          final record = cachedMessage.records[i];
-          final info = NdefRecordInfo.fromNdef(record);
-
-          debugPrint("info " + info.subtitle.toString());
-
-          var str = info.subtitle.replaceAll("(en)", "");
-          var items = str.split(",");
-          orderId = items[0];
-          userId = items[1];
-        });
-
-        if(orderId.isNotEmpty && userId.isNotEmpty) {
-          debugPrint("open orderId "+orderId+"  userId: "+userId);
-        }
-      } else {
-        debugPrint("cached messages null");
-      }
-    }
-
-    try {
-      debugPrint("reading "+tech.cachedMessage.toString());
-      //await tech.format(NdefMessage([]));
-    } on PlatformException catch (e) {
-      throw(e.message ?? 'Some error has occurred.');
-    }
-
-    return '[Ndef - Format] is completed.';
-  }
-
 
   @override
   Widget build(BuildContext context) {
@@ -163,12 +84,6 @@ class NfcScreenState extends State<NfcScreen> {
                     ),
                     Text(_errorMessage),
                     const SizedBox(height: 80),
-                    InkWell(
-                      onTap: () {
-                        startScan();
-                      },
-                        child: SvgPicture.asset("assets/images/phone_nfc.svg")
-                    ),
                     const Expanded(
                       child: SizedBox(),
                     ),

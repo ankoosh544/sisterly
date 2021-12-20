@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/screens/checkout_screen.dart';
 import 'package:sisterly/screens/profile_screen.dart';
+import 'package:sisterly/screens/upload_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:flutter/material.dart';
@@ -110,15 +111,23 @@ class ProductScreenState extends State<ProductScreen>  {
                 width: double.infinity,
                 child: Stack(
                   children: [
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20.0),
-                        child: CachedNetworkImage(
-                          height: 180, fit: BoxFit.fitHeight,
-                          imageUrl: SessionData().serverUrl + (widget.product.images.isNotEmpty ? widget.product.images.first : ""),
-                          placeholder: (context, url) => Center(child: CircularProgressIndicator()),
-                          errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
-                        ),
+                    SizedBox(
+                      height: 180,
+                      child: PageView(
+                        children: [
+                          for (var img in widget.product.images)
+                            Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(20.0),
+                                child: CachedNetworkImage(
+                                  height: 180, fit: BoxFit.fitHeight,
+                                  imageUrl: SessionData().serverUrl + (img.isNotEmpty ? img : ""),
+                                  placeholder: (context, url) => Center(child: CircularProgressIndicator()),
+                                  errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
+                                ),
+                              ),
+                            )
+                        ],
                       ),
                     ),
                     Positioned(
@@ -311,7 +320,7 @@ class ProductScreenState extends State<ProductScreen>  {
                       SizedBox(height: 8,),
                       getInfoRow("Width", "26cm"),*/
                       SizedBox(height: 40,),
-                      Row(
+                      if(widget.product.owner.id != SessionData().userId) Row(
                         children: [
                           Expanded(
                             child: OutlinedButton(
@@ -335,8 +344,8 @@ class ProductScreenState extends State<ProductScreen>  {
                           ),
                         ],
                       ),
-                      SizedBox(height: 12,),
-                      Row(
+                      if(widget.product.owner.id != SessionData().userId) SizedBox(height: 12,),
+                      if(widget.product.owner.id != SessionData().userId) Row(
                         children: [
                           Expanded(
                             child: ElevatedButton(
@@ -358,6 +367,29 @@ class ProductScreenState extends State<ProductScreen>  {
                           ),
                         ],
                       ),
+                      if(widget.product.owner.id == SessionData().userId) Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                  primary: Constants.SECONDARY_COLOR,
+                                  textStyle: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold
+                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
+                              ),
+                              child: Text('Modifica'),
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                    MaterialPageRoute(builder: (BuildContext context) => UploadScreen(editProduct: widget.product,)));
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      if(widget.product.owner.id == SessionData().userId) SizedBox(height: 190,)
                     ],
                   ),
                 ),
