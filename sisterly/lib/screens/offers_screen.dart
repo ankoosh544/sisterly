@@ -122,7 +122,7 @@ class OffersScreenState extends State<OffersScreen>  {
                     width: 127,
                     height: 96,
                     fit: BoxFit.contain,
-                    imageUrl: SessionData().serverUrl + offer.product.images.first,
+                    imageUrl: offer.product.images.first,
                     placeholder: (context, url) => CircularProgressIndicator(),
                     errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg",),
                   ),
@@ -206,6 +206,7 @@ class OffersScreenState extends State<OffersScreen>  {
               ],
             ),
             if(_mode == OffersScreenMode.received && canProcess(offer)) Divider(),
+            if(_mode == OffersScreenMode.sent && canPay(offer)) Divider(),
             if(_mode == OffersScreenMode.sent && canPay(offer)) Row(
               children: [
                 Expanded(

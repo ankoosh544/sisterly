@@ -57,7 +57,7 @@ class ApiManager {
       "refresh": refreshToken
     };
 
-    await internalMakePostRequest("/client/token/refresh", SessionData().token, params, success, failure, false);
+    await internalMakePostRequest("/client/token/refresh", params, SessionData().token, success, failure, false);
   }
 
   makePostRequest(endpoint, params, success, failure) async {
@@ -287,11 +287,17 @@ class ApiManager {
         var preferences = await SharedPreferences.getInstance();
         var token = preferences.getString(Constants.PREFS_REFRESH_TOKEN);
         refreshToken(token, (response) async {
-          var preferences = await SharedPreferences.getInstance();
-          preferences.setString(Constants.PREFS_TOKEN, response["access"]);
-          preferences.setString(Constants.PREFS_REFRESH_TOKEN, response["refresh"]);
-          SessionData().token = response["access"];
-          internalMakeGetRequest(endpoint, params, SessionData().token, success, failure, false);
+          if(response != null && response["access"] != null) {
+            var preferences = await SharedPreferences.getInstance();
+            preferences.setString(Constants.PREFS_TOKEN, response["access"]);
+            preferences.setString(
+                Constants.PREFS_REFRESH_TOKEN, response["refresh"]);
+            SessionData().token = response["access"];
+            internalMakeGetRequest(
+                endpoint, params, SessionData().token, success, failure, false);
+          } else {
+            SessionData().logout(context);
+          }
         }, failure);
       } else if (bodyResponse["errors"] != null) {
         debugPrint("internalMakePutRequest " + url + " error");

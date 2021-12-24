@@ -201,7 +201,7 @@ class AccountScreenState extends State<AccountScreen>  {
                                 borderRadius: BorderRadius.circular(68.0),
                                 child: CachedNetworkImage(
                                   width: 68, height: 68, fit: BoxFit.cover,
-                                  imageUrl: SessionData().serverUrl + (_profile!.image ?? ""),
+                                  imageUrl: (_profile!.image ?? ""),
                                   placeholder: (context, url) => CircularProgressIndicator(),
                                   errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder.svg"),
                                 ),
@@ -292,7 +292,7 @@ class AccountScreenState extends State<AccountScreen>  {
                               Navigator.of(context).push(
                                   MaterialPageRoute(builder: (BuildContext context) => OrdersScreen()));
                             },
-                            child: getItem("assets/images/rent 2.svg", "Ordini")
+                            child: getItem("assets/images/rent 2.svg", "Noleggi")
                         ),
                         InkWell(
                             onTap: () {
@@ -327,13 +327,7 @@ class AccountScreenState extends State<AccountScreen>  {
                           },
                             child: getItem("assets/images/review.svg", "Le tue recensioni")
                         ),
-                        InkWell(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (BuildContext context) => ReviewsScreen()));
-                            },
-                            child: getSwitchItem("assets/images/vacation.svg", "Modalità Vacanza")
-                        ),
+                        getSwitchItem("assets/images/vacation.svg", "Modalità Vacanza"),
                         InkWell(
                           onTap: () {
                             SessionData().logout(context);

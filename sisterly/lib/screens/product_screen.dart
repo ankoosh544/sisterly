@@ -121,7 +121,7 @@ class ProductScreenState extends State<ProductScreen>  {
                                 padding: const EdgeInsets.all(20.0),
                                 child: CachedNetworkImage(
                                   height: 180, fit: BoxFit.fitHeight,
-                                  imageUrl: SessionData().serverUrl + (img.isNotEmpty ? img : ""),
+                                  imageUrl: (img.isNotEmpty ? img : ""),
                                   placeholder: (context, url) => Center(child: CircularProgressIndicator()),
                                   errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
                                 ),
@@ -185,7 +185,7 @@ class ProductScreenState extends State<ProductScreen>  {
                             ],
                           ),
                           Text(
-                            "${Utils.formatCurrency(widget.product.sellingPrice)}",
+                            "${Utils.formatCurrency(widget.product.priceOffer)}",
                             style: TextStyle(
                                 color: Constants.PRIMARY_COLOR,
                                 fontSize: 25,
@@ -216,7 +216,7 @@ class ProductScreenState extends State<ProductScreen>  {
                               borderRadius: BorderRadius.circular(68.0),
                               child: CachedNetworkImage(
                                 width: 68, height: 68, fit: BoxFit.cover,
-                                imageUrl: SessionData().serverUrl + (widget.product.owner.image ?? ""),
+                                imageUrl: (widget.product.owner.image ?? ""),
                                 placeholder: (context, url) => Center(child: CircularProgressIndicator()),
                                 errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder.svg"),
                               ),
@@ -269,7 +269,7 @@ class ProductScreenState extends State<ProductScreen>  {
                       SizedBox(height: 8,),
                       getInfoRow("Anni", widget.product.year.toString()),
                       SizedBox(height: 8,),
-                      getInfoRow("Taglia", widget.product.size.toString()),
+                      getInfoRow("Misura", widget.product.size.toString()),
                       SizedBox(height: 8,),
                       Divider(height: 30,),
                       SizedBox(height: 8,),
@@ -360,6 +360,11 @@ class ProductScreenState extends State<ProductScreen>  {
                               ),
                               child: Text('Prenota'),
                               onPressed: () {
+                                if(widget.product.owner.holidayMode!) {
+                                  ApiManager.showFreeErrorMessage(context, "L'utente in questione ha attivato la modalità vacanza, non sarà possibile prenotare la borsa fino al suo rientro. Riprova tra qualche giorno");
+                                  return;  
+                                }
+                                
                                 Navigator.of(context).push(
                                     MaterialPageRoute(builder: (BuildContext context) => CheckoutScreen(product: widget.product,)));
                               },

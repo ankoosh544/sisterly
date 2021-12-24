@@ -28,6 +28,8 @@ class Product {
   final String? year;
   final int? yearId;
   final DeliveryMode? deliveryType;
+  bool usePriceAlgorithm;
+  bool useDiscount;
 
   Product(
       this.id,
@@ -50,7 +52,9 @@ class Product {
       this.sizeId,
       this.year,
       this.yearId,
-      this.deliveryType);
+      this.deliveryType,
+      this.usePriceAlgorithm,
+      this.useDiscount);
 
   static getArrayDesc(item) {
     if (item.isNotEmpty && item.length > 1) {
@@ -82,7 +86,10 @@ class Product {
         json["size"]["id"],
         getGenericName(json["year"]["id"], bagYears),
         json["year"]["id"],
-        DeliveryMode.fromJson(json["delivery_type"]));
+        DeliveryMode.fromJson(json["delivery_type"]),
+      json["use_price_algorithm"] ?? false,
+      json["use_discount"] ?? false,
+    );
 
     var media = json["media"];
 

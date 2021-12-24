@@ -212,7 +212,7 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
                               borderRadius: BorderRadius.circular(68.0),
                               child: CachedNetworkImage(
                                 width: 68, height: 68, fit: BoxFit.cover,
-                                imageUrl: SessionData().serverUrl + (_profile!.image ?? ""),
+                                imageUrl: (_profile!.image ?? ""),
                                 placeholder: (context, url) => CircularProgressIndicator(),
                                 errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder.svg"),
                               ),

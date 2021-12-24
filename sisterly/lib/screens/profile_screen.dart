@@ -178,7 +178,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
                   ),
                   child: CachedNetworkImage(
                     height: 76,
-                    imageUrl: SessionData().serverUrl + (product.images.isNotEmpty ? product.images.first : ""),
+                    imageUrl: (product.images.isNotEmpty ? product.images.first : ""),
                     placeholder: (context, url) => Center(child: CircularProgressIndicator()),
                     errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
                   )
@@ -263,7 +263,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
                               borderRadius: BorderRadius.circular(68.0),
                               child: CachedNetworkImage(
                                 width: 68, height: 68, fit: BoxFit.cover,
-                                imageUrl: SessionData().serverUrl + (_profile!.image ?? ""),
+                                imageUrl: (_profile!.image ?? ""),
                                 placeholder: (context, url) => CircularProgressIndicator(),
                                 errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder.svg"),
                               ),

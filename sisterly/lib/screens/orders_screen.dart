@@ -130,7 +130,7 @@ class OrdersScreenState extends State<OrdersScreen>  {
                     width: 127,
                     height: 96,
                     fit: BoxFit.contain,
-                    imageUrl: SessionData().serverUrl + offer.product.images.first,
+                    imageUrl: offer.product.images.first,
                     placeholder: (context, url) => CircularProgressIndicator(),
                     errorWidget: (context, url, error) => Icon(Icons.error),
                   ),
@@ -210,7 +210,7 @@ class OrdersScreenState extends State<OrdersScreen>  {
       backgroundColor: Constants.PRIMARY_COLOR,
       body: Column(
         children: [
-          HeaderWidget(title: "Ordini"),
+          HeaderWidget(title: "Noleggi"),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(
@@ -300,7 +300,7 @@ class OrdersScreenState extends State<OrdersScreen>  {
                                 return offerCell(_orders[index]);
                               }
                             ),
-                          ) : Center(child: Text("Non ci sono ordini qui")),
+                          ) : Center(child: Text("Non ci sono noleggi qui")),
                         ),
                       ),
                     ],

@@ -84,28 +84,29 @@ class SearchScreenState extends State<SearchScreen>  {
                 children: [
                   Container(
                     width: double.infinity,
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Color(0xfff5f5f5),
-                      borderRadius: BorderRadius.circular(15)
+                        color: Color(0xfff5f5f5),
+                        borderRadius: BorderRadius.circular(15)
                     ),
                     // child: Image.asset("assets/images/product.png", height: 169,),
                     child: CachedNetworkImage(
                       height: 169,
-                      imageUrl: SessionData().serverUrl + (product.images.isNotEmpty ? product.images.first : ""),
-                      placeholder: (context, url) => CircularProgressIndicator(),
+                      imageUrl: (product.images.isNotEmpty ? product.images.first : ""),
+                      placeholder: (context, url) => Center(child: CircularProgressIndicator()),
                       errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
                     ),
                   ),
                   Positioned(
-                    top: 16,
-                    right: 16,
+                      top: 12,
+                      right: 12,
                       child: isFavorite(product) ? InkWell(
-                        child: SizedBox(width: 16, height: 16, child: SvgPicture.asset("assets/images/saved.svg")),
+                        child: SizedBox(width: 18, height: 18, child: SvgPicture.asset("assets/images/saved.svg")),
                         onTap: () {
                           setProductFavorite(product, false);
                         },
                       ) : InkWell(
-                        child: SizedBox(width: 16, height: 16, child: SvgPicture.asset("assets/images/save.svg")),
+                        child: SizedBox(width: 18, height: 18, child: SvgPicture.asset("assets/images/save.svg")),
                         onTap: () {
                           setProductFavorite(product, true);
                         },
@@ -115,7 +116,7 @@ class SearchScreenState extends State<SearchScreen>  {
               ),
               SizedBox(height: 16,),
               Text(
-                product.model,
+                product.model.toString() + " - " + product.brandName.toString(),
                 textAlign: TextAlign.left,
                 style: TextStyle(
                   color: Constants.TEXT_COLOR,
@@ -124,15 +125,32 @@ class SearchScreenState extends State<SearchScreen>  {
                 ),
               ),
               SizedBox(height: 8,),
-              Text(
-                "${Utils.formatCurrency(product.priceOffer)} al giorno",
-                textAlign: TextAlign.left,
-                style: TextStyle(
-                  color: Constants.PRIMARY_COLOR,
-                  fontSize: 18,
-                    fontFamily: Constants.FONT,
-                  fontWeight: FontWeight.bold
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "${Utils.formatCurrency(product.priceOffer)} al giorno",
+                    textAlign: TextAlign.left,
+                    style: TextStyle(
+                        color: Constants.PRIMARY_COLOR,
+                        fontSize: 18,
+                        fontFamily: Constants.FONT,
+                        fontWeight: FontWeight.bold
+                    ),
+                  ),
+                  SizedBox(width: 8,),
+                  Text(
+                    "${Utils.formatCurrency(product.sellingPrice)}",
+                    textAlign: TextAlign.left,
+                    style: TextStyle(
+                      color: Constants.PRIMARY_COLOR,
+                      fontSize: 18,
+                      fontFamily: Constants.FONT,
+                      fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.lineThrough,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

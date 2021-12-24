@@ -262,7 +262,7 @@ class DocumentsScreenState extends State<DocumentsScreen>  {
                                 for (var img in _imageUrls)
                                   ClipRRect(
                                     child: CachedNetworkImage(
-                                      imageUrl: SessionData().serverUrl + img,
+                                      imageUrl: img,
                                       fit: BoxFit.cover,
                                       placeholder: (context, url) => Center(child: CircularProgressIndicator()),
                                       errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
@@ -322,6 +322,8 @@ class DocumentsScreenState extends State<DocumentsScreen>  {
             setState(() {
               _isUploading = false;
             });
+
+            getDocuments();
           }, (res) {
             debugPrint('Failed uploading photo');
             _images.remove(photo);

@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:nfc_manager/nfc_manager.dart';
+import 'package:sisterly/models/product.dart';
 import 'package:sisterly/models/record.dart';
+import 'package:sisterly/screens/product_screen.dart';
 import 'package:sisterly/screens/signup_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
@@ -82,8 +84,7 @@ class NfcScreenState extends State<NfcScreen> {
       debugPrint("isWritable: "+tech.isWritable.toString());
 
       if (cachedMessage != null) {
-        var orderId = "";
-        var userId = "";
+        var productId = "";
 
         Iterable.generate(cachedMessage.records.length).forEach((i) {
           final record = cachedMessage.records[i];
@@ -91,14 +92,21 @@ class NfcScreenState extends State<NfcScreen> {
 
           debugPrint("info " + info.subtitle.toString());
 
-          var str = info.subtitle.replaceAll("(en)", "");
-          var items = str.split(",");
-          orderId = items[0];
-          userId = items[1];
+          productId = info.subtitle.replaceAll("(en)", "").trim();
         });
 
-        if(orderId.isNotEmpty && userId.isNotEmpty) {
-          debugPrint("open orderId "+orderId+"  userId: "+userId);
+        if(productId.isNotEmpty) {
+          debugPrint("open productId "+productId);
+
+          ApiManager(context).makeGetRequest('/product/'+productId+'/', {}, (res) {
+            var data = res["data"];
+            if (data != null) {
+              Product prd = Product.fromJson(data);
+
+              Navigator.of(context).push(
+                  MaterialPageRoute(builder: (BuildContext context) => ProductScreen(prd)));
+            }
+          }, (res) {});
         }
       } else {
         debugPrint("cached messages null");

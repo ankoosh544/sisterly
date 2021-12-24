@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/screens/nfc_screen.dart';
 import 'package:sisterly/screens/product_screen.dart';
@@ -32,8 +33,36 @@ class HomeScreenState extends State<HomeScreen>  {
     super.initState();
 
     Future.delayed(Duration.zero, () {
+      initPush();
       getProducts();
       getProductsFavorite();
+    });
+  }
+
+  initPush() async {
+    OneSignal.shared.setLogLevel(OSLogLevel.verbose, OSLogLevel.none);
+
+    OneSignal.shared.setAppId("525f16c7-1961-47ca-841d-bf2f96c2b002");
+
+    OneSignal.shared.setExternalUserId(SessionData().userId.toString());
+
+// The promptForPushNotificationsWithUserResponse function will show the iOS push notification prompt. We recommend removing the following code and instead using an In-App Message to prompt for notification permission
+    OneSignal.shared.promptUserForPushNotificationPermission().then((accepted) {
+      print("Accepted permission: $accepted");
+    });
+
+    final status = await OneSignal.shared.getDeviceState();
+    final String? osUserID = status?.userId;
+
+    debugPrint("onesignal id "+osUserID.toString());
+
+    var params = {
+      "player_id": osUserID.toString()
+    };
+    ApiManager(context).makePostRequest('/client/playerId', params, (res) {
+
+    }, (res) {
+
     });
   }
 
@@ -66,7 +95,7 @@ class HomeScreenState extends State<HomeScreen>  {
                     // child: Image.asset("assets/images/product.png", height: 169,),
                     child: CachedNetworkImage(
                       height: 169,
-                      imageUrl: SessionData().serverUrl + (product.images.isNotEmpty ? product.images.first : ""),
+                      imageUrl: (product.images.isNotEmpty ? product.images.first : ""),
                       placeholder: (context, url) => Center(child: CircularProgressIndicator()),
                       errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
                     ),
@@ -90,7 +119,7 @@ class HomeScreenState extends State<HomeScreen>  {
               ),
               SizedBox(height: 16,),
               Text(
-                product.model,
+                product.model.toString() + " - " + product.brandName.toString(),
                 textAlign: TextAlign.left,
                 style: TextStyle(
                   color: Constants.TEXT_COLOR,
@@ -99,20 +128,9 @@ class HomeScreenState extends State<HomeScreen>  {
                 ),
               ),
               SizedBox(height: 8,),
-              Wrap(
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    "${Utils.formatCurrency(product.sellingPrice)}",
-                    textAlign: TextAlign.left,
-                    style: TextStyle(
-                        color: Constants.PRIMARY_COLOR,
-                        fontSize: 18,
-                        fontFamily: Constants.FONT,
-                        fontWeight: FontWeight.bold,
-                        decoration: TextDecoration.lineThrough,
-                    ),
-                  ),
-                  SizedBox(width: 8,),
                   Text(
                     "${Utils.formatCurrency(product.priceOffer)} al giorno",
                     textAlign: TextAlign.left,
@@ -121,6 +139,18 @@ class HomeScreenState extends State<HomeScreen>  {
                       fontSize: 18,
                         fontFamily: Constants.FONT,
                       fontWeight: FontWeight.bold
+                    ),
+                  ),
+                  SizedBox(width: 8,),
+                  Text(
+                    "${Utils.formatCurrency(product.sellingPrice)}",
+                    textAlign: TextAlign.left,
+                    style: TextStyle(
+                      color: Constants.PRIMARY_COLOR,
+                      fontSize: 18,
+                      fontFamily: Constants.FONT,
+                      fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.lineThrough,
                     ),
                   ),
                 ],

@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:sisterly/models/address.dart';
 import 'package:sisterly/models/credit_card.dart';
+import 'package:sisterly/models/document.dart';
 import 'package:sisterly/models/offer.dart';
 import 'package:sisterly/screens/payment_status_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
+
+import 'documents_screen.dart';
 
 class ChoosePaymentScreen extends StatefulWidget {
 
@@ -27,12 +30,15 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
   List<CreditCard> _cards = [];
   CreditCard? _activeCard;
   bool _addNewCard = false;
+  List<Document> _documents = [];
+  bool _isLoadingDocuments = true;
 
   @override
   void initState() {
     super.initState();
 
     Future.delayed(Duration.zero, () {
+      getDocuments();
       getCards(null);
     });
   }
@@ -66,7 +72,7 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
     }, (response) {});
   }
 
-  saveCard() {
+  saveCard(callback) {
     if (_date.text.isNotEmpty && _cardNumber.text.isNotEmpty && _cvv.text.isNotEmpty) {
       ApiManager(context).makePutRequest('/client/cards', {
         "card_number": _cardNumber.text,
@@ -75,8 +81,10 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
       }, (res) {
         debugPrint("create card success");
         getCards(null);
+        if(callback != null) callback();
       }, (res) {
         ApiManager.showFreeErrorMessage(context, "Carta non valida");
+        if(callback != null) callback();
       });
     }
   }
@@ -90,6 +98,30 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
     } catch(e) {
       //
     }
+  }
+
+  getDocuments() {
+    setState(() {
+      _isLoadingDocuments = true;
+    });
+    ApiManager(context).makeGetRequest('/payment/kyc', {}, (res) {
+      _documents = [];
+
+      var data = res["data"];
+      if (data != null) {
+        for (var doc in data) {
+          _documents.add(Document.fromJson(doc));
+        }
+      }
+
+      setState(() {
+        _isLoadingDocuments = false;
+      });
+    }, (res) {
+      setState(() {
+        _isLoadingDocuments = false;
+      });
+    });
   }
 
   @override
@@ -302,33 +334,76 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
                             ),
                           ]
                       ),
+                      if(_documents.isEmpty) SizedBox(height: 15),
+                      if(_documents.isEmpty && !_isLoadingDocuments) InkWell(
+                        onTap: () async {
+                          await Navigator.of(context).push(
+                              MaterialPageRoute(builder: (BuildContext context) => DocumentsScreen()));
 
+                          getDocuments();
+                        },
+                        child: Card(
+                          color: Color(0x88FF8A80),
+                          elevation: 0,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              children: const [
+                                Text('Carica un documento d\'identità per poter procedere con il pagamento"',
+                                    style: TextStyle(
+                                      color: Constants.TEXT_COLOR,
+                                      fontSize: 16,
+                                      fontFamily: Constants.FONT,
+                                    )
+                                ),
+                                SizedBox(height: 8),
+                                Text('Clicca qui',
+                                    style: TextStyle(
+                                      color: Constants.TEXT_COLOR,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: Constants.FONT,
+                                    )
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                       SizedBox(height: 15),
                       Center(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                              primary: Constants.SECONDARY_COLOR,
-                              textStyle: const TextStyle(
-                                  fontSize: 16
-                              ),
-                              padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
-                          ),
-                          child: Text('Avanti'),
-                          onPressed: () async {
-                            if(!_hasCards && !_addNewCard) {
-                              return;
-                            }
+                        child: Opacity(
+                          opacity: _documents.isEmpty ? 0.3 : 1,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                                primary: Constants.SECONDARY_COLOR,
+                                textStyle: const TextStyle(
+                                    fontSize: 16
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
+                            ),
+                            child: Text('Avanti'),
+                            onPressed: () async {
+                              if(_documents.isEmpty) {
+                                return;
+                              }
 
-                            if (!_hasCards || (_saveCard && _addNewCard)) {
-                              await saveCard();
-                              getCards(() {
+                              if(!_hasCards && !_addNewCard) {
+                                return;
+                              }
+
+                              if (!_hasCards || (_saveCard && _addNewCard)) {
+                                saveCard(() {
+                                  getCards(() {
+                                    next();
+                                  });
+                                });
+                              } else {
                                 next();
-                              });
-                            } else {
-                              next();
-                            }
-                          },
+                              }
+                            },
+                          ),
                         ),
                       ),
                       SizedBox(height: 35)
@@ -348,13 +423,22 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
 
     var params = {
       "id": _activeCard!.id.toString(),
-      "is_card": true
+      "is_card": true,
+      "JavaEnabled": false,
+      "Language": "it",
+      "ColorDepth": 1,
+      "JavascriptEnabled": true,
+      "ScreenHeight": MediaQuery.of(context).size.height,
+      "ScreenWidth": MediaQuery.of(context).size.width,
+      "TimeZoneOffset": "UTC+2",
+      "UserAgent": "Mobile",
+      "ip_address": "192.168.1.1"
     };
 
     ApiManager(context).makePutRequest("/payment/make/" + widget.offer.id.toString(), params, (res) {
-      if(res["data"] != null && res["data"]["code"] != null) {
+      if(res["data"] != null && res["data"]["result"] != null) {
         Navigator.of(context).push(
-            MaterialPageRoute(builder: (BuildContext context) => PaymentStatusScreen(offer: widget.offer, code: res["data"]["code"])));
+            MaterialPageRoute(builder: (BuildContext context) => PaymentStatusScreen(offer: widget.offer, code: "")));
       } else {
         ApiManager.showFreeErrorMessage(context, "Pagamento fallito");
       }

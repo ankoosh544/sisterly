@@ -38,7 +38,7 @@ class CheckoutProductCard extends StatelessWidget {
             ),
             child: CachedNetworkImage(
               height: 76,
-              imageUrl: SessionData().serverUrl + (product.images.isNotEmpty ? product.images.first : ""),
+              imageUrl: (product.images.isNotEmpty ? product.images.first : ""),
               placeholder: (context, url) => Center(child: CircularProgressIndicator()),
               errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
             ),

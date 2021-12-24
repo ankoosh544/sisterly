@@ -7,11 +7,13 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:sisterly/models/address.dart';
 import 'package:sisterly/models/brand.dart';
 import 'package:sisterly/models/delivery_mode.dart';
+import 'package:sisterly/models/document.dart';
 import 'package:sisterly/models/generic.dart';
 import 'package:sisterly/models/material.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/models/product_color.dart';
 import 'package:sisterly/models/var.dart';
+import 'package:sisterly/screens/product_edit_success_screen.dart';
 import 'package:sisterly/screens/product_success_screen.dart';
 import 'package:sisterly/screens/sister_advice_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
@@ -24,6 +26,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:sisterly/widgets/header_widget.dart';
 
 import '../utils/constants.dart';
+import 'documents_screen.dart';
 
 class UploadScreen extends StatefulWidget {
 
@@ -54,11 +57,15 @@ class UploadScreenState extends State<UploadScreen>  {
   Generic _selectedConditions = productConditions[0];
   Generic _selectedBagYears = bagYears[0];
   Generic _selectedBagSize = bagSizes[0];
+  Generic _selectedLenderKit = lenderKits[0];
   List<String> _imageUrls = [];
   String? _mediaId;
   bool _isUploading = false;
   bool _usePriceAlgo = false;
   bool _useDiscount = false;
+  String? _suggestedPrice;
+  List<Document> _documents = [];
+  bool _isLoadingDocuments = true;
 
   /* Address management */
   final TextEditingController _name = TextEditingController();
@@ -86,6 +93,7 @@ class UploadScreenState extends State<UploadScreen>  {
     Future.delayed(Duration.zero, () {
       debugPrint("deliveryTypes: "+jsonEncode(deliveryTypes));
 
+      _getDocuments();
       _getMediaId();
       _getBrands();
       _getColors();
@@ -102,6 +110,30 @@ class UploadScreenState extends State<UploadScreen>  {
     super.dispose();
   }
 
+  _getDocuments() {
+    setState(() {
+      _isLoadingDocuments = true;
+    });
+    ApiManager(context).makeGetRequest('/payment/kyc', {}, (res) {
+      _documents = [];
+
+      var data = res["data"];
+      if (data != null) {
+        for (var doc in data) {
+          _documents.add(Document.fromJson(doc));
+        }
+      }
+
+      setState(() {
+        _isLoadingDocuments = false;
+      });
+    }, (res) {
+      setState(() {
+        _isLoadingDocuments = false;
+      });
+    });
+  }
+
   populateEditProduct() {
     if(widget.editProduct != null) {
       if(_brands.isNotEmpty && _materials.isNotEmpty && _colors.isNotEmpty) {
@@ -116,6 +148,8 @@ class UploadScreenState extends State<UploadScreen>  {
         _selectedBagYears = bagYears.firstWhere((element) => element.id == widget.editProduct!.yearId);
         _dailyPrice.text = widget.editProduct!.priceOffer.toString();
         _sellingPrice.text = widget.editProduct!.sellingPrice.toString();
+        _usePriceAlgo = widget.editProduct!.usePriceAlgorithm;
+        _useDiscount = widget.editProduct!.useDiscount;
 
         _imageUrls = widget.editProduct!.images;
 
@@ -190,741 +224,846 @@ class UploadScreenState extends State<UploadScreen>  {
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      SizedBox(height: 8),
-                      Text(
-                        "Carica nuovo prodotto",
-                        style: TextStyle(
-                            color: Constants.DARK_TEXT_COLOR,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: Constants.FONT
-                        ),
-                      ),
-                      SizedBox(height: 24,),
-                      Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15),
-                          color: Constants.SECONDARY_COLOR_LIGHT
-                        ),
-                        child: Column(
-                          children: [
-                            SizedBox(height: 10),
-                            // Text(
-                            //   "Add up to 20 photos",
-                            //   style: TextStyle(
-                            //       color: Constants.LIGHT_TEXT_COLOR,
-                            //       fontSize: 14,
-                            //       fontFamily: Constants.FONT
-                            //   )
-                            // ),
-                            SizedBox(height: 10),
-                            TextButton(
-                              style: ButtonStyle(
-                                backgroundColor: MaterialStateProperty.all(Constants.SECONDARY_COLOR),
-                                padding: MaterialStateProperty.all(EdgeInsets.symmetric(horizontal: 46, vertical: 14)),
-                                shape: MaterialStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)))
-                              ),
-                              child: Text(
-                                "Carica foto",
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontFamily: Constants.FONT
-                                )
-                              ),
-                              onPressed: () async {
-                                ImageSource? source = await showDialog<ImageSource>(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                      content: Text("Scegli immagine da"),
-                                      actions: [
-                                        FlatButton(
-                                          child: Text("Scatta ora"),
-                                          onPressed: () => Navigator.pop(context, ImageSource.camera),
-                                        ),
-                                        FlatButton(
-                                          child: Text("Galleria"),
-                                          onPressed: () => Navigator.pop(context, ImageSource.gallery),
-                                        ),
-                                      ]
-                                  ),
-                                );
+                    children: [
+                      if(_documents.isEmpty) SizedBox(height: 15),
+                      if(_documents.isEmpty && !_isLoadingDocuments) InkWell(
+                        onTap: () async {
+                          await Navigator.of(context).push(
+                              MaterialPageRoute(builder: (BuildContext context) => DocumentsScreen()));
 
-                                if(source == ImageSource.camera) {
-                                  _images = [(await picker.pickImage(source: ImageSource.camera))!];
-                                } else {
-                                  _images = (await picker.pickMultiImage())!;
-                                }
-
-                                _upload();
-                                setState(() {});
-                              },
-                            ),
-                            SizedBox(height: 12),
-                            if(_isUploading) CircularProgressIndicator(),
-                            SizedBox(height: 4),
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => SisterAdviceScreen()));
-                              },
-                              child: Text(
-                                  "Vedi consigli",
-                                  style: TextStyle(
-                                    color: Constants.PRIMARY_COLOR,
-                                    fontSize: 14,
-                                    fontFamily: Constants.FONT,
-                                    decoration: TextDecoration.underline
-                                  )
-                              ),
-                            ),
-                            SizedBox(height: 10),
-                            if (_imageUrls.isNotEmpty) GridView.count(
-                              shrinkWrap: true,
-                              crossAxisCount: 4,
-                              mainAxisSpacing: 5.0,
-                              crossAxisSpacing: 5.0,
-                              physics: NeverScrollableScrollPhysics(),
-                              children: [
-                                  /*for (var img in _images)
-                                    ClipRRect(
-                                        child: Image.file(File(img.path), fit: BoxFit.cover),
-                                      borderRadius: BorderRadius.circular(12),
-                                    )*/
-
-                                for (var img in _imageUrls)
-                                  ClipRRect(
-                                    child: CachedNetworkImage(
-                                      imageUrl: SessionData().serverUrl + img,
-                                      fit: BoxFit.cover,
-                                      placeholder: (context, url) => Center(child: CircularProgressIndicator()),
-                                      errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
-                                    ),
-                                    borderRadius: BorderRadius.circular(12),
-                                  )
-                              ]
-                            ),
-                            SizedBox(height: 10)
-                          ]
-                        )
-                      ),
-                      SizedBox(height: 32),
-                      Text(
-                        "Nome modello",
-                        style: TextStyle(
-                            color: Constants.TEXT_COLOR,
-                            fontSize: 16,
-                            fontFamily: Constants.FONT
-                        ),
-                      ),
-                      SizedBox(height: 8,),
-                      Container(
-                        decoration: const BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0x4ca3c4d4),
-                              spreadRadius: 8,
-                              blurRadius: 12,
-                              offset:
-                              Offset(0, 0), // changes position of shadow
-                            ),
-                          ],
-                        ),
-                        child: TextField(
-                          keyboardType: TextInputType.text,
-                          cursorColor: Constants.PRIMARY_COLOR,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Constants.FORM_TEXT,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: "Nome modello...",
-                            hintStyle: const TextStyle(
-                                color: Constants.PLACEHOLDER_COLOR),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                width: 0,
-                                style: BorderStyle.none,
-                              ),
-                            ),
-                            contentPadding: const EdgeInsets.all(16),
-                            filled: true,
-                            fillColor: Constants.WHITE,
-                          ),
-                          controller: _modelText,
-                        ),
-                      ),
-                      SizedBox(height: 32,),
-                      Text(
-                        "Brand",
-                        style: TextStyle(
-                            color: Constants.TEXT_COLOR,
-                            fontSize: 16,
-                            fontFamily: Constants.FONT
-                        ),
-                      ),
-                      SizedBox(height: 8,),
-                      if (_brands.isNotEmpty)  Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.only(left: 15),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x4ca3c4d4),
-                              spreadRadius: 8,
-                              blurRadius: 12,
-                              offset:
-                              Offset(0, 0), // changes position of shadow
-                            ),
-                          ],
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<Brand>(
-                            items: _brands.map((Brand b) => DropdownMenuItem<Brand>(
-                                child: Text(b.name, style: TextStyle(fontSize: 16)),
-                                value: b
-                              )
-                            ).toList(),
-                            onChanged: (val) => setState(() => _selectedBrand = val!),
-                            value: _selectedBrand
-                          ),
-                        )
-                      ),
-                      SizedBox(height: 32),
-                      Text(
-                        "Materiale",
-                        style: TextStyle(
-                            color: Constants.TEXT_COLOR,
-                            fontSize: 16,
-                            fontFamily: Constants.FONT
-                        ),
-                      ),
-                      SizedBox(height: 8,),
-                      if (_materials.isNotEmpty)  Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.only(left: 15),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x4ca3c4d4),
-                              spreadRadius: 8,
-                              blurRadius: 12,
-                              offset:
-                              Offset(0, 0), // changes position of shadow
-                            ),
-                          ],
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<MyMaterial>(
-                            items: _materials.map((MyMaterial m) => DropdownMenuItem<MyMaterial>(
-                                child: Text(m.material, style: TextStyle(fontSize: 16)),
-                                value: m
-                              )
-                            ).toList(),
-                            onChanged: (val) => setState(() => _selectedMaterial = val!),
-                            value: _selectedMaterial
-                          ),
-                        )
-                      ),
-                      SizedBox(height: 32),
-                      Text(
-                        "Descrizione",
-                        style: TextStyle(
-                            color: Constants.TEXT_COLOR,
-                            fontSize: 16,
-                            fontFamily: Constants.FONT
-                        ),
-                      ),
-                      SizedBox(height: 8,),
-                      Container(
-                        decoration: const BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0x4ca3c4d4),
-                              spreadRadius: 8,
-                              blurRadius: 12,
-                              offset:
-                              Offset(0, 0), // changes position of shadow
-                            ),
-                          ],
-                        ),
-                        child: TextField(
-                          keyboardType: TextInputType.multiline,
-                          cursorColor: Constants.PRIMARY_COLOR,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Constants.FORM_TEXT,
-                          ),
-                          maxLines: 4,
-                          decoration: InputDecoration(
-                            hintText: "Esempio: descrizione delle condizioni, spiegazione di eventuali imperfezioni, a cosa stare attenti nell’utilizzo ecc",
-                            hintStyle: const TextStyle(
-                                color: Constants.PLACEHOLDER_COLOR),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                width: 0,
-                                style: BorderStyle.none,
-                              ),
-                            ),
-                            contentPadding: const EdgeInsets.all(16),
-                            filled: true,
-                            fillColor: Constants.WHITE,
-                          ),
-                          controller: _descriptionText,
-                        ),
-                      ),
-                      SizedBox(height: 32,),
-                      Text(
-                        "Colore",
-                        style: TextStyle(
-                            color: Constants.DARK_TEXT_COLOR,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: Constants.FONT),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: 8,),
-                      if (_colors.isNotEmpty) Wrap(
-                        children: [
-                          for (var c in _colors)
-                            getColorBullet(c)
-                        ],
-                      ),
-                      SizedBox(height: 32,),
-                      Text(
-                        "Consegna",
-                        style: TextStyle(
-                            color: Constants.DARK_TEXT_COLOR,
-                            fontSize: 16,
-                            fontFamily: Constants.FONT),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: 8,),
-                      Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.only(left: 15),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x4ca3c4d4),
-                                spreadRadius: 8,
-                                blurRadius: 12,
-                                offset:
-                                Offset(0, 0), // changes position of shadow
-                              ),
-                            ],
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<DeliveryMode>(
-                                items: deliveryTypes.map((DeliveryMode val) => DropdownMenuItem<DeliveryMode>(
-                                    child: Text(val.description, style: TextStyle(fontSize: 16)),
-                                    value: val
-                                )
-                                ).toList(),
-                                onChanged: (val) => setState(() => _selectedDelivery = val!),
-                                value: _selectedDelivery
-                            ),
-                          )
-                      ),
-                      SizedBox(height: 32),
-                      Text(
-                        "Condizioni",
-                        style: TextStyle(
-                            color: Constants.DARK_TEXT_COLOR,
-                            fontSize: 16,
-                            fontFamily: Constants.FONT),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: 8,),
-                      Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.only(left: 15),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x4ca3c4d4),
-                                spreadRadius: 8,
-                                blurRadius: 12,
-                                offset:
-                                Offset(0, 0), // changes position of shadow
-                              ),
-                            ],
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<Generic>(
-                                items: productConditions.map((Generic val) => DropdownMenuItem<Generic>(
-                                    child: Text(val.name, style: TextStyle(fontSize: 16)),
-                                    value: val
-                                )
-                                ).toList(),
-                                onChanged: (val) => setState(() => _selectedConditions = val!),
-                                value: _selectedConditions
-                            ),
-                          )
-                      ),
-                      SizedBox(height: 32),
-                      Text(
-                        "Anni",
-                        style: TextStyle(
-                            color: Constants.DARK_TEXT_COLOR,
-                            fontSize: 16,
-                            fontFamily: Constants.FONT),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: 8,),
-                      Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.only(left: 15),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x4ca3c4d4),
-                                spreadRadius: 8,
-                                blurRadius: 12,
-                                offset:
-                                Offset(0, 0), // changes position of shadow
-                              ),
-                            ],
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<Generic>(
-                                items: bagYears.map((Generic val) => DropdownMenuItem<Generic>(
-                                    child: Text(val.name, style: TextStyle(fontSize: 16)),
-                                    value: val
-                                )
-                                ).toList(),
-                                onChanged: (val) => setState(() => _selectedBagYears = val!),
-                                value: _selectedBagYears
-                            ),
-                          )
-                      ),
-                      SizedBox(height: 32),
-                      Text(
-                        "Dimensioni",
-                        style: TextStyle(
-                            color: Constants.DARK_TEXT_COLOR,
-                            fontSize: 16,
-                            fontFamily: Constants.FONT),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: 8,),
-                      Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.only(left: 15),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x4ca3c4d4),
-                                spreadRadius: 8,
-                                blurRadius: 12,
-                                offset:
-                                Offset(0, 0), // changes position of shadow
-                              ),
-                            ],
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<Generic>(
-                                items: bagSizes.map((Generic val) => DropdownMenuItem<Generic>(
-                                    child: Text(val.name, style: TextStyle(fontSize: 16)),
-                                    value: val
-                                )
-                                ).toList(),
-                                onChanged: (val) => setState(() => _selectedBagSize = val!),
-                                value: _selectedBagSize
-                            ),
-                          )
-                      ),
-                      SizedBox(height: 32),
-                      Text(
-                        "Prezzo al giorno",
-                        style: TextStyle(
-                            color: Constants.TEXT_COLOR,
-                            fontSize: 16,
-                            fontFamily: Constants.FONT
-                        ),
-                      ),
-                      SizedBox(height: 8,),
-                      Container(
-                        decoration: const BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0x4ca3c4d4),
-                              spreadRadius: 8,
-                              blurRadius: 12,
-                              offset:
-                              Offset(0, 0), // changes position of shadow
-                            ),
-                          ],
-                        ),
-                        child: TextField(
-                          keyboardType: TextInputType.number,
-                          cursorColor: Constants.PRIMARY_COLOR,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Constants.FORM_TEXT,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: "Prezzo al giorno...",
-                            hintStyle: const TextStyle(
-                                color: Constants.PLACEHOLDER_COLOR),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                width: 0,
-                                style: BorderStyle.none,
-                              ),
-                            ),
-                            contentPadding: const EdgeInsets.all(16),
-                            filled: true,
-                            fillColor: Constants.WHITE,
-                          ),
-                          controller: _dailyPrice,
-                        ),
-                      ),
-                      SizedBox(height: 32),
-                      Text(
-                        "Prezzo di acquisto",
-                        style: TextStyle(
-                            color: Constants.TEXT_COLOR,
-                            fontSize: 16,
-                            fontFamily: Constants.FONT
-                        ),
-                      ),
-                      SizedBox(height: 8,),
-                      Container(
-                        decoration: const BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0x4ca3c4d4),
-                              spreadRadius: 8,
-                              blurRadius: 12,
-                              offset:
-                              Offset(0, 0), // changes position of shadow
-                            ),
-                          ],
-                        ),
-                        child: TextField(
-                          keyboardType: TextInputType.number,
-                          cursorColor: Constants.PRIMARY_COLOR,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Constants.FORM_TEXT,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: "Prezzo di acquisto...",
-                            hintStyle: const TextStyle(
-                                color: Constants.PLACEHOLDER_COLOR),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                width: 0,
-                                style: BorderStyle.none,
-                              ),
-                            ),
-                            contentPadding: const EdgeInsets.all(16),
-                            filled: true,
-                            fillColor: Constants.WHITE,
-                          ),
-                          controller: _sellingPrice,
-                        ),
-                      ),
-                      SizedBox(height: 32,),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Transform.scale(
-                            scale: 1.2,
-                            child: Theme(
-                              data: Theme.of(context).copyWith(
-                                unselectedWidgetColor: Color(0xff92a0a7),
-                              ),
-                              child: Checkbox(
-                                  value: _useDiscount,
-                                  activeColor: Constants.PRIMARY_COLOR,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _useDiscount = value!;
-                                    });
-                                  }
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _useDiscount = !_useDiscount;
-                                });
-                              },
-                              child: Text("Vuoi partecipare alle promozion in Sisterly?",
-                                style: TextStyle(
-                                    color: Constants.TEXT_COLOR,
-                                    fontSize: 16,
-                                    fontFamily: Constants.FONT
-                                ),
-                              ),
-                            )
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 32,),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Transform.scale(
-                            scale: 1.2,
-                            child: Theme(
-                              data: Theme.of(context).copyWith(
-                                unselectedWidgetColor: Color(0xff92a0a7),
-                              ),
-                              child: Checkbox(
-                                  value: _usePriceAlgo,
-                                  activeColor: Constants.PRIMARY_COLOR,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _usePriceAlgo = value!;
-                                    });
-                                  }
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _usePriceAlgo = !_usePriceAlgo;
-                                });
-                              },
-                              child: Text("Vuoi che Sisterly calcoli il prezzo per te per noleggi più lunghi?",
-                                style: TextStyle(
-                                    color: Constants.TEXT_COLOR,
-                                    fontSize: 16,
-                                    fontFamily: Constants.FONT
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 32),
-                      Text(
-                        "A quale indirizzo dobbiamo inviare il Sisterly Kit?",
-                        style: TextStyle(
-                            color: Constants.DARK_TEXT_COLOR,
-                            fontSize: 18,
-                            fontFamily: Constants.FONT,
-                            fontWeight: FontWeight.bold
-                        ),
-                      ),
-                      if (!_hasAddress || _addNewAddress || _editAddress) Column(
-                          children: [
-                            inputField("Nome", _name, false),
-                            inputField("Indirizzo", _address, false),
-                            inputField("Indirizzo 2", _address2, false),
-                            inputField("Città", _city, false),
-                            inputField("Codice postale", _zip, false),
-                            inputField("Provincia", _state, false),
-                            inputField("Nazione", _country, true),
-                            inputField("Email", _email, false),
-                            inputField("Cellulare", _phone, false),
-                            const SizedBox(height: 25),
-                          ]
-                      ),
-                      if (_editAddress) ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                            primary: Constants.GREEN_SAVE,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
-                        ),
-                        child: Text('Salva',
-                            style: TextStyle(
-                              color: Constants.TEXT_COLOR,
-                              fontSize: 16,
-                              fontFamily: Constants.FONT,
-                            )
-                        ),
-                        onPressed: () {
-                          _updateAddress();
-                          setState(() {
-                            _editAddress = false;
-                            _addressToEdit = null;
-                          });
+                          _getDocuments();
                         },
+                        child: Card(
+                          color: Color(0x88FF8A80),
+                          elevation: 0,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              children: const [
+                                Text('Carica un documento d\'identità per poter procedere con il pagamento"',
+                                    style: TextStyle(
+                                      color: Constants.TEXT_COLOR,
+                                      fontSize: 16,
+                                      fontFamily: Constants.FONT,
+                                    )
+                                ),
+                                SizedBox(height: 8),
+                                Text('Clicca qui',
+                                    style: TextStyle(
+                                      color: Constants.TEXT_COLOR,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: Constants.FONT,
+                                    )
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                      if (_hasAddress && !_addNewAddress && !_editAddress) Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
+                      AbsorbPointer(
+                        absorbing: _documents.isEmpty,
+                        child: Opacity(
+                          opacity: _documents.isEmpty ? 0.4 : 1,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              SizedBox(height: 8),
+                              Text(
+                                widget.editProduct != null ? "Modifica prodotto" : "Carica nuovo prodotto",
+                                style: TextStyle(
+                                    color: Constants.DARK_TEXT_COLOR,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: Constants.FONT
+                                ),
+                              ),
+                              SizedBox(height: 24,),
+                              Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(15),
+                                  color: Constants.SECONDARY_COLOR_LIGHT
+                                ),
+                                child: Column(
                                   children: [
-                                    if (_activeAddress != null) _renderAddress(_activeAddress!),
-                                    for (var a in _addresses) _renderAddress(a)
+                                    SizedBox(height: 10),
+                                    // Text(
+                                    //   "Add up to 20 photos",
+                                    //   style: TextStyle(
+                                    //       color: Constants.LIGHT_TEXT_COLOR,
+                                    //       fontSize: 14,
+                                    //       fontFamily: Constants.FONT
+                                    //   )
+                                    // ),
+                                    SizedBox(height: 10),
+                                    TextButton(
+                                      style: ButtonStyle(
+                                        backgroundColor: MaterialStateProperty.all(Constants.SECONDARY_COLOR),
+                                        padding: MaterialStateProperty.all(EdgeInsets.symmetric(horizontal: 46, vertical: 14)),
+                                        shape: MaterialStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)))
+                                      ),
+                                      child: Text(
+                                        "Carica foto",
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontFamily: Constants.FONT
+                                        )
+                                      ),
+                                      onPressed: () async {
+                                        ImageSource? source = await showDialog<ImageSource>(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                              content: Text("Scegli immagine da"),
+                                              actions: [
+                                                FlatButton(
+                                                  child: Text("Scatta ora"),
+                                                  onPressed: () => Navigator.pop(context, ImageSource.camera),
+                                                ),
+                                                FlatButton(
+                                                  child: Text("Galleria"),
+                                                  onPressed: () => Navigator.pop(context, ImageSource.gallery),
+                                                ),
+                                              ]
+                                          ),
+                                        );
+
+                                        if(source == ImageSource.camera) {
+                                          _images = [(await picker.pickImage(source: ImageSource.camera))!];
+                                        } else {
+                                          _images = (await picker.pickMultiImage())!;
+                                        }
+
+                                        _upload();
+                                        setState(() {});
+                                      },
+                                    ),
+                                    SizedBox(height: 12),
+                                    if(_isUploading) CircularProgressIndicator(),
+                                    SizedBox(height: 4),
+                                    GestureDetector(
+                                      onTap: () {
+                                        Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => SisterAdviceScreen()));
+                                      },
+                                      child: Text(
+                                          "Vedi consigli",
+                                          style: TextStyle(
+                                            color: Constants.PRIMARY_COLOR,
+                                            fontSize: 14,
+                                            fontFamily: Constants.FONT,
+                                            decoration: TextDecoration.underline
+                                          )
+                                      ),
+                                    ),
+                                    SizedBox(height: 10),
+                                    if (_imageUrls.isNotEmpty) GridView.count(
+                                      shrinkWrap: true,
+                                      crossAxisCount: 4,
+                                      mainAxisSpacing: 5.0,
+                                      crossAxisSpacing: 5.0,
+                                      physics: NeverScrollableScrollPhysics(),
+                                      children: [
+                                          /*for (var img in _images)
+                                            ClipRRect(
+                                                child: Image.file(File(img.path), fit: BoxFit.cover),
+                                              borderRadius: BorderRadius.circular(12),
+                                            )*/
+
+                                        for (var img in _imageUrls)
+                                          ClipRRect(
+                                            child: CachedNetworkImage(
+                                              imageUrl: img,
+                                              fit: BoxFit.cover,
+                                              placeholder: (context, url) => Center(child: CircularProgressIndicator()),
+                                              errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
+                                            ),
+                                            borderRadius: BorderRadius.circular(12),
+                                          )
+                                      ]
+                                    ),
+                                    SizedBox(height: 10)
+                                  ]
+                                )
+                              ),
+                              SizedBox(height: 32),
+                              Text(
+                                "Nome modello",
+                                style: TextStyle(
+                                    color: Constants.TEXT_COLOR,
+                                    fontSize: 16,
+                                    fontFamily: Constants.FONT
+                                ),
+                              ),
+                              SizedBox(height: 8,),
+                              Container(
+                                decoration: const BoxDecoration(
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Color(0x4ca3c4d4),
+                                      spreadRadius: 8,
+                                      blurRadius: 12,
+                                      offset:
+                                      Offset(0, 0), // changes position of shadow
+                                    ),
+                                  ],
+                                ),
+                                child: TextField(
+                                  keyboardType: TextInputType.text,
+                                  cursorColor: Constants.PRIMARY_COLOR,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Constants.FORM_TEXT,
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText: "Nome modello...",
+                                    hintStyle: const TextStyle(
+                                        color: Constants.PLACEHOLDER_COLOR),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                        width: 0,
+                                        style: BorderStyle.none,
+                                      ),
+                                    ),
+                                    contentPadding: const EdgeInsets.all(16),
+                                    filled: true,
+                                    fillColor: Constants.WHITE,
+                                  ),
+                                  controller: _modelText,
+                                ),
+                              ),
+                              SizedBox(height: 32,),
+                              Text(
+                                "Brand",
+                                style: TextStyle(
+                                    color: Constants.TEXT_COLOR,
+                                    fontSize: 16,
+                                    fontFamily: Constants.FONT
+                                ),
+                              ),
+                              SizedBox(height: 8,),
+                              if (_brands.isNotEmpty)  Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.only(left: 15),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Color(0x4ca3c4d4),
+                                      spreadRadius: 8,
+                                      blurRadius: 12,
+                                      offset:
+                                      Offset(0, 0), // changes position of shadow
+                                    ),
+                                  ],
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<Brand>(
+                                    items: _brands.map((Brand b) => DropdownMenuItem<Brand>(
+                                        child: Text(b.name, style: TextStyle(fontSize: 16)),
+                                        value: b
+                                      )
+                                    ).toList(),
+                                    onChanged: (val) => setState(() => _selectedBrand = val!),
+                                    value: _selectedBrand
+                                  ),
+                                )
+                              ),
+                              SizedBox(height: 32),
+                              Text(
+                                "Materiale",
+                                style: TextStyle(
+                                    color: Constants.TEXT_COLOR,
+                                    fontSize: 16,
+                                    fontFamily: Constants.FONT
+                                ),
+                              ),
+                              SizedBox(height: 8,),
+                              if (_materials.isNotEmpty)  Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.only(left: 15),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Color(0x4ca3c4d4),
+                                      spreadRadius: 8,
+                                      blurRadius: 12,
+                                      offset:
+                                      Offset(0, 0), // changes position of shadow
+                                    ),
+                                  ],
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<MyMaterial>(
+                                    items: _materials.map((MyMaterial m) => DropdownMenuItem<MyMaterial>(
+                                        child: Text(m.material, style: TextStyle(fontSize: 16)),
+                                        value: m
+                                      )
+                                    ).toList(),
+                                    onChanged: (val) => setState(() => _selectedMaterial = val!),
+                                    value: _selectedMaterial
+                                  ),
+                                )
+                              ),
+                              SizedBox(height: 32),
+                              Text(
+                                "Descrizione",
+                                style: TextStyle(
+                                    color: Constants.TEXT_COLOR,
+                                    fontSize: 16,
+                                    fontFamily: Constants.FONT
+                                ),
+                              ),
+                              SizedBox(height: 8,),
+                              Container(
+                                decoration: const BoxDecoration(
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Color(0x4ca3c4d4),
+                                      spreadRadius: 8,
+                                      blurRadius: 12,
+                                      offset:
+                                      Offset(0, 0), // changes position of shadow
+                                    ),
+                                  ],
+                                ),
+                                child: TextField(
+                                  keyboardType: TextInputType.multiline,
+                                  cursorColor: Constants.PRIMARY_COLOR,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Constants.FORM_TEXT,
+                                  ),
+                                  maxLines: 4,
+                                  decoration: InputDecoration(
+                                    hintText: "Esempio: descrizione delle condizioni, spiegazione di eventuali imperfezioni, a cosa stare attenti nell’utilizzo ecc",
+                                    hintStyle: const TextStyle(
+                                        color: Constants.PLACEHOLDER_COLOR),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                        width: 0,
+                                        style: BorderStyle.none,
+                                      ),
+                                    ),
+                                    contentPadding: const EdgeInsets.all(16),
+                                    filled: true,
+                                    fillColor: Constants.WHITE,
+                                  ),
+                                  controller: _descriptionText,
+                                ),
+                              ),
+                              SizedBox(height: 32,),
+                              Text(
+                                "Colore",
+                                style: TextStyle(
+                                    color: Constants.DARK_TEXT_COLOR,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: Constants.FONT),
+                                textAlign: TextAlign.center,
+                              ),
+                              SizedBox(height: 8,),
+                              if (_colors.isNotEmpty) Wrap(
+                                children: [
+                                  for (var c in _colors)
+                                    getColorBullet(c)
+                                ],
+                              ),
+                              SizedBox(height: 32,),
+                              Text(
+                                "Consegna",
+                                style: TextStyle(
+                                    color: Constants.DARK_TEXT_COLOR,
+                                    fontSize: 16,
+                                    fontFamily: Constants.FONT),
+                                textAlign: TextAlign.center,
+                              ),
+                              SizedBox(height: 8,),
+                              Container(
+                                  width: double.infinity,
+                                  padding: EdgeInsets.only(left: 15),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color(0x4ca3c4d4),
+                                        spreadRadius: 8,
+                                        blurRadius: 12,
+                                        offset:
+                                        Offset(0, 0), // changes position of shadow
+                                      ),
+                                    ],
+                                  ),
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<DeliveryMode>(
+                                        items: deliveryTypes.map((DeliveryMode val) => DropdownMenuItem<DeliveryMode>(
+                                            child: Text(val.description, style: TextStyle(fontSize: 16)),
+                                            value: val
+                                        )
+                                        ).toList(),
+                                        onChanged: (val) => setState(() => _selectedDelivery = val!),
+                                        value: _selectedDelivery
+                                    ),
+                                  )
+                              ),
+                              SizedBox(height: 32),
+                              Text(
+                                "Condizioni",
+                                style: TextStyle(
+                                    color: Constants.DARK_TEXT_COLOR,
+                                    fontSize: 16,
+                                    fontFamily: Constants.FONT),
+                                textAlign: TextAlign.center,
+                              ),
+                              SizedBox(height: 8,),
+                              Container(
+                                  width: double.infinity,
+                                  padding: EdgeInsets.only(left: 15),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color(0x4ca3c4d4),
+                                        spreadRadius: 8,
+                                        blurRadius: 12,
+                                        offset:
+                                        Offset(0, 0), // changes position of shadow
+                                      ),
+                                    ],
+                                  ),
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<Generic>(
+                                        items: productConditions.map((Generic val) => DropdownMenuItem<Generic>(
+                                            child: Text(val.name, style: TextStyle(fontSize: 16)),
+                                            value: val
+                                        )
+                                        ).toList(),
+                                        onChanged: (val) {
+                                          _calculateSuggestedPrice();
+                                          setState(() => _selectedConditions = val!) ;
+                                        },
+                                        value: _selectedConditions
+                                    ),
+                                  )
+                              ),
+                              SizedBox(height: 32),
+                              Text(
+                                "Anni",
+                                style: TextStyle(
+                                    color: Constants.DARK_TEXT_COLOR,
+                                    fontSize: 16,
+                                    fontFamily: Constants.FONT),
+                                textAlign: TextAlign.center,
+                              ),
+                              SizedBox(height: 8,),
+                              Container(
+                                  width: double.infinity,
+                                  padding: EdgeInsets.only(left: 15),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color(0x4ca3c4d4),
+                                        spreadRadius: 8,
+                                        blurRadius: 12,
+                                        offset:
+                                        Offset(0, 0), // changes position of shadow
+                                      ),
+                                    ],
+                                  ),
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<Generic>(
+                                        items: bagYears.map((Generic val) => DropdownMenuItem<Generic>(
+                                            child: Text(val.name, style: TextStyle(fontSize: 16)),
+                                            value: val
+                                        )
+                                        ).toList(),
+                                        onChanged: (val) {
+                                          _calculateSuggestedPrice();
+                                          setState(() => _selectedBagYears = val!);
+                                        },
+                                        value: _selectedBagYears
+                                    ),
+                                  )
+                              ),
+                              SizedBox(height: 32),
+                              Text(
+                                "Dimensioni",
+                                style: TextStyle(
+                                    color: Constants.DARK_TEXT_COLOR,
+                                    fontSize: 16,
+                                    fontFamily: Constants.FONT),
+                                textAlign: TextAlign.center,
+                              ),
+                              SizedBox(height: 8,),
+                              Container(
+                                  width: double.infinity,
+                                  padding: EdgeInsets.only(left: 15),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color(0x4ca3c4d4),
+                                        spreadRadius: 8,
+                                        blurRadius: 12,
+                                        offset:
+                                        Offset(0, 0), // changes position of shadow
+                                      ),
+                                    ],
+                                  ),
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<Generic>(
+                                        items: bagSizes.map((Generic val) => DropdownMenuItem<Generic>(
+                                            child: Text(val.name, style: TextStyle(fontSize: 16)),
+                                            value: val
+                                        )
+                                        ).toList(),
+                                        onChanged: (val) => setState(() => _selectedBagSize = val!),
+                                        value: _selectedBagSize
+                                    ),
+                                  )
+                              ),
+                              SizedBox(height: 32),
+                              Text(
+                                "Prezzo di acquisto",
+                                style: TextStyle(
+                                    color: Constants.TEXT_COLOR,
+                                    fontSize: 16,
+                                    fontFamily: Constants.FONT
+                                ),
+                              ),
+                              SizedBox(height: 8,),
+                              Container(
+                                decoration: const BoxDecoration(
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Color(0x4ca3c4d4),
+                                      spreadRadius: 8,
+                                      blurRadius: 12,
+                                      offset:
+                                      Offset(0, 0), // changes position of shadow
+                                    ),
+                                  ],
+                                ),
+                                child: TextField(
+                                  keyboardType: TextInputType.number,
+                                  cursorColor: Constants.PRIMARY_COLOR,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Constants.FORM_TEXT,
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText: "Prezzo di acquisto...",
+                                    hintStyle: const TextStyle(
+                                        color: Constants.PLACEHOLDER_COLOR),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                        width: 0,
+                                        style: BorderStyle.none,
+                                      ),
+                                    ),
+                                    contentPadding: const EdgeInsets.all(16),
+                                    filled: true,
+                                    fillColor: Constants.WHITE,
+
+                                  ),
+                                  onChanged: (str) {
+                                    _calculateSuggestedPrice();
+                                  },
+                                  controller: _sellingPrice,
+                                ),
+                              ),
+                              SizedBox(height: 32),
+                              Text(
+                                "Prezzo al giorno",
+                                style: TextStyle(
+                                    color: Constants.TEXT_COLOR,
+                                    fontSize: 16,
+                                    fontFamily: Constants.FONT
+                                ),
+                              ),
+                              SizedBox(height: 8,),
+                              Container(
+                                decoration: const BoxDecoration(
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Color(0x4ca3c4d4),
+                                      spreadRadius: 8,
+                                      blurRadius: 12,
+                                      offset:
+                                      Offset(0, 0), // changes position of shadow
+                                    ),
+                                  ],
+                                ),
+                                child: TextField(
+                                  keyboardType: TextInputType.number,
+                                  cursorColor: Constants.PRIMARY_COLOR,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Constants.FORM_TEXT,
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText: _suggestedPrice ?? "Prezzo al giorno...",
+                                    hintStyle: const TextStyle(color: Constants.PLACEHOLDER_COLOR),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                        width: 0,
+                                        style: BorderStyle.none,
+                                      ),
+                                    ),
+                                    contentPadding: const EdgeInsets.all(16),
+                                    filled: true,
+                                    fillColor: Constants.WHITE,
+                                  ),
+                                  controller: _dailyPrice,
+                                ),
+                              ),
+                              SizedBox(height: 12,),
+                              Text(
+                                "The suggested price is calculated on the basis of the average for this stock market model. you can change it at any time.",
+                                style: TextStyle(
+                                    color: Constants.TEXT_COLOR,
+                                    fontSize: 14,
+                                    fontFamily: Constants.FONT
+                                ),
+                              ),
+                              SizedBox(height: 32,),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  Transform.scale(
+                                    scale: 1.2,
+                                    child: Theme(
+                                      data: Theme.of(context).copyWith(
+                                        unselectedWidgetColor: Color(0xff92a0a7),
+                                      ),
+                                      child: Checkbox(
+                                          value: _useDiscount,
+                                          activeColor: Constants.PRIMARY_COLOR,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              _useDiscount = value!;
+                                            });
+                                          }
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          _useDiscount = !_useDiscount;
+                                        });
+                                      },
+                                      child: Text("Vuoi partecipare alle promozion in Sisterly?",
+                                        style: TextStyle(
+                                            color: Constants.TEXT_COLOR,
+                                            fontSize: 16,
+                                            fontFamily: Constants.FONT
+                                        ),
+                                      ),
+                                    )
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 32,),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  Transform.scale(
+                                    scale: 1.2,
+                                    child: Theme(
+                                      data: Theme.of(context).copyWith(
+                                        unselectedWidgetColor: Color(0xff92a0a7),
+                                      ),
+                                      child: Checkbox(
+                                          value: _usePriceAlgo,
+                                          activeColor: Constants.PRIMARY_COLOR,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              _usePriceAlgo = value!;
+                                            });
+                                          }
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          _usePriceAlgo = !_usePriceAlgo;
+                                        });
+                                      },
+                                      child: Text("Vuoi che Sisterly calcoli il prezzo per te per noleggi più lunghi?",
+                                        style: TextStyle(
+                                            color: Constants.TEXT_COLOR,
+                                            fontSize: 16,
+                                            fontFamily: Constants.FONT
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 32),
+                              Text(
+                                "A quale indirizzo dobbiamo inviare il Sisterly Kit?",
+                                style: TextStyle(
+                                    color: Constants.DARK_TEXT_COLOR,
+                                    fontSize: 18,
+                                    fontFamily: Constants.FONT,
+                                    fontWeight: FontWeight.bold
+                                ),
+                              ),
+                              if (!_hasAddress || _addNewAddress || _editAddress) Column(
+                                  children: [
+                                    inputField("Nome", _name, false),
+                                    inputField("Indirizzo", _address, false),
+                                    inputField("Indirizzo 2", _address2, false),
+                                    inputField("Città", _city, false),
+                                    inputField("Codice postale", _zip, false),
+                                    inputField("Provincia", _state, false),
+                                    inputField("Nazione", _country, true),
+                                    inputField("Email", _email, false),
+                                    inputField("Cellulare", _phone, false),
+                                    const SizedBox(height: 25),
                                   ]
                               ),
-                            ),
-                            SizedBox(height: 10),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                  primary: Constants.LIGHT_GREY_COLOR2,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
+                              if (_editAddress) ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    primary: Constants.GREEN_SAVE,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
+                                ),
+                                child: Text('Salva',
+                                    style: TextStyle(
+                                      color: Constants.TEXT_COLOR,
+                                      fontSize: 16,
+                                      fontFamily: Constants.FONT,
+                                    )
+                                ),
+                                onPressed: () {
+                                  _updateAddress();
+                                  setState(() {
+                                    _editAddress = false;
+                                    _addressToEdit = null;
+                                  });
+                                },
                               ),
-                              child: Text('+ Nuovo',
-                                  style: TextStyle(
+                              if (_hasAddress && !_addNewAddress && !_editAddress) Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      child: Row(
+                                          children: [
+                                            if (_activeAddress != null) _renderAddress(_activeAddress!),
+                                            for (var a in _addresses) _renderAddress(a)
+                                          ]
+                                      ),
+                                    ),
+                                    SizedBox(height: 10),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                          primary: Constants.LIGHT_GREY_COLOR2,
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
+                                      ),
+                                      child: Text('+ Nuovo',
+                                          style: TextStyle(
+                                            color: Constants.TEXT_COLOR,
+                                            fontSize: 16,
+                                            fontFamily: Constants.FONT,
+                                          )
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _addNewAddress = true;
+                                        });
+                                      },
+                                    ),
+                                  ]
+                              ),
+                              SizedBox(height: 32,),
+                              Text(
+                                "Ci siamo quasi!\n\nOgni Lender Sister ha bisogno del suo Lender Kit che contiene un tag univoco per rendere la tua borsa insostituibile (è obbligatorio applicare l’adesivo ed è fondamentale per tutelarti) e una dust bag in cui inserire la tua borsa prima di noleggiarla.\n\nA te la scelta: ",
+                                style: TextStyle(
                                     color: Constants.TEXT_COLOR,
                                     fontSize: 16,
-                                    fontFamily: Constants.FONT,
+                                    fontFamily: Constants.FONT
+                                ),
+                              ),
+                              SizedBox(height: 8,),
+                              Container(
+                                  width: double.infinity,
+                                  padding: EdgeInsets.only(left: 15),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color(0x4ca3c4d4),
+                                        spreadRadius: 8,
+                                        blurRadius: 12,
+                                        offset:
+                                        Offset(0, 0), // changes position of shadow
+                                      ),
+                                    ],
+                                  ),
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<Generic>(
+                                        items: lenderKits.map((Generic val) => DropdownMenuItem<Generic>(
+                                            child: Text(val.name, style: TextStyle(fontSize: 16)),
+                                            value: val
+                                        )
+                                        ).toList(),
+                                        onChanged: (val) {
+                                          setState(() => _selectedLenderKit = val!) ;
+                                        },
+                                        value: _selectedLenderKit
+                                    ),
                                   )
                               ),
-                              onPressed: () {
-                                setState(() {
-                                  _addNewAddress = true;
-                                });
-                              },
-                            ),
-                          ]
-                      ),
-                      SizedBox(height: 32),
-                      Center(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                              primary: Constants.SECONDARY_COLOR,
-                              textStyle: const TextStyle(
-                                  fontSize: 16),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 80, vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(50))),
-                          child: Text('Conferma'),
-                          onPressed: () async {
-                            if (!_hasAddress || (_saveAddress && _addNewAddress && !_editAddress)) {
-                              await saveAddress();
-                              await _getAddresses(() {
-                                _createProduct();
-                              });
-                            } else {
-                              _createProduct();
-                            }
-                          },
+                              SizedBox(height: 32),
+                              Center(
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                      primary: Constants.SECONDARY_COLOR,
+                                      textStyle: const TextStyle(
+                                          fontSize: 16),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 80, vertical: 14),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(50))),
+                                  child: Text('Conferma'),
+                                  onPressed: () async {
+                                    if (!_hasAddress || (_saveAddress && _addNewAddress && !_editAddress)) {
+                                      saveAddress(() async {
+                                        _getAddresses(() {
+                                          _createProduct();
+                                        });
+                                      });
+                                    } else {
+                                      _createProduct();
+                                    }
+                                  },
+                                ),
+                              ),
+                              SizedBox(height: 60)
+                            ],
+                          ),
                         ),
                       ),
-                      SizedBox(height: 60)
                     ],
                   ),
                 ),
@@ -1007,6 +1146,27 @@ class UploadScreenState extends State<UploadScreen>  {
     });
   }
 
+  _calculateSuggestedPrice() {
+    if(_sellingPrice.text.isNotEmpty) {
+      var params = {
+        "selling_price": _sellingPrice.text.toString(),
+        "condition": _selectedConditions.id,
+        "year": _selectedBagYears.id
+      };
+      ApiManager(context).makeGetRequest('/product/suggested_price', params, (res) {
+        var data = res["data"];
+        if (data != null) {
+          debugPrint("setting price "+data.toString());
+          setState(() {
+            _suggestedPrice = data.toString();
+          });
+        }
+      }, (res) {
+
+      });
+    }
+  }
+
   _createProduct() {
     debugPrint("_createProduct");
     if(_modelText.text.isEmpty) {
@@ -1030,7 +1190,7 @@ class UploadScreenState extends State<UploadScreen>  {
     }
 
     if (!(_modelText.text.isEmpty || _descriptionText.text.isEmpty || _sellingPrice.text.isEmpty || _dailyPrice.text.isEmpty || _selectedDelivery == null)) {
-      ApiManager(context).makePutRequest('/product/', {
+      var params = {
         "model": _modelText.text,
         "media_pk": _mediaId,
         "brand_pk": _selectedBrand.id,
@@ -1047,11 +1207,21 @@ class UploadScreenState extends State<UploadScreen>  {
         "description": _descriptionText.text,
         "maximum_loan_days": -1,
         "use_discount": _useDiscount,
-        "use_price_algorithm": _usePriceAlgo
-      }, (res) {
-        Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (BuildContext context) => ProductSuccessScreen()), (_) => false);
-      }, (res) {});
+        "use_price_algorithm": _usePriceAlgo,
+        "lender_kit_to_send": _selectedLenderKit.id
+      };
+
+      if(widget.editProduct != null) {
+        ApiManager(context).makePostRequest('/product/' + widget.editProduct!.id.toString() + "/", params, (res) {
+          Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (BuildContext context) => ProductEditSuccessScreen()), (_) => false);
+        }, (res) {});
+      } else {
+        ApiManager(context).makePutRequest('/product/', params, (res) {
+          Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (BuildContext context) => ProductSuccessScreen()), (_) => false);
+        }, (res) {});
+      }
     }
   }
 
@@ -1071,6 +1241,8 @@ class UploadScreenState extends State<UploadScreen>  {
             setState(() {
               _isUploading = false;
             });
+
+            _imageUrls.add(res["data"]["image"]["image"]);
           }, (res) {
             debugPrint('Failed uploading photo');
             _images.remove(photo);
@@ -1298,7 +1470,7 @@ class UploadScreenState extends State<UploadScreen>  {
     }, (response) {});
   }
 
-  saveAddress() {
+  saveAddress(callback) {
     if (_name.text.isNotEmpty && _address.text.isNotEmpty && _country.text.isNotEmpty && _state.text.isNotEmpty && _zip.text.isNotEmpty && _city.text.isNotEmpty) {
       ApiManager(context).makePutRequest('/client/address', {
         "name": _name.text,
@@ -1313,7 +1485,11 @@ class UploadScreenState extends State<UploadScreen>  {
         "note": "",
         "default": false,
         "active": _activeAddress == null
-      }, (res) {}, (res) {});
+      }, (res) {
+        if(callback != null) callback();
+      }, (res) {
+        if(callback != null) callback();
+      });
     }
   }
 

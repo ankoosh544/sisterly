@@ -25,6 +25,11 @@ List<Generic> bagSizes = [
   Generic(3, 'Grande')
 ];
 
+List<Generic> lenderKits = [
+  Generic(1, 'Solo tag NFC (obbligatorio)'),
+  Generic(2, 'Lender Kit completo (Tag + Bag)')
+];
+
 /*
 Orders status
 1 - WAITING FOR ACCEPTANCE

@@ -199,6 +199,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                         ]
                       ),
+                      if(_shipping == "shipment") Card(
+                        color: Color(0x55e8e23e),
+                        elevation: 0,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            children: const [
+                              Text('Costo spedizione: 15€',
+                                  style: TextStyle(
+                                    color: Constants.TEXT_COLOR,
+                                    fontSize: 16,
+                                    fontFamily: Constants.FONT,
+                                  )
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                       if(_shipping != 'withdraw') Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -300,7 +318,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                       SizedBox(height: 25),
                       Text(
-                        "Vuoi aggiungere l'assicurazione?",
+                        "Vuoi aggiungere la protezione acquisti?",
                         style: TextStyle(
                             color: Constants.DARK_TEXT_COLOR,
                             fontSize: 18,
@@ -321,7 +339,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 borderRadius: BorderRadius.circular(20),
                                 color: _insurance ? Constants.SECONDARY_COLOR_LIGHT : Constants.LIGHT_GREY_COLOR2
                               ),
-                              child: Text('Si (+ € 6.00)',
+                              child: Text('Si (+ € 10.00)',
                                   style: TextStyle(
                                     color: _insurance ? Colors.black : Constants.TEXT_COLOR,
                                     fontSize: 16,
@@ -680,6 +698,32 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ),
                       ),
                       SizedBox(height: 35),
+                      /*Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Totale da pagare",
+                            style: TextStyle(
+                                color: Constants.DARK_TEXT_COLOR,
+                                fontSize: 18,
+                                fontFamily: Constants.FONT,
+                                fontWeight: FontWeight.bold
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          Text(
+                            "${Utils.formatCurrency(widget.product.priceOffer)} al giorno",
+                            style: TextStyle(
+                                color: Constants.DARK_TEXT_COLOR,
+                                fontSize: 18,
+                                fontFamily: Constants.FONT,
+                                fontWeight: FontWeight.bold
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 35),*/
                       Center(
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
@@ -690,7 +734,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
                           ),
-                          child: Text('Avanti'),
+                          child: Text('Invia offerta'),
                           onPressed: () async {
                             if (!_hasAddress || (_saveAddress && _addNewAddress && !_editAddress)) {
                               await saveAddress();
@@ -757,7 +801,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           borderRadius: BorderRadius.circular(68.0),
           child: CachedNetworkImage(
             width: 68, height: 68, fit: BoxFit.cover,
-            imageUrl: SessionData().serverUrl + (widget.product.owner.image ?? ""),
+            imageUrl: (widget.product.owner.image ?? ""),
             placeholder: (context, url) => CircularProgressIndicator(),
             errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder.svg"),
           ),

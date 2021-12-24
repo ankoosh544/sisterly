@@ -119,7 +119,7 @@ class WishlistScreenState extends State<WishlistScreen>  {
                   ),
                   child: CachedNetworkImage(
                     height: 76,
-                    imageUrl: SessionData().serverUrl + (product.images.isNotEmpty ? product.images.first : ""),
+                    imageUrl: (product.images.isNotEmpty ? product.images.first : ""),
                     placeholder: (context, url) => Center(child: CircularProgressIndicator()),
                     errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
                   )
@@ -190,6 +190,11 @@ class WishlistScreenState extends State<WishlistScreen>  {
                           ),
                           child: Text('Prenota'),
                           onPressed: () {
+                            if(product.owner.holidayMode!) {
+                              ApiManager.showFreeErrorMessage(context, "L'utente in questione ha attivato la modalità vacanza, non sarà possibile prenotare la borsa fino al suo rientro. Riprova tra qualche giorno");
+                              return;
+                            }
+
                             Navigator.of(context).push(
                                 MaterialPageRoute(builder: (BuildContext context) => CheckoutScreen(product: product,)));
                           },

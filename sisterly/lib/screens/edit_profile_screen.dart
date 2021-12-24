@@ -249,7 +249,7 @@ class EditProfileScreenState extends State<EditProfileScreen>  {
                                   borderRadius: BorderRadius.circular(90.0),
                                   child: _profileImage != null ? Image.file(File(_profileImage!.path), width: 90, height: 90, fit: BoxFit.cover) : CachedNetworkImage(
                                     width: 90, height: 90, fit: BoxFit.cover,
-                                    imageUrl: SessionData().serverUrl + (_profile!.image ?? ""),
+                                    imageUrl: (_profile!.image ?? ""),
                                     placeholder: (context, url) => CircularProgressIndicator(),
                                     errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder.svg"),
                                   ),
