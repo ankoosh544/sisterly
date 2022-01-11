@@ -13,13 +13,13 @@ import '../utils/constants.dart';
 import 'forgot_screen.dart';
 import 'login_screen.dart';
 
-class ProductEditSuccessScreen extends StatefulWidget {
+class ClaimSuccessScreen extends StatefulWidget {
 
   @override
-  ProductEditSuccessScreenState createState() => ProductEditSuccessScreenState();
+  ClaimSuccessScreenState createState() => ClaimSuccessScreenState();
 }
 
-class ProductEditSuccessScreenState extends State<ProductEditSuccessScreen> {
+class ClaimSuccessScreenState extends State<ClaimSuccessScreen> {
 
   @override
   void initState() {
@@ -62,7 +62,7 @@ class ProductEditSuccessScreenState extends State<ProductEditSuccessScreen> {
                 ),
               ),
               const SizedBox(height: 40),
-              const Text("Le tue modifiche sono state salvate correttamente",
+              const Text("Grazie per aver inviato un reclamo",
                   style: TextStyle(
                     color: Constants.TEXT_COLOR,
                     fontSize: 16,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:sisterly/models/address.dart';
 import 'package:sisterly/models/credit_card.dart';
@@ -37,6 +38,11 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
   void initState() {
     super.initState();
 
+    _cardNumber.addListener(() {
+      debugPrint("cardnumber change "+_cardNumber.text.toString());
+      //_cardNumber.text = _cardNumber.text.toString().replaceAll(" ", "");
+    });
+
     Future.delayed(Duration.zero, () {
       getDocuments();
       getCards(null);
@@ -69,14 +75,16 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
 
         if(callback != null) callback();
       }
-    }, (response) {});
+    }, (response) {
+      ApiManager.showFreeErrorMessage(context, "Errore durante il recupero delle carte di credito, riprova più tardi e se il problema persiste contatta l'assistenza");
+    });
   }
 
   saveCard(callback) {
     if (_date.text.isNotEmpty && _cardNumber.text.isNotEmpty && _cvv.text.isNotEmpty) {
       ApiManager(context).makePutRequest('/client/cards', {
         "card_number": _cardNumber.text,
-        "expiration_date": _date.text,
+        "expiration_date": _date.text.replaceAll("/", ""),
         "cvx": _cvv.text,
       }, (res) {
         debugPrint("create card success");
@@ -121,6 +129,41 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
       setState(() {
         _isLoadingDocuments = false;
       });
+    });
+  }
+
+  onExpireChanged(value) {
+    setState(() {
+      value = value.replaceAll(RegExp(r"\D"), "");
+      switch (value.length) {
+        case 0:
+          _date.text = "MM/AA";
+          _date.selection = TextSelection.collapsed(offset: 0);
+          break;
+        case 1:
+          _date.text = "${value}M/AA";
+          _date.selection = TextSelection.collapsed(offset: 1);
+          break;
+        case 2:
+          _date.text = "$value/AA";
+          _date.selection = TextSelection.collapsed(offset: 2);
+          break;
+        case 3:
+          _date.text =
+          "${value.substring(0, 2)}/${value.substring(2)}Y";
+          _date.selection = TextSelection.collapsed(offset: 4);
+          break;
+        case 4:
+          _date.text =
+          "${value.substring(0, 2)}/${value.substring(2, 4)}";
+          _date.selection = TextSelection.collapsed(offset: 5);
+          break;
+      }
+      if (value.length > 4) {
+        _date.text =
+        "${value.substring(0, 2)}/${value.substring(2, 4)}";
+        _date.selection = TextSelection.collapsed(offset: 5);
+      }
     });
   }
 
@@ -271,14 +314,14 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
                       if (!_hasCards || _addNewCard) Column(
                           children: [
                             //inputField("Nome sulla carta", _name),
-                            inputField("Numero carta", _cardNumber),
+                            inputField("Numero carta", _cardNumber, TextInputType.number, 16, (value) { }),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                SizedBox(width: MediaQuery.of(context).size.width / 2.1, child: inputField("Scadenza", _date)),
+                                SizedBox(width: MediaQuery.of(context).size.width / 2.1, child: inputField("Scadenza", _date, TextInputType.number, 4, onExpireChanged)),
                                 Container(
                                   constraints: BoxConstraints(maxWidth: 150),
-                                    child: inputField("CVV", _cvv)),
+                                    child: inputField("CVV", _cvv, TextInputType.number, 3, (value) { })),
                               ],
                             ),
                             /*const SizedBox(height: 25),
@@ -349,7 +392,7 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
                             padding: const EdgeInsets.all(16.0),
                             child: Column(
                               children: const [
-                                Text('Carica un documento d\'identità per poter procedere con il pagamento"',
+                                Text('Carica un documento d\'identità per poter procedere con il pagamento',
                                     style: TextStyle(
                                       color: Constants.TEXT_COLOR,
                                       fontSize: 16,
@@ -394,12 +437,14 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
                               }
 
                               if (!_hasCards || (_saveCard && _addNewCard)) {
+                                debugPrint("save card");
                                 saveCard(() {
                                   getCards(() {
                                     next();
                                   });
                                 });
                               } else {
+                                debugPrint("next");
                                 next();
                               }
                             },
@@ -443,7 +488,11 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
         ApiManager.showFreeErrorMessage(context, "Pagamento fallito");
       }
     }, (res) {
-      ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+      if(res != null && res["errors"] != null) {
+        ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+      } else {
+        ApiManager.showFreeErrorMessage(context, "Errore durante il pagamento, riprova più tardi e se il problema persiste contatta l'assistenza");
+      }
       /*setState(() {
         _isLoading = false;
       });*/
@@ -459,7 +508,7 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
   }
 
 
-  Widget inputField(String label, TextEditingController controller) {
+  Widget inputField(String label, TextEditingController controller, TextInputType keyboardType, int maxLength, Function onChanged) {
     return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -485,12 +534,17 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
               ],
             ),
             child: TextField(
+              onChanged: (value) {
+                onChanged(value);
+              },
+              keyboardType: keyboardType,
               cursorColor: Constants.PRIMARY_COLOR,
               style: const TextStyle(
                 fontSize: 16,
                 color: Constants.FORM_TEXT,
               ),
               decoration: InputDecoration(
+                counterText: "",
                 hintText: label,
                 hintStyle: const TextStyle(
                     color: Constants.PLACEHOLDER_COLOR),
@@ -506,6 +560,10 @@ class _ChoosePaymentScreenState extends State<ChoosePaymentScreen> {
                 fillColor: Constants.WHITE,
               ),
               controller: controller,
+              maxLength: maxLength,
+              inputFormatters: <TextInputFormatter>[
+                FilteringTextInputFormatter.digitsOnly
+              ],
             ),
           ),
         ]

@@ -22,8 +22,8 @@ class SessionData {
   var currencyFormat = NumberFormat.currency(symbol: "€", locale: "it_IT", customPattern: "€###.0#");
 
   //var serverUrl = "https://api.v1.sisterly.it"; //stage
-  //var serverUrl = "http://sisterly-dev-env.eu-central-1.elasticbeanstalk.com"; //stage nuovo
-  var serverUrl = "https://api.sisterly.it"; //prod
+  var serverUrl = "http://sisterly-dev-env.eu-central-1.elasticbeanstalk.com"; //stage nuovo
+  //var serverUrl = "https://api.sisterly.it"; //prod
 
   SessionData._internal() {
     // init things inside this

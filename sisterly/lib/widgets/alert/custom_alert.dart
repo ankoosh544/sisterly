@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sisterly/utils/constants.dart';
 import 'package:sisterly/utils/localization/app_localizations.dart';
 
 import 'src/cancel.dart';
@@ -142,7 +143,7 @@ class CustomAlertDialogState extends State<CustomAlertDialog> with SingleTickerP
         padding: const EdgeInsets.all(8.0),
         child: Text(
           _options.title!,
-          style: const TextStyle(fontSize: 25.0, color: Color(0xff575757)),
+          style: const TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold, color: Color(0xff575757), fontFamily: Constants.FONT),
           textAlign: TextAlign.center,
         ),
       ));
@@ -153,7 +154,7 @@ class CustomAlertDialogState extends State<CustomAlertDialog> with SingleTickerP
         padding: EdgeInsets.only(top: 10.0, left: 10.0, right: 10.0),
         child: Text(
           _options.subtitle!,
-          style: TextStyle(fontSize: 16.0, color: Color(0xff797979)),
+          style: TextStyle(fontSize: 16.0, color: Color(0xff797979), fontFamily: Constants.FONT),
           textAlign: TextAlign.center,
         ),
       ));
@@ -172,7 +173,7 @@ class CustomAlertDialogState extends State<CustomAlertDialog> with SingleTickerP
                   padding: EdgeInsets.zero,
                   onPressed: cancel,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15.0),
+                    borderRadius: BorderRadius.circular(60.0),
                   ),
                   color: _options.cancelButtonColor ?? CustomAlert.cancel,
                   child: Text(
@@ -189,7 +190,7 @@ class CustomAlertDialogState extends State<CustomAlertDialog> with SingleTickerP
                   padding: EdgeInsets.zero,
                   onPressed: confirm,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15.0),
+                    borderRadius: BorderRadius.circular(60.0),
                   ),
                   color: _options.confirmButtonColor ?? CustomAlert.danger,
                   child: Text(
@@ -203,11 +204,12 @@ class CustomAlertDialogState extends State<CustomAlertDialog> with SingleTickerP
         ));
       } else {
         listOfChildren.add(Padding(
-          padding: EdgeInsets.only(top: 10.0),
+          padding: EdgeInsets.only(top: 30.0),
           child: RaisedButton(
             onPressed: confirm,
+            padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 0),
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15.0),
+                borderRadius: BorderRadius.circular(60.0),
             ),
             color: _options.confirmButtonColor ?? CustomAlert.success,
             child: Text(
@@ -226,7 +228,7 @@ class CustomAlertDialogState extends State<CustomAlertDialog> with SingleTickerP
               return ScaleTransition(
                 scale: tween,
                 child: ClipRRect(
-                  borderRadius: BorderRadius.all(Radius.circular(5.0)),
+                  borderRadius: BorderRadius.all(Radius.circular(15.0)),
                   child: Container(
                       color: Colors.white,
                       width: double.infinity,

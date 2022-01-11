@@ -15,23 +15,20 @@ import 'package:sisterly/widgets/stars_widget.dart';
 import '../utils/constants.dart';
 import "package:sisterly/utils/utils.dart";
 
-enum OffersScreenMode {
-  received, sent
-}
+class NfcSelectOfferScreen extends StatefulWidget {
 
-class OffersScreen extends StatefulWidget {
+  final int productId;
 
-  const OffersScreen({Key? key}) : super(key: key);
+  const NfcSelectOfferScreen({Key? key, required this.productId}) : super(key: key);
 
   @override
-  OffersScreenState createState() => OffersScreenState();
+  NfcSelectOfferScreenState createState() => NfcSelectOfferScreenState();
 }
 
-class OffersScreenState extends State<OffersScreen>  {
+class NfcSelectOfferScreenState extends State<NfcSelectOfferScreen>  {
 
   bool _isLoading = false;
   List<Offer> _offers = [];
-  OffersScreenMode _mode = OffersScreenMode.sent;
 
   @override
   void initState() {
@@ -52,7 +49,7 @@ class OffersScreenState extends State<OffersScreen>  {
       _isLoading = true;
     });
 
-    ApiManager(context).makeGetRequest(_mode == OffersScreenMode.received ? "/product/offers" : "/product/cart", {}, (res) {
+    ApiManager(context).makeGetRequest("/product/" + widget.productId.toString() + "/offer/", {}, (res) {
       // print(res);
       setState(() {
         _isLoading = false;
@@ -64,7 +61,7 @@ class OffersScreenState extends State<OffersScreen>  {
       if (data != null) {
         for (var prod in data) {
           var offer = Offer.fromJson(prod);
-          if(isOffer(offer)) {
+          if(isValidOffer(offer)) {
             _offers.add(offer);
           }
         }
@@ -96,27 +93,14 @@ class OffersScreenState extends State<OffersScreen>  {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Text(
-                    "Offerta #" + offer.id.toString(),
-                    style: TextStyle(
-                      color: Constants.PRIMARY_COLOR,
-                      fontSize: 18,
-                      fontFamily: Constants.FONT,
-                      fontWeight: FontWeight.bold
-                    ),
-                  ),
-                ),
-                if(isDeleteable(offer)) InkWell(
-                  onTap: () {
-                    delete(offer);
-                  },
-                    child: SvgPicture.asset("assets/images/cancel.svg", width: 40, height: 40,)
-                )
-              ],
+            Text(
+              "Offerta #" + offer.id.toString(),
+              style: TextStyle(
+                color: Constants.PRIMARY_COLOR,
+                fontSize: 18,
+                fontFamily: Constants.FONT,
+                fontWeight: FontWeight.bold
+              ),
             ),
             SizedBox(height: 4,),
             Text(
@@ -234,52 +218,8 @@ class OffersScreenState extends State<OffersScreen>  {
                 )
               ],
             ),
-            if(_mode == OffersScreenMode.received && canProcess(offer)) Divider(),
-            if(_mode == OffersScreenMode.received && canProcess(offer)) Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
-                        primary: Constants.PRIMARY_COLOR,
-                        textStyle: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold
-                        ),
-                        side: const BorderSide(color: Constants.PRIMARY_COLOR, width: 1),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(50),
-                        )
-                    ),
-                    child: Text('Rifiuta'),
-                    onPressed: () {
-                      reject(offer);
-                    },
-                  ),
-                ),
-                SizedBox(width: 16,),
-                Expanded(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                        primary: Constants.SECONDARY_COLOR,
-                        textStyle: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 14),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(50))),
-                    child: Text('Accetta'),
-                    onPressed: () {
-                      accept(offer);
-                    },
-                  ),
-                ),
-              ],
-            ),
-            if(_mode == OffersScreenMode.received && canProcess(offer)) Divider(),
-            if(_mode == OffersScreenMode.sent && canPay(offer)) Divider(),
-            if(_mode == OffersScreenMode.sent && canPay(offer)) Row(
+            Divider(),
+            Row(
               children: [
                 Expanded(
                   child: ElevatedButton(
@@ -292,25 +232,13 @@ class OffersScreenState extends State<OffersScreen>  {
                             horizontal: 8, vertical: 14),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(50))),
-                    child: Text('Paga ora'),
+                    child: Text('Seleziona'),
                     onPressed: () {
-                      payNow(offer);
+                      //payNow(offer);
                     },
                   ),
                 ),
               ],
-            ),
-            SizedBox(height: 16),
-            Center(
-              child: Text(
-                getOfferStatusName(offer),
-                style: TextStyle(
-                    color: Constants.TEXT_COLOR,
-                    fontSize: 16,
-                    fontFamily: Constants.FONT,
-                  fontWeight: FontWeight.bold
-                ),
-              ),
             ),
           ],
         ),
@@ -318,41 +246,7 @@ class OffersScreenState extends State<OffersScreen>  {
     );
   }
 
-  String getOfferStatusName(Offer offer) {
-    switch(offer.state.id) {
-      case 1: return "In attesa di accettazione";
-      case 2: return "In attesa di pagamento";
-      case 3: return "Pagamento in corso";
-      case 4: return "Pagato";
-      case 5: return "Preso in prestito";
-      case 6: return "Chiuso";
-      case 7: return "Rifiutato";
-      default: return "";
-    }
-  }
-
-  isDeleteable(Offer offer) {
-    switch(offer.state.id) {
-      case 1: return true;
-      default: return false;
-    }
-  }
-
-  canProcess(Offer offer) {
-    switch(offer.state.id) {
-      case 1: return true;
-      default: return false;
-    }
-  }
-
-  canPay(Offer offer) {
-    switch(offer.state.id) {
-      case 2: return true;
-      default: return false;
-    }
-  }
-
-  isOffer(Offer offer) {
+  isValidOffer(Offer offer) {
     switch(offer.state.id) {
       case 1: return true;
       case 2: return true;
@@ -362,54 +256,7 @@ class OffersScreenState extends State<OffersScreen>  {
     }
   }
 
-  delete(Offer offer) {
-    setState(() {
-      _isLoading = true;
-    });
-
-    ApiManager(context).makeDeleteRequest("/order/" + offer.id.toString(), (res) {
-      // print(res);
-      setState(() {
-        _isLoading = false;
-      });
-
-      ApiManager.showFreeSuccessMessage(context, "Offerta eliminata!");
-
-      getOffers();
-    }, (res) {
-      setState(() {
-        _isLoading = false;
-      });
-    });
-  }
-
-  reject(Offer offer) {
-    setState(() {
-      _isLoading = true;
-    });
-
-    var params = {
-      "order_id": offer.id,
-      "result": false
-    };
-
-    ApiManager(context).makePostRequest("/product/" + offer.product.id.toString() + "/offer/", params, (res) {
-      // print(res);
-      setState(() {
-        _isLoading = false;
-      });
-
-      ApiManager.showFreeSuccessMessage(context, "Offerta rifiutata!");
-
-      getOffers();
-    }, (res) {
-      setState(() {
-        _isLoading = false;
-      });
-    });
-  }
-
-  accept(Offer offer) {
+  /*accept(Offer offer) {
     setState(() {
       _isLoading = true;
     });
@@ -433,30 +280,7 @@ class OffersScreenState extends State<OffersScreen>  {
         _isLoading = false;
       });
     });
-  }
-
-  payNow(Offer offer) {
-    setState(() {
-      _isLoading = true;
-    });
-
-    var params = {
-      "insurance": false
-    };
-
-    ApiManager(context).makePostRequest("/product/order/" + offer.id.toString() + "/checkout", params, (res) {
-      // print(res);
-      setState(() {
-        _isLoading = false;
-      });
-
-      Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChoosePaymentScreen(offer: offer)));
-    }, (res) {
-      setState(() {
-        _isLoading = false;
-      });
-    });
-  }
+  }*/
 
   @override
   Widget build(BuildContext context) {
@@ -464,7 +288,7 @@ class OffersScreenState extends State<OffersScreen>  {
       backgroundColor: Constants.PRIMARY_COLOR,
       body: Column(
         children: [
-          HeaderWidget(title: "Offerte"),
+          HeaderWidget(title: "Seleziona offerta"),
           SizedBox(height: 16,),
           Expanded(
             child: Container(
@@ -481,67 +305,6 @@ class OffersScreenState extends State<OffersScreen>  {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(60),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.2),
-                              spreadRadius: 10,
-                              blurRadius: 30,
-                              offset: Offset(0, 0), // changes position of shadow
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                  elevation: 0,
-                                  primary: _mode == OffersScreenMode.sent ? Constants.PRIMARY_COLOR : Colors.white,
-                                  textStyle: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.normal,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
-                              ),
-                              child: Text('Inviate', style: TextStyle(color: _mode == OffersScreenMode.sent ? Colors.white : Constants.TEXT_COLOR),),
-                              onPressed: () {
-                                setState(() {
-                                  _mode = OffersScreenMode.sent;
-
-                                  getOffers();
-                                });
-                              },
-                            ),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                  primary: _mode == OffersScreenMode.received ? Constants.PRIMARY_COLOR : Colors.white,
-                                  elevation: 0,
-                                  textStyle: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.normal,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
-                              ),
-                              child: Text('Ricevute', style: TextStyle(color: _mode == OffersScreenMode.received ? Colors.white : Constants.TEXT_COLOR),),
-                              onPressed: () {
-                                setState(() {
-                                  _mode = OffersScreenMode.received;
-
-                                  getOffers();
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: 16),
                       Expanded(
                         child: SingleChildScrollView(
                           child: _isLoading ? Center(child: CircularProgressIndicator()) : _offers.isNotEmpty ? MediaQuery.removePadding(

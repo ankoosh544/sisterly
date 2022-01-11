@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:sisterly/screens/account_screen.dart';
 import 'package:sisterly/screens/home_screen.dart';
 import 'package:sisterly/screens/inbox_screen.dart';
@@ -18,6 +19,8 @@ class TabScreen extends StatefulWidget {
 }
 
 class TabScreenState extends State<TabScreen>  {
+
+  static final GlobalKey<NavigatorState> uploadNavKey = GlobalKey<NavigatorState>(debugLabel: 'UploadNavigation');
 
   int selectedTab = 0;
 
@@ -54,7 +57,15 @@ class TabScreenState extends State<TabScreen>  {
       case 1: return SearchScreen();
       case 2: return InboxScreen();
       case 3: return AccountScreen();
-      case 4: return UploadScreen();
+      case 4: return Navigator(
+        key: TabScreenState.uploadNavKey,
+        initialRoute: "/",
+        onGenerateRoute: (RouteSettings settings) {
+          return CupertinoPageRoute(builder: (context) {
+            return UploadScreen();
+          });
+        },
+      );
     }
 
     return HomeScreen();

@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/screens/checkout_screen.dart';
+import 'package:sisterly/screens/fullscreen_gallery_screen.dart';
 import 'package:sisterly/screens/profile_screen.dart';
 import 'package:sisterly/screens/upload_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
@@ -111,23 +112,32 @@ class ProductScreenState extends State<ProductScreen>  {
                 width: double.infinity,
                 child: Stack(
                   children: [
-                    SizedBox(
-                      height: 180,
-                      child: PageView(
-                        children: [
-                          for (var img in widget.product.images)
-                            Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(20.0),
-                                child: CachedNetworkImage(
-                                  height: 180, fit: BoxFit.fitHeight,
-                                  imageUrl: (img.isNotEmpty ? img : ""),
-                                  placeholder: (context, url) => Center(child: CircularProgressIndicator()),
-                                  errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
-                                ),
-                              ),
+                    InkWell(
+                      onTap: () {
+                        Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (BuildContext context) => FullscreenGalleryScreen(images: widget.product.images,),
                             )
-                        ],
+                        );
+                      },
+                      child: SizedBox(
+                        height: 180,
+                        child: PageView(
+                          children: [
+                            for (var img in widget.product.images)
+                              Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(20.0),
+                                  child: CachedNetworkImage(
+                                    height: 180, fit: BoxFit.fitHeight,
+                                    imageUrl: (img.isNotEmpty ? img : ""),
+                                    placeholder: (context, url) => Center(child: CircularProgressIndicator()),
+                                    errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
+                                  ),
+                                ),
+                              )
+                          ],
+                        ),
                       ),
                     ),
                     Positioned(
@@ -184,15 +194,32 @@ class ProductScreenState extends State<ProductScreen>  {
                               ),
                             ],
                           ),
-                          Text(
-                            "${Utils.formatCurrency(widget.product.priceOffer)}",
-                            style: TextStyle(
-                                color: Constants.PRIMARY_COLOR,
-                                fontSize: 25,
-                                fontFamily: Constants.FONT,
-                                fontWeight: FontWeight.bold
-                            ),
-                          ),
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              Text(
+                                "${Utils.formatCurrency(widget.product.priceOffer)}",
+                                style: TextStyle(
+                                    color: Constants.PRIMARY_COLOR,
+                                    fontSize: 25,
+                                    fontFamily: Constants.FONT,
+                                    fontWeight: FontWeight.bold
+                                ),
+                              ),
+                              SizedBox(width: 8,),
+                              Text(
+                                "${Utils.formatCurrency(widget.product.sellingPrice)}",
+                                textAlign: TextAlign.left,
+                                style: TextStyle(
+                                  color: Constants.PRIMARY_COLOR,
+                                  fontSize: 18,
+                                  fontFamily: Constants.FONT,
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.lineThrough,
+                                ),
+                              ),
+                            ],
+                          )
                         ],
                       ),
                       SizedBox(height: 12),
@@ -270,6 +297,28 @@ class ProductScreenState extends State<ProductScreen>  {
                       getInfoRow("Anni", widget.product.year.toString()),
                       SizedBox(height: 8,),
                       getInfoRow("Misura", widget.product.size.toString()),
+                      SizedBox(height: 8,),
+                      Divider(height: 30,),
+                      SizedBox(height: 8,),
+                      Text(
+                        "Descrizione",
+                        style: TextStyle(
+                            color: Constants.TEXT_COLOR,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: Constants.FONT
+                        ),
+                      ),
+                      SizedBox(height: 8,),
+                      Text(
+                        widget.product.description.toString(),
+                        style: TextStyle(
+                            color: Constants.TEXT_COLOR,
+                            fontSize: 16,
+                            fontWeight: FontWeight.normal,
+                            fontFamily: Constants.FONT
+                        ),
+                      ),
                       SizedBox(height: 8,),
                       Divider(height: 30,),
                       SizedBox(height: 8,),

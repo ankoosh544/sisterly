@@ -365,7 +365,17 @@ class ProfileScreenState extends State<ProfileScreen>  {
                             ),
                           ],
                         ),*/
-                        //SizedBox(height: 40,),
+                        SizedBox(height: 8,),
+                        if(_profile != null) Text(
+                          _profile!.description.toString(),
+                          style: TextStyle(
+                              color: Constants.TEXT_COLOR,
+                              fontSize: 16,
+                              fontWeight: FontWeight.normal,
+                              fontFamily: Constants.FONT
+                          ),
+                        ),
+                        SizedBox(height: 40,),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [

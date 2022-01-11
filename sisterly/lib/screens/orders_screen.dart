@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:sisterly/models/account.dart';
 import 'package:sisterly/models/offer.dart';
 import 'package:sisterly/models/product.dart';
+import 'package:sisterly/screens/profile_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:flutter/material.dart';
@@ -122,6 +123,64 @@ class OrdersScreenState extends State<OrdersScreen>  {
               ),
             ),
             Divider(),
+            InkWell(
+              onTap: () {
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (BuildContext context) => ProfileScreen(id: offer.user.id)));
+              },
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(68.0),
+                    child: CachedNetworkImage(
+                      width: 48, height: 48, fit: BoxFit.cover,
+                      imageUrl: (offer.user.image ?? ""),
+                      placeholder: (context, url) => Center(child: CircularProgressIndicator()),
+                      errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder.svg"),
+                    ),
+                  ),
+                  SizedBox(width: 12,),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Creata da " + offer.user.firstName!.capitalize() + " " + offer.user.lastName!.substring(0, 1).toUpperCase() + ".",
+                        style: TextStyle(
+                            color: Constants.DARK_TEXT_COLOR,
+                            fontSize: 16,
+                            fontFamily: Constants.FONT
+                        ),
+                      ),
+                      SizedBox(height: 4,),
+                      /*Text(
+                                    "Milano",
+                                    style: TextStyle(
+                                        color: Constants.LIGHT_TEXT_COLOR,
+                                        fontSize: 14,
+                                        fontFamily: Constants.FONT
+                                    ),
+                                  ),*/
+                      SizedBox(height: 4,),
+                      Wrap(
+                        spacing: 3,
+                        children: [
+                          StarsWidget(stars: offer.user.reviewsMedia!.toInt()),
+                          Text(
+                            offer.product.owner.reviewsMedia.toString(),
+                            style: TextStyle(
+                                color: Constants.DARK_TEXT_COLOR,
+                                fontSize: 14,
+                                fontFamily: Constants.FONT
+                            ),
+                          ),
+                        ],
+                      )
+                    ],
+                  )
+                ],
+              ),
+            ),
+            Divider(),
             Row(
               children: [
                 ClipRRect(
@@ -131,7 +190,7 @@ class OrdersScreenState extends State<OrdersScreen>  {
                     height: 96,
                     fit: BoxFit.contain,
                     imageUrl: offer.product.images.first,
-                    placeholder: (context, url) => CircularProgressIndicator(),
+                    placeholder: (context, url) => Center(child: CircularProgressIndicator()),
                     errorWidget: (context, url, error) => Icon(Icons.error),
                   ),
                 ),

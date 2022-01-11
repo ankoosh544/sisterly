@@ -278,7 +278,7 @@ class AccountScreenState extends State<AccountScreen>  {
 
                               getUser();
                             },
-                            child: getItem("assets/images/edit.svg", "Carica documenti")
+                            child: getItem("assets/images/document.svg", "Carica documenti")
                         ),
                         InkWell(
                             onTap: () {

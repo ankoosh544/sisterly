@@ -28,6 +28,8 @@
 	<string>Usiamo l'nfc per permetterti di aprire rapidamente i prodotti</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Utilizziamo la fotocamera per scattare le foto dei nuovi prodotti</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Utilizziamo la posizione per inviarti notifiche localizzate</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Utilizziamo la libreria foto per caricare nuovi prodotti</string>
 	<key>NSUserTrackingUsageDescription</key>

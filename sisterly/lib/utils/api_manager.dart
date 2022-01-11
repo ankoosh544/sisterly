@@ -64,6 +64,10 @@ class ApiManager {
     await internalMakePostRequest(endpoint, params, SessionData().token, success, failure, true);
   }
 
+  makeDeleteRequest(endpoint, success, failure) async {
+    await internalMakeDeleteRequest(endpoint, success, failure);
+  }
+
   internalMakePostRequest(endpoint, params, token, success, failure, retry) async {
     String url = SessionData().serverUrl + endpoint;
 
@@ -462,9 +466,10 @@ class ApiManager {
     if(context == null) return;
 
     CustomAlert.show(context,
-        title: AppLocalizations.of(context).translate("generic_success"),
+        //title: AppLocalizations.of(context).translate("generic_success"),
+        confirmButtonColor: Constants.SECONDARY_COLOR,
         subtitle: AppLocalizations.of(context).translate(textKey),
-        style: CustomAlertStyle.success,
+        //style: CustomAlertStyle.success,
         onPress: (bool isConfirm) {
           Navigator.of(context, rootNavigator: true).pop();
 
@@ -476,9 +481,10 @@ class ApiManager {
     if(context == null) return;
 
     CustomAlert.show(context,
-        title: AppLocalizations.of(context).translate("generic_success"),
+        //title: AppLocalizations.of(context).translate("generic_success"),
+        confirmButtonColor: Constants.SECONDARY_COLOR,
         subtitle: text,
-        style: CustomAlertStyle.success,
+        //style: CustomAlertStyle.success,
         onPress: (bool isConfirm) {
           Navigator.of(context, rootNavigator: true).pop();
 
@@ -490,10 +496,10 @@ class ApiManager {
     if(context == null) return;
 
     CustomAlert.show(context,
-        confirmButtonColor: Colors.red,
-        title: AppLocalizations.of(context).translate("generic_warning"),
+        confirmButtonColor: Constants.SECONDARY_COLOR,
+        //title: AppLocalizations.of(context).translate("generic_warning"),
         subtitle: AppLocalizations.of(context).translate(textKey),
-        style: CustomAlertStyle.error,
+        //style: CustomAlertStyle.error,
         onPress: (bool isConfirm) {
           Navigator.of(context, rootNavigator: true).pop();
 
@@ -505,10 +511,9 @@ class ApiManager {
     if(context == null) return;
 
     CustomAlert.show(context,
-        confirmButtonColor: Colors.red,
-        title: AppLocalizations.of(context).translate("generic_warning"),
+        confirmButtonColor: Constants.SECONDARY_COLOR,
+        //title: AppLocalizations.of(context).translate("generic_warning"),
         subtitle: text,
-        style: CustomAlertStyle.error,
         onPress: (bool isConfirm) {
           Navigator.of(context, rootNavigator: true).pop();
 

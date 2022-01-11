@@ -3,6 +3,7 @@ import 'package:sisterly/models/delivery_mode_offer.dart';
 import 'package:sisterly/models/var.dart';
 
 import 'account.dart';
+import 'lender_kit.dart';
 
 class Product {
   final int id;
@@ -30,6 +31,7 @@ class Product {
   final DeliveryMode? deliveryType;
   bool usePriceAlgorithm;
   bool useDiscount;
+  final LenderKit? lenderKitToSend;
 
   Product(
       this.id,
@@ -54,7 +56,8 @@ class Product {
       this.yearId,
       this.deliveryType,
       this.usePriceAlgorithm,
-      this.useDiscount);
+      this.useDiscount,
+      this.lenderKitToSend);
 
   static getArrayDesc(item) {
     if (item.isNotEmpty && item.length > 1) {
@@ -89,6 +92,7 @@ class Product {
         DeliveryMode.fromJson(json["delivery_type"]),
       json["use_price_algorithm"] ?? false,
       json["use_discount"] ?? false,
+      LenderKit.fromJson(json["lender_kit_to_send"])
     );
 
     var media = json["media"];

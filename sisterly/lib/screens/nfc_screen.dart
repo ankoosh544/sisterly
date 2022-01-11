@@ -4,6 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:nfc_manager/nfc_manager.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/models/record.dart';
+import 'package:sisterly/screens/add_claim_screen.dart';
+import 'package:sisterly/screens/add_review_screen.dart';
+import 'package:sisterly/screens/manage_nfc_screen.dart';
 import 'package:sisterly/screens/product_screen.dart';
 import 'package:sisterly/screens/signup_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
@@ -14,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../utils/constants.dart';
+import 'nfc_select_offer_screen.dart';
 
 class NfcScreen extends StatefulWidget {
 
@@ -35,6 +39,9 @@ class NfcScreenState extends State<NfcScreen> {
       debugPrint("nfc isAvailable: "+isAvailable.toString());
 
       startScan();
+
+      //test purpose
+      goToProduct(42);
     });
   }
 
@@ -98,15 +105,7 @@ class NfcScreenState extends State<NfcScreen> {
         if(productId.isNotEmpty) {
           debugPrint("open productId "+productId);
 
-          ApiManager(context).makeGetRequest('/product/'+productId+'/', {}, (res) {
-            var data = res["data"];
-            if (data != null) {
-              Product prd = Product.fromJson(data);
-
-              Navigator.of(context).push(
-                  MaterialPageRoute(builder: (BuildContext context) => ProductScreen(prd)));
-            }
-          }, (res) {});
+          goToProduct(productId);
         }
       } else {
         debugPrint("cached messages null");
@@ -123,6 +122,20 @@ class NfcScreenState extends State<NfcScreen> {
     return '[Ndef - Format] is completed.';
   }
 
+  goToProduct(productId) {
+    ApiManager(context).makeGetRequest('/product/'+productId.toString()+'/', {}, (res) {
+      var data = res["data"];
+      if (data != null) {
+        Product prd = Product.fromJson(data);
+
+        Navigator.of(context).push(
+            MaterialPageRoute(builder: (BuildContext context) => NfcSelectOfferScreen(productId: prd.id,)));
+
+        /*Navigator.of(context).push(
+            MaterialPageRoute(builder: (BuildContext context) => ManageNfcScreen(product: prd,)));*/
+      }
+    }, (res) {});
+  }
 
   @override
   Widget build(BuildContext context) {

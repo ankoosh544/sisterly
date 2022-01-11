@@ -53,6 +53,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Address? _addressToEdit;
   DateTime _availableFrom = DateTime.now();
   DateTime _availableTo = DateTime.now().add(Duration(days: 7));
+  String _rentPrice = "0";
 
   @override
   void initState() {
@@ -62,6 +63,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       setFromDate(_availableFrom);
       setToDate(_availableTo);
       getAddresses(null);
+      getTotalPrice();
     });
   }
 
@@ -69,12 +71,30 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     _fromDayText.text = date.day.toString();
     _fromMonthText.text = date.month.toString();
     _fromYearText.text = date.year.toString();
+    getTotalPrice();
   }
 
   setToDate(DateTime date) {
     _toDayText.text = date.day.toString();
     _toMonthText.text = date.month.toString();
     _toYearText.text = date.year.toString();
+    getTotalPrice();
+  }
+
+  getTotalPrice() {
+    var params = {
+      "rent_price": widget.product.priceOffer,
+      "rent_days": _availableTo.difference(_availableFrom).inDays
+    };
+    ApiManager(context).makeGetRequest('/product/calculate_rent_price', params, (response) {
+      if (response["data"] != null) {
+        setState(() {
+          _rentPrice = response["data"].toString();
+        });
+      }
+    }, (response) {
+
+    });
   }
 
   @override
@@ -318,7 +338,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                       SizedBox(height: 25),
                       Text(
-                        "Vuoi aggiungere la protezione acquisti?",
+                        "Protezione acquisti obbligatoria",
                         style: TextStyle(
                             color: Constants.DARK_TEXT_COLOR,
                             fontSize: 18,
@@ -339,7 +359,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 borderRadius: BorderRadius.circular(20),
                                 color: _insurance ? Constants.SECONDARY_COLOR_LIGHT : Constants.LIGHT_GREY_COLOR2
                               ),
-                              child: Text('Si (+ € 10.00)',
+                              child: Text('+ € 10.00',
                                   style: TextStyle(
                                     color: _insurance ? Colors.black : Constants.TEXT_COLOR,
                                     fontSize: 16,
@@ -348,7 +368,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               ),
                             ),
                           ),
-                          GestureDetector(
+                          /*GestureDetector(
                             onTap: () => setState(() {
                               _insurance = false;
                             }),
@@ -367,7 +387,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   )
                               ),
                             ),
-                          )
+                          )*/
                         ]
                       ),
                       SizedBox(height: 35),
@@ -698,7 +718,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ),
                       ),
                       SizedBox(height: 35),
-                      /*Row(
+                      Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
@@ -712,7 +732,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             textAlign: TextAlign.center,
                           ),
                           Text(
-                            "${Utils.formatCurrency(widget.product.priceOffer)} al giorno",
+                            Utils.formatCurrency(double.parse(_rentPrice)),
                             style: TextStyle(
                                 color: Constants.DARK_TEXT_COLOR,
                                 fontSize: 18,
@@ -723,7 +743,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                         ],
                       ),
-                      SizedBox(height: 35),*/
+                      SizedBox(height: 35),
                       Center(
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
