@@ -8,6 +8,7 @@ class Filters {
   DateTime availableFrom = DateTime.now();
   DateTime availableTo = DateTime.now().add(Duration(days: 30));
   bool onlySameCity = false;
+  int? brand;
 
   areSet() {
     return model != null
@@ -16,6 +17,7 @@ class Filters {
         || deliveryModes.isNotEmpty
         || maxPrice != 1000
         || onlySameCity
+        || brand != null
     ;
   }
 

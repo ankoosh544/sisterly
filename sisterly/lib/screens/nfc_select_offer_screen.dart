@@ -288,7 +288,7 @@ class NfcSelectOfferScreenState extends State<NfcSelectOfferScreen>  {
       backgroundColor: Constants.PRIMARY_COLOR,
       body: Column(
         children: [
-          HeaderWidget(title: "Seleziona offerta"),
+          HeaderWidget(title: "Seleziona il noleggio"),
           SizedBox(height: 16,),
           Expanded(
             child: Container(

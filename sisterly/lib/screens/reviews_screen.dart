@@ -85,14 +85,9 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
     });
   }
 
-  String getFullName() {
+  String getUsername() {
     if(_profile == null) return "";
-    return _profile!.firstName!.capitalize() + " " + _profile!.lastName!.capitalize();
-  }
-
-  String getFirstName() {
-    if(_profile == null) return "";
-    return _profile!.firstName!.capitalize();
+    return _profile!.username!.capitalize();
   }
 
   Widget reviewCell(review) {
@@ -222,7 +217,7 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  getFullName(),
+                                  getUsername(),
                                   style: TextStyle(
                                       color: Constants.DARK_TEXT_COLOR,
                                       fontSize: 20,

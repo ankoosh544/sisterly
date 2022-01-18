@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:intl/intl.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/screens/checkout_screen.dart';
 import 'package:sisterly/screens/fullscreen_gallery_screen.dart';
@@ -11,7 +12,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sisterly/utils/session_data.dart';
 import "package:sisterly/utils/utils.dart";
 import 'package:sisterly/widgets/stars_widget.dart';
+import 'package:table_calendar/table_calendar.dart';
 import '../utils/constants.dart';
+import 'chat_screen.dart';
 
 class ProductScreen extends StatefulWidget {
   final Product product;
@@ -24,8 +27,10 @@ class ProductScreen extends StatefulWidget {
 
 class ProductScreenState extends State<ProductScreen>  {
 
+  late final PageController _calendarController;
   List<Product> _productsFavorite = [];
-  
+  DateTime _focusedDay = DateTime.now().add(Duration(days: 1));
+
   @override
   void initState() {
     super.initState();
@@ -88,6 +93,24 @@ class ProductScreenState extends State<ProductScreen>  {
     });
   }
 
+  contact() {
+    var params = {
+      "email_user_to": widget.product.owner.email
+    };
+
+    ApiManager(context).makePutRequest('/chat/', params, (res) {
+      if (res["errors"] != null) {
+        ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+      } else {
+        Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChatScreen(code: res["data"]["code"])));
+      }
+    }, (res) {
+      if (res["errors"] != null) {
+        ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+      }
+    });
+  }
+
   setProductFavorite(product, add) {
     var params = {
       "product_id": product.id,
@@ -114,11 +137,21 @@ class ProductScreenState extends State<ProductScreen>  {
                   children: [
                     InkWell(
                       onTap: () {
-                        Navigator.of(context).push(
+                        showDialog(
+                            context: context,
+                            barrierColor: Colors.black12.withOpacity(0.6), // Background color
+                            barrierDismissible: true,
+                            builder: (_) => Dialog(
+                              backgroundColor: Colors.transparent,
+                                insetPadding: EdgeInsets.zero,
+                              child: FullscreenGalleryScreen(images: widget.product.images,)
+                            ));
+                        /*Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (BuildContext context) => FullscreenGalleryScreen(images: widget.product.images,),
+                              fullscreenDialog: true
                             )
-                        );
+                        );*/
                       },
                       child: SizedBox(
                         height: 180,
@@ -139,6 +172,21 @@ class ProductScreenState extends State<ProductScreen>  {
                           ],
                         ),
                       ),
+                    ),
+                    Positioned(
+                        top: 16,
+                        right: 12,
+                        child: isFavorite(widget.product) ? InkWell(
+                          child: SizedBox(width: 24, height: 24, child: SvgPicture.asset("assets/images/saved.svg")),
+                          onTap: () {
+                            setProductFavorite(widget.product, false);
+                          },
+                        ) : InkWell(
+                          child: SizedBox(width: 24, height: 24, child: SvgPicture.asset("assets/images/save.svg")),
+                          onTap: () {
+                            setProductFavorite(widget.product, true);
+                          },
+                        )
                     ),
                     Positioned(
                       left: 16,
@@ -170,29 +218,31 @@ class ProductScreenState extends State<ProductScreen>  {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                widget.product.brandName,
-                                style: TextStyle(
-                                    color: Constants.DARK_TEXT_COLOR,
-                                    fontSize: 16,
-                                    fontFamily: Constants.FONT,
-                                    fontWeight: FontWeight.bold
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  widget.product.brandName,
+                                  style: TextStyle(
+                                      color: Constants.DARK_TEXT_COLOR,
+                                      fontSize: 16,
+                                      fontFamily: Constants.FONT,
+                                      fontWeight: FontWeight.bold
+                                  ),
                                 ),
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                widget.product.model,
-                                style: TextStyle(
-                                    color: Constants.DARK_TEXT_COLOR,
-                                    fontSize: 20,
-                                    fontFamily: Constants.FONT,
-                                    fontWeight: FontWeight.bold
+                                SizedBox(height: 8),
+                                Text(
+                                  widget.product.model,
+                                  style: TextStyle(
+                                      color: Constants.DARK_TEXT_COLOR,
+                                      fontSize: 20,
+                                      fontFamily: Constants.FONT,
+                                      fontWeight: FontWeight.bold
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                           Wrap(
                             crossAxisAlignment: WrapCrossAlignment.center,
@@ -253,7 +303,7 @@ class ProductScreenState extends State<ProductScreen>  {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  "Pubblicata da " + widget.product.owner.firstName!.capitalize() + " " + widget.product.owner.lastName!.substring(0, 1).toUpperCase() + ".",
+                                  "Pubblicata da " + widget.product.owner.username!.capitalize(),
                                   style: TextStyle(
                                       color: Constants.DARK_TEXT_COLOR,
                                       fontSize: 16,
@@ -369,9 +419,114 @@ class ProductScreenState extends State<ProductScreen>  {
                       SizedBox(height: 8,),
                       getInfoRow("Width", "26cm"),*/
                       SizedBox(height: 40,),
-                      if(widget.product.owner.id != SessionData().userId) Row(
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Expanded(
+                          Text(
+                            DateFormat('MMMM yyyy', 'it_IT').format(_focusedDay).capitalize(),
+                            style: TextStyle(
+                                color: Constants.PRIMARY_COLOR,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: Constants.FONT
+                            ),
+                          ),
+                          Wrap(
+                            children: [
+                              InkWell(
+                                onTap: () {
+                                  _calendarController.previousPage(
+                                    duration: Duration(milliseconds: 300),
+                                    curve: Curves.easeOut,
+                                  );
+                                },
+                                child: RotatedBox(
+                                  quarterTurns: 2,
+                                    child: SvgPicture.asset("assets/images/arrow_right.svg", width: 10,)
+                                ),
+                              ),
+                              SizedBox(width: 20,),
+                              InkWell(
+                                onTap: () {
+                                  _calendarController.nextPage(
+                                    duration: Duration(milliseconds: 300),
+                                    curve: Curves.easeOut,
+                                  );
+                                },
+                                child: SvgPicture.asset("assets/images/arrow_right.svg", width: 10,),
+                              )
+                            ],
+                          )
+                        ],
+                      ),
+                      SizedBox(height: 12,),
+                      TableCalendar(
+                        firstDay: DateTime.now().add(Duration(days: 1)),
+                        lastDay: DateTime.utc(2040, 3, 14),
+                        focusedDay: _focusedDay,
+                        rowHeight: 28,
+                        onCalendarCreated: (controller) => _calendarController = controller,
+                        onPageChanged: (focusedDay) {
+                          debugPrint("focusedDay "+focusedDay.toString());
+                          setState(() {
+                            _focusedDay = focusedDay;
+                          });
+                        },
+                        startingDayOfWeek: StartingDayOfWeek.monday,
+                        daysOfWeekStyle: DaysOfWeekStyle(
+                          decoration: BoxDecoration(
+                            border: Border(bottom: BorderSide(color: Colors.black12)),
+                          ),
+                        ),
+                        daysOfWeekHeight: 40,
+                        calendarBuilders: CalendarBuilders(
+                          dowBuilder: (context, day) {
+                            final text = DateFormat.E("it_IT").format(day).capitalize();
+
+                            return Center(
+                              child: Text(
+                                text,
+                                style: TextStyle(color: Color(0xff333333)),
+                              ),
+                            );
+                          },
+                          defaultBuilder: (context, day, focusedDay) {
+                            debugPrint("defaultBuilder");
+                            return Container(
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: Color(0x40ffa8a8)
+                              ),
+                              child: FittedBox(
+                                  child: Container(
+                                      padding: const EdgeInsets.all(5),
+                                      child: Text(day.day.toString(), style: TextStyle(color: Colors.black, fontSize: 12),)
+                                  )
+                              ),
+                            );
+                          },
+                          disabledBuilder: (context, day, focusedDay) {
+                            debugPrint("defaultBuilder");
+                            return Container(
+                              alignment: Alignment.center,
+                              child: FittedBox(
+                                  child: Container(
+                                      padding: const EdgeInsets.all(5),
+                                      child: Text(day.day.toString(), style: TextStyle(color: Color(0xffcccccc), fontSize: 12),)
+                                  )
+                              ),
+                            );
+                          },
+                        ),
+
+                        headerVisible: false,
+                        locale: "it_IT",
+                      ),
+                      SizedBox(height: 40,),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          if(widget.product.owner.id != SessionData().userId) Expanded(
                             child: OutlinedButton(
                               style: OutlinedButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -385,18 +540,14 @@ class ProductScreenState extends State<ProductScreen>  {
                                     borderRadius: BorderRadius.circular(50),
                                   )
                               ),
-                              child: Text(isFavorite(widget.product) ? 'Rimuovi dalla Wishlist' : 'Aggiungi alla Wishlist', textAlign: TextAlign.center,),
+                              child: Text("Contatta", textAlign: TextAlign.center,),
                               onPressed: () {
-                                setProductFavorite(widget.product, !isFavorite(widget.product));
+                                contact();
                               },
-                            ),
+                            )
                           ),
-                        ],
-                      ),
-                      if(widget.product.owner.id != SessionData().userId) SizedBox(height: 12,),
-                      if(widget.product.owner.id != SessionData().userId) Row(
-                        children: [
-                          Expanded(
+                          if(widget.product.owner.id != SessionData().userId) SizedBox(width: 12,),
+                          if(widget.product.owner.id != SessionData().userId) Expanded(
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                   primary: Constants.SECONDARY_COLOR,
@@ -411,19 +562,15 @@ class ProductScreenState extends State<ProductScreen>  {
                               onPressed: () {
                                 if(widget.product.owner.holidayMode!) {
                                   ApiManager.showFreeErrorMessage(context, "L'utente in questione ha attivato la modalità vacanza, non sarà possibile prenotare la borsa fino al suo rientro. Riprova tra qualche giorno");
-                                  return;  
+                                  return;
                                 }
-                                
+
                                 Navigator.of(context).push(
                                     MaterialPageRoute(builder: (BuildContext context) => CheckoutScreen(product: widget.product,)));
                               },
                             ),
                           ),
-                        ],
-                      ),
-                      if(widget.product.owner.id == SessionData().userId) Row(
-                        children: [
-                          Expanded(
+                          if(widget.product.owner.id == SessionData().userId) Expanded(
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                   primary: Constants.SECONDARY_COLOR,

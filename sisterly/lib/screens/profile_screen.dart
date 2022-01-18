@@ -98,14 +98,9 @@ class ProfileScreenState extends State<ProfileScreen>  {
     });
   }
 
-  String getFullName() {
+  String getUsername() {
     if(_profile == null) return "";
-    return _profile!.firstName!.capitalize() + " " + _profile!.lastName!.capitalize();
-  }
-
-  String getFirstName() {
-    if(_profile == null) return "";
-    return _profile!.firstName!.capitalize();
+    return _profile!.username!.capitalize();
   }
 
   isFavorite(product) {
@@ -273,7 +268,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  getFullName(),
+                                  getUsername(),
                                   style: TextStyle(
                                       color: Constants.DARK_TEXT_COLOR,
                                       fontSize: 20,
@@ -379,13 +374,15 @@ class ProfileScreenState extends State<ProfileScreen>  {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              "Pubblicati da " + getFirstName(),
-                              style: TextStyle(
-                                  color: Constants.DARK_TEXT_COLOR,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: Constants.FONT
+                            Expanded(
+                              child: Text(
+                                "Pubblicati da " + getUsername(),
+                                style: TextStyle(
+                                    color: Constants.DARK_TEXT_COLOR,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: Constants.FONT
+                                ),
                               ),
                             ),
                             if(_products.isNotEmpty) InkWell(

@@ -55,7 +55,7 @@ class SearchScreenState extends State<SearchScreen>  {
     );
 
     if(results == null) {
-      _filters = new Filters();
+      _filters = Filters();
     } else {
       _filters = results;
     }
@@ -168,6 +168,10 @@ class SearchScreenState extends State<SearchScreen>  {
 
     if(_filters.model != null && _filters.model!.isNotEmpty) {
       params["model"] = _filters.model;
+    }
+
+    if(_filters.brand != null) {
+      params["id_brands"] = [_filters.brand];
     }
 
     if(_filters.conditions.isNotEmpty) {

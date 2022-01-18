@@ -1058,13 +1058,26 @@ class UploadScreenState extends State<UploadScreen>  {
         "selling_price": double.parse(_sellingPrice.text),
         "delivery_type": _selectedDelivery!.id,
         "description": _descriptionText.text,
-        "max_days": -1,
+        "max_days": 100,
         "use_discount": _useDiscount,
         "use_price_algorithm": _usePriceAlgo
       };
 
-      Navigator.of(context).push(
-          MaterialPageRoute(builder: (BuildContext context) => Upload2Screen(step1Params: params, editProduct: widget.editProduct,)));
+      if(widget.editProduct != null) {
+        //params["delivery_kit_pk"] = widget.editProduct.
+        params["lender_kit_to_send"] = widget.editProduct!.lenderKitToSend!.id;
+        ApiManager(context).makePostRequest('/product/' + widget.editProduct!.id.toString() + "/", params, (res) {
+          if(res["errors"] != null) {
+            ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+          } else {
+            Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (BuildContext context) => ProductEditSuccessScreen()), (_) => false);
+          }
+        }, (res) {});
+      } else {
+        Navigator.of(context).push(
+            MaterialPageRoute(builder: (BuildContext context) => Upload2Screen(step1Params: params, editProduct: widget.editProduct,)));
+      }
     }
   }
 

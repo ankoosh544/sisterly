@@ -1,14 +1,18 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:sisterly/models/account.dart';
+import 'package:sisterly/models/chat.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sisterly/widgets/header_widget.dart';
+import 'package:sisterly/widgets/stars_widget.dart';
 
 import '../utils/constants.dart';
 import "package:sisterly/utils/utils.dart";
+
+import 'chat_screen.dart';
 
 enum InboxScreenMode {
   messages, notifications
@@ -25,7 +29,7 @@ class InboxScreen extends StatefulWidget {
 class InboxScreenState extends State<InboxScreen>  {
 
   bool _isLoading = false;
-  List<Product> _conversations = [];
+  List<Chat> _conversations = [];
   InboxScreenMode _mode = InboxScreenMode.messages;
 
   @override
@@ -57,8 +61,8 @@ class InboxScreenState extends State<InboxScreen>  {
 
       var data = res["data"];
       if (data != null) {
-        for (var prod in data) {
-          _conversations.add(Product.fromJson(prod));
+        for (var chat in data) {
+          _conversations.add(Chat.fromJson(chat));
         }
       }
     }, (res) {
@@ -68,92 +72,67 @@ class InboxScreenState extends State<InboxScreen>  {
     });
   }
 
-  Widget conversationCell(review) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            spreadRadius: 0,
-            blurRadius: 6,
-            offset: Offset(0, 0), // changes position of shadow
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                ClipRRect(
-                    borderRadius: BorderRadius.circular(50.0),
-                    child: Image.asset("assets/images/product.png", width: 50, height: 50, fit: BoxFit.cover,)
-                ),
-                SizedBox(width: 12,),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Beatrice Pedrali",
-                        style: TextStyle(
-                            color: Constants.DARK_TEXT_COLOR,
-                            fontSize: 16,
-                            fontFamily: Constants.FONT
-                        ),
-                      ),
-                      SizedBox(height: 6,),
-                      Wrap(
-                        spacing: 3,
-                        children: [
-                          SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                          SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                          SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                          SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                          SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                          Text(
-                            "5.0",
-                            style: TextStyle(
-                                color: Constants.DARK_TEXT_COLOR,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: Constants.FONT
-                            ),
-                          ),
-                        ],
-                      )
-                    ],
-                  ),
-                ),
-                SizedBox(width: 12,),
-                Text(
-                  "1 day ago",
-                  style: TextStyle(
-                      color: Constants.LIGHT_GREY_COLOR,
-                      fontSize: 14,
-                      fontFamily: Constants.FONT
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 12,),
-            Text(
-              "There is now an abundance of readable dummy texts. These are usually used when a text is required purely to fill a space.",
-              style: TextStyle(
-                  color: Constants.TEXT_COLOR,
-                  fontSize: 14,
-                  fontFamily: Constants.FONT
-              ),
+  Widget conversationCell(Chat chat) {
+    return InkWell(
+      onTap: () {
+        Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChatScreen(code: chat.code)));
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+            borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              spreadRadius: 0,
+              blurRadius: 6,
+              offset: Offset(0, 0), // changes position of shadow
             ),
           ],
         ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(52.0),
+                    child: CachedNetworkImage(
+                      width: 52, height: 52, fit: BoxFit.cover,
+                      imageUrl: (chat.user.image ?? ""),
+                      placeholder: (context, url) => CircularProgressIndicator(),
+                      errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder.svg"),
+                    ),
+                  ),
+                  SizedBox(width: 12,),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        getUsername(chat.user),
+                        style: TextStyle(
+                            color: Constants.DARK_TEXT_COLOR,
+                            fontSize: 16,
+                            fontFamily: Constants.FONT,
+                          fontWeight: FontWeight.bold
+                        ),
+                      ),
+                    ],
+                  )
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
+  }
+
+  String getUsername(Account profile) {
+    return profile.username!.capitalize();
   }
 
   @override

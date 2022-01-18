@@ -560,6 +560,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "4.4.0"
+  photo_view:
+    dependency: "direct main"
+    description:
+      name: photo_view
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.13.0"
   pin_code_fields:
     dependency: "direct main"
     description:
@@ -658,6 +665,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.4"
+  simple_gesture_detector:
+    dependency: transitive
+    description:
+      name: simple_gesture_detector
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.2.0"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -712,6 +726,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.0.0"
+  table_calendar:
+    dependency: "direct main"
+    description:
+      name: table_calendar
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "3.0.3"
   term_glyph:
     dependency: transitive
     description:
@@ -800,6 +821,13 @@ packages:
     dependency: transitive
     description:
       name: vector_math
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.1.0"
+  web_socket_channel:
+    dependency: "direct main"
+    description:
+      name: web_socket_channel
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.1.0"

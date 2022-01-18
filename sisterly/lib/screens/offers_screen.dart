@@ -332,6 +332,7 @@ class OffersScreenState extends State<OffersScreen>  {
   }
 
   isDeleteable(Offer offer) {
+    if(_mode != OffersScreenMode.sent) return false;
     switch(offer.state.id) {
       case 1: return true;
       default: return false;
@@ -367,7 +368,7 @@ class OffersScreenState extends State<OffersScreen>  {
       _isLoading = true;
     });
 
-    ApiManager(context).makeDeleteRequest("/order/" + offer.id.toString(), (res) {
+    ApiManager(context).makeDeleteRequest("/product/order/" + offer.id.toString(), (res) {
       // print(res);
       setState(() {
         _isLoading = false;
