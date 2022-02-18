@@ -62,7 +62,7 @@ class ProductEditSuccessScreenState extends State<ProductEditSuccessScreen> {
                 ),
               ),
               const SizedBox(height: 40),
-              const Text("Le tue modifiche sono state salvate correttamente",
+              const Text("Le tue modifiche sono state salvate correttamente. Il tuo prodotto sarà visibile appena gli amministratori lo approveranno.",
                   style: TextStyle(
                     color: Constants.TEXT_COLOR,
                     fontSize: 16,

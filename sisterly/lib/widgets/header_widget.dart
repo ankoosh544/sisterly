@@ -6,19 +6,31 @@ import 'package:sisterly/utils/constants.dart';
 class HeaderWidget extends StatelessWidget {
 
   final String title;
+  final String? subtitleLink;
   final Widget? leftWidget;
   final Widget? rightWidget;
+  final GlobalKey<NavigatorState>? navigatorKey;
 
   const HeaderWidget({
     Key? key,
     required this.title,
+    this.subtitleLink,
     this.leftWidget,
-    this.rightWidget}
+    this.rightWidget,
+    this.navigatorKey}
     ) : super(key: key);
+
+  canPop(context) {
+    if(navigatorKey != null && navigatorKey!.currentState != null) {
+      return navigatorKey!.currentState!.canPop();
+    }
+
+    return Navigator.of(context, rootNavigator: true).canPop();
+  }
 
   getLeftWidget(BuildContext context) {
     if(leftWidget == null) {
-      if(Navigator.of(context).canPop()) {
+      if(canPop(context)) {
         return InkWell(
           child: Container(padding: const EdgeInsets.all(12), child: SvgPicture.asset("assets/images/back.svg")),
           onTap: () {
@@ -55,7 +67,29 @@ class HeaderWidget extends StatelessWidget {
             alignment: Alignment.center,
             child: SafeArea(
               bottom: false,
-              child: Text(
+              child: subtitleLink != null ? Column(
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 25,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: Constants.FONT),
+                    textAlign: TextAlign.center,
+                  ),
+                  Text(
+                    subtitleLink!,
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        decoration: TextDecoration.underline,
+                        fontWeight: FontWeight.normal,
+                        fontFamily: Constants.FONT),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ) : Text(
                 title,
                 style: TextStyle(
                     color: Colors.white,

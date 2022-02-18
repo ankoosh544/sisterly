@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+import 'package:sisterly/models/chat.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/screens/checkout_screen.dart';
 import 'package:sisterly/screens/fullscreen_gallery_screen.dart';
@@ -30,6 +31,10 @@ class ProductScreenState extends State<ProductScreen>  {
   late final PageController _calendarController;
   List<Product> _productsFavorite = [];
   DateTime _focusedDay = DateTime.now().add(Duration(days: 1));
+  DateTime? _rangeStart;
+  DateTime? _rangeEnd;
+  DateTime? _selectedDay;
+  RangeSelectionMode _rangeSelectionMode = RangeSelectionMode.toggledOn;
 
   @override
   void initState() {
@@ -102,7 +107,11 @@ class ProductScreenState extends State<ProductScreen>  {
       if (res["errors"] != null) {
         ApiManager.showFreeErrorMessage(context, res["errors"].toString());
       } else {
-        Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChatScreen(code: res["data"]["code"])));
+        ApiManager(context).makeGetRequest('/chat/' + res["data"]["code"]  + '/', {}, (chatRes) {
+          Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChatScreen(chat: Chat.fromJson(chatRes["data"]), code: res["data"]["code"])));
+        }, (res) {
+
+        });
       }
     }, (res) {
       if (res["errors"] != null) {
@@ -144,7 +153,7 @@ class ProductScreenState extends State<ProductScreen>  {
                             builder: (_) => Dialog(
                               backgroundColor: Colors.transparent,
                                 insetPadding: EdgeInsets.zero,
-                              child: FullscreenGalleryScreen(images: widget.product.images,)
+                              child: FullscreenGalleryScreen(images: widget.product.images.map((e) => e.image).toList(),)
                             ));
                         /*Navigator.of(context).push(
                             MaterialPageRoute(
@@ -163,7 +172,7 @@ class ProductScreenState extends State<ProductScreen>  {
                                   padding: const EdgeInsets.all(20.0),
                                   child: CachedNetworkImage(
                                     height: 180, fit: BoxFit.fitHeight,
-                                    imageUrl: (img.isNotEmpty ? img : ""),
+                                    imageUrl: (img.image.isNotEmpty ? img.image : ""),
                                     placeholder: (context, url) => Center(child: CircularProgressIndicator()),
                                     errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
                                   ),
@@ -442,7 +451,10 @@ class ProductScreenState extends State<ProductScreen>  {
                                 },
                                 child: RotatedBox(
                                   quarterTurns: 2,
-                                    child: SvgPicture.asset("assets/images/arrow_right.svg", width: 10,)
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                      child: SvgPicture.asset("assets/images/arrow_right.svg", width: 10,),
+                                    )
                                 ),
                               ),
                               SizedBox(width: 20,),
@@ -453,7 +465,10 @@ class ProductScreenState extends State<ProductScreen>  {
                                     curve: Curves.easeOut,
                                   );
                                 },
-                                child: SvgPicture.asset("assets/images/arrow_right.svg", width: 10,),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14,  vertical: 8),
+                                  child: SvgPicture.asset("assets/images/arrow_right.svg", width: 10,),
+                                ),
                               )
                             ],
                           )
@@ -465,6 +480,29 @@ class ProductScreenState extends State<ProductScreen>  {
                         lastDay: DateTime.utc(2040, 3, 14),
                         focusedDay: _focusedDay,
                         rowHeight: 28,
+                        rangeStartDay: _rangeStart,
+                        rangeEndDay: _rangeEnd,
+                        rangeSelectionMode: _rangeSelectionMode,
+                        onDaySelected: (selectedDay, focusedDay) {
+                          if (!isSameDay(_selectedDay, selectedDay)) {
+                            setState(() {
+                              _selectedDay = selectedDay;
+                              _focusedDay = focusedDay;
+                              _rangeStart = null; // Important to clean those
+                              _rangeEnd = null;
+                              _rangeSelectionMode = RangeSelectionMode.toggledOff;
+                            });
+                          }
+                        },
+                        onRangeSelected: (start, end, focusedDay) {
+                          setState(() {
+                            _selectedDay = null;
+                            _focusedDay = focusedDay;
+                            _rangeStart = start;
+                            _rangeEnd = end;
+                            _rangeSelectionMode = RangeSelectionMode.toggledOn;
+                          });
+                        },
                         onCalendarCreated: (controller) => _calendarController = controller,
                         onPageChanged: (focusedDay) {
                           debugPrint("focusedDay "+focusedDay.toString());
@@ -490,8 +528,53 @@ class ProductScreenState extends State<ProductScreen>  {
                               ),
                             );
                           },
+                          withinRangeBuilder: (context, day, focusedDay) {
+                            //debugPrint("defaultBuilder");
+                            return Container(
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                  color: Constants.SECONDARY_COLOR
+                              ),
+                              child: FittedBox(
+                                  child: Container(
+                                      padding: const EdgeInsets.all(5),
+                                      child: Text(day.day.toString(), style: TextStyle(color: Colors.black, fontSize: 12),)
+                                  )
+                              ),
+                            );
+                          },
+                          rangeStartBuilder: (context, day, focusedDay) {
+                            //debugPrint("defaultBuilder");
+                            return Container(
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                  color: Constants.SECONDARY_COLOR
+                              ),
+                              child: FittedBox(
+                                  child: Container(
+                                      padding: const EdgeInsets.all(5),
+                                      child: Text(day.day.toString(), style: TextStyle(color: Colors.black, fontSize: 12),)
+                                  )
+                              ),
+                            );
+                          },
+                          rangeEndBuilder: (context, day, focusedDay) {
+                            //debugPrint("defaultBuilder");
+                            return Container(
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                  color: Constants.SECONDARY_COLOR
+                              ),
+                              child: FittedBox(
+                                  child: Container(
+                                      padding: const EdgeInsets.all(5),
+                                      child: Text(day.day.toString(), style: TextStyle(color: Colors.black, fontSize: 12),)
+                                  )
+                              ),
+                            );
+                          },
                           defaultBuilder: (context, day, focusedDay) {
-                            debugPrint("defaultBuilder");
+                            //debugPrint("defaultBuilder");
                             return Container(
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
@@ -506,7 +589,7 @@ class ProductScreenState extends State<ProductScreen>  {
                             );
                           },
                           disabledBuilder: (context, day, focusedDay) {
-                            debugPrint("defaultBuilder");
+                            //debugPrint("defaultBuilder");
                             return Container(
                               alignment: Alignment.center,
                               child: FittedBox(
@@ -565,8 +648,18 @@ class ProductScreenState extends State<ProductScreen>  {
                                   return;
                                 }
 
+                                if(_rangeStart == null || _rangeEnd == null) {
+                                  ApiManager.showFreeErrorMessage(context, "Seleziona il periodo desiderato. Minimo 3 giorni.");
+                                  return;
+                                }
+
+                                if(_rangeEnd!.difference(_rangeStart!).inDays < 2) {
+                                  ApiManager.showFreeErrorMessage(context, "Seleziona un periodo minimo di 3 giorni.");
+                                  return;
+                                }
+
                                 Navigator.of(context).push(
-                                    MaterialPageRoute(builder: (BuildContext context) => CheckoutScreen(product: widget.product,)));
+                                    MaterialPageRoute(builder: (BuildContext context) => CheckoutScreen(product: widget.product, startDate: _rangeStart!, endDate: _rangeEnd!)));
                               },
                             ),
                           ),

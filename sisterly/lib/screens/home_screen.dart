@@ -95,7 +95,7 @@ class HomeScreenState extends State<HomeScreen>  {
                     // child: Image.asset("assets/images/product.png", height: 169,),
                     child: CachedNetworkImage(
                       height: 169,
-                      imageUrl: (product.images.isNotEmpty ? product.images.first : ""),
+                      imageUrl: (product.images.isNotEmpty ? product.images.first.image : ""),
                       placeholder: (context, url) => Center(child: CircularProgressIndicator()),
                       errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
                     ),

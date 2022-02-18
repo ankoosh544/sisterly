@@ -114,7 +114,7 @@ class AddReviewScreenState extends State<AddReviewScreen> {
                           ],
                         ),
                         child: TextField(
-                          keyboardType: TextInputType.multiline,
+                          keyboardType: TextInputType.text,
                           cursorColor: Constants.PRIMARY_COLOR,
                           style: const TextStyle(
                             fontSize: 16,
@@ -123,7 +123,7 @@ class AddReviewScreenState extends State<AddReviewScreen> {
                           maxLines: 4,
                           decoration: InputDecoration(
                             hintText:
-                                "Esempio: descrizione delle condizioni, spiegazione di eventuali imperfezioni, a cosa stare attenti nell’utilizzo ecc",
+                                "Lender puntuale e disponibile / Borsa perfetta e conforme alla descrizione / Consigliata per outfit da giorno / Peccato debba restituirla, è stato un sogno!",
                             hintStyle: const TextStyle(
                                 color: Constants.PLACEHOLDER_COLOR),
                             border: OutlineInputBorder(
@@ -201,7 +201,7 @@ class AddReviewScreenState extends State<AddReviewScreen> {
 
     var params = {"stars": _stars, "description": _descriptionText.text.toString()};
 
-    ApiManager(context).makePostRequest('/product/order/' + widget.offer!.id.toString() + "/reviews", params, (res) {
+    ApiManager(context).makePutRequest('/product/order/' + widget.offer!.id.toString() + "/reviews", params, (res) {
       if (res["errors"] != null) {
         ApiManager.showFreeErrorMessage(context, res["errors"].toString());
       } else {

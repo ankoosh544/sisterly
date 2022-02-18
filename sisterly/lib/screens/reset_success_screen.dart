@@ -60,7 +60,7 @@ class ResetSuccessScreenState extends State<ResetSuccessScreen> {
                 ),
               ),
               const SizedBox(height: 40),
-              const Text("Check your emails!",
+              const Text("Controlla la tua posta!",
                   style: TextStyle(
                     color: Constants.TEXT_COLOR,
                     fontSize: 16,

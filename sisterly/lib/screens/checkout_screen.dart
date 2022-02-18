@@ -17,8 +17,10 @@ import 'package:sisterly/widgets/stars_widget.dart';
 class CheckoutScreen extends StatefulWidget {
 
   final Product product;
+  final DateTime startDate;
+  final DateTime endDate;
 
-  const CheckoutScreen({Key? key, required this.product}) : super(key: key);
+  const CheckoutScreen({Key? key, required this.product, required this.startDate, required this.endDate}) : super(key: key);
 
   @override
   _CheckoutScreenState createState() => _CheckoutScreenState();
@@ -46,6 +48,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   bool _insurance = true;
   bool _hasAddress = false;
   bool _saveAddress = true;
+  bool _isLoadingTotal = false;
   List<Address> _addresses = [];
   Address? _activeAddress;
   bool _addNewAddress = false;
@@ -60,6 +63,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     super.initState();
 
     Future.delayed(Duration.zero, () {
+      _availableFrom = widget.startDate;
+      _availableTo = widget.endDate;
+
       setFromDate(_availableFrom);
       setToDate(_availableTo);
       getAddresses(null);
@@ -82,19 +88,33 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   getTotalPrice() {
+    setState(() {
+      _isLoadingTotal = true;
+    });
+
     var params = {
       "rent_price": widget.product.priceOffer,
-      "rent_days": _availableTo.difference(_availableFrom).inDays
+      "date_start": DateFormat("yyyy-MM-dd").format(_availableFrom),
+      "date_end": DateFormat("yyyy-MM-dd").format(_availableTo),
     };
     ApiManager(context).makeGetRequest('/product/calculate_rent_price', params, (response) {
+      setState(() {
+        _isLoadingTotal = false;
+      });
       if (response["data"] != null) {
         setState(() {
           _rentPrice = response["data"].toString();
         });
       }
     }, (response) {
-
+      setState(() {
+        _isLoadingTotal = false;
+      });
     });
+  }
+
+  getTotal() {
+    return double.parse(_rentPrice) + 10.0 + (_shipping == 'shipment' ? 15.0 : 0.0);
   }
 
   @override
@@ -718,7 +738,85 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ),
                       ),
                       SizedBox(height: 35),
+                      _isLoadingTotal ? Center(child: CircularProgressIndicator()) : Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Noleggio",
+                            style: TextStyle(
+                                color: Constants.DARK_TEXT_COLOR,
+                                fontSize: 18,
+                                fontFamily: Constants.FONT,
+                                fontWeight: FontWeight.normal
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          Text(
+                            Utils.formatCurrency(double.parse(_rentPrice)),
+                            style: TextStyle(
+                                color: Constants.DARK_TEXT_COLOR,
+                                fontSize: 18,
+                                fontFamily: Constants.FONT,
+                                fontWeight: FontWeight.normal
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 16),
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Protezione acquisti",
+                            style: TextStyle(
+                                color: Constants.DARK_TEXT_COLOR,
+                                fontSize: 18,
+                                fontFamily: Constants.FONT,
+                                fontWeight: FontWeight.normal
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          Text(
+                            Utils.formatCurrency(10),
+                            style: TextStyle(
+                                color: Constants.DARK_TEXT_COLOR,
+                                fontSize: 18,
+                                fontFamily: Constants.FONT,
+                                fontWeight: FontWeight.normal
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                      if(_shipping == "shipment") SizedBox(height: 16),
+                      if(_shipping == "shipment") Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Spedizione",
+                            style: TextStyle(
+                                color: Constants.DARK_TEXT_COLOR,
+                                fontSize: 18,
+                                fontFamily: Constants.FONT,
+                                fontWeight: FontWeight.normal
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          Text(
+                            Utils.formatCurrency(15),
+                            style: TextStyle(
+                                color: Constants.DARK_TEXT_COLOR,
+                                fontSize: 18,
+                                fontFamily: Constants.FONT,
+                                fontWeight: FontWeight.normal
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 16),
+                      _isLoadingTotal ? Center(child: CircularProgressIndicator()) : Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
@@ -732,7 +830,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             textAlign: TextAlign.center,
                           ),
                           Text(
-                            Utils.formatCurrency(double.parse(_rentPrice)),
+                            Utils.formatCurrency(getTotal()),
                             style: TextStyle(
                                 color: Constants.DARK_TEXT_COLOR,
                                 fontSize: 18,
@@ -756,6 +854,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                           child: Text('Invia offerta'),
                           onPressed: () async {
+                            if(_availableTo.difference(_availableFrom).inDays < 2) {
+                              ApiManager.showFreeErrorMessage(context, "Seleziona un periodo minimo di 3 giorni.");
+                              return;
+                            }
+
                             if (!_hasAddress || (_saveAddress && _addNewAddress && !_editAddress)) {
                               await saveAddress();
                               getAddresses(() {
@@ -785,7 +888,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });*/
 
     var params = {
-      "price": widget.product.sellingPrice.toString(),
+      "price": widget.product.priceOffer.toString(),
       "date_start": DateFormat("yyyy-MM-dd").format(_availableFrom),
       "date_end": DateFormat("yyyy-MM-dd").format(_availableTo),
       "delivery_mode": _shipping == 'shipment' ? 3 : 1
@@ -831,7 +934,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.product.owner.firstName!.capitalize() + " " + widget.product.owner.lastName!.capitalize(),
+              widget.product.owner.username.toString(),
               style: TextStyle(
                   color: Constants.DARK_TEXT_COLOR,
                   fontSize: 20,
@@ -943,7 +1046,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(address.name,
+                Text(address.name.toString(),
                     style: TextStyle(
                       fontSize: 16,
                       fontFamily: Constants.FONT,
@@ -1007,7 +1110,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         setState(() {
                           _addressToEdit = address;
                           _editAddress = true;
-                          _name.text = address.name;
+                          _name.text = address.name.toString();
                           _address.text = address.address1;
                           _address2.text = address.address2 ?? "";
                           _city.text = address.city;

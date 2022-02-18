@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:nfc_manager/nfc_manager.dart';
+import 'package:sisterly/models/offer.dart';
 import 'package:sisterly/models/record.dart';
 import 'package:sisterly/screens/signup_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
@@ -14,6 +15,10 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../utils/constants.dart';
 
 class NfcChooseScreen extends StatefulWidget {
+
+  final Offer offer;
+
+  const NfcChooseScreen({Key? key, required this.offer}) : super(key: key);
 
   @override
   NfcChooseScreenState createState() => NfcChooseScreenState();

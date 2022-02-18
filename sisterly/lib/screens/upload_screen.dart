@@ -12,10 +12,14 @@ import 'package:sisterly/models/generic.dart';
 import 'package:sisterly/models/material.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/models/product_color.dart';
+import 'package:sisterly/models/product_image.dart';
 import 'package:sisterly/models/var.dart';
+import 'package:sisterly/screens/documents_success_screen.dart';
 import 'package:sisterly/screens/product_edit_success_screen.dart';
 import 'package:sisterly/screens/product_success_screen.dart';
 import 'package:sisterly/screens/sister_advice_screen.dart';
+import 'package:sisterly/screens/stripe_webview_screen.dart';
+import 'package:sisterly/screens/tab_screen.dart';
 import 'package:sisterly/screens/upload_2_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
@@ -58,7 +62,7 @@ class UploadScreenState extends State<UploadScreen>  {
   Generic _selectedConditions = productConditions[0];
   Generic _selectedBagYears = bagYears[0];
   Generic _selectedBagSize = bagSizes[0];
-  List<String> _imageUrls = [];
+  List<ProductImage> _imageUrls = [];
   String? _mediaId;
   bool _isUploading = false;
   bool _usePriceAlgo = false;
@@ -66,6 +70,7 @@ class UploadScreenState extends State<UploadScreen>  {
   String? _suggestedPrice;
   List<Document> _documents = [];
   bool _isLoadingDocuments = true;
+  String? onboardingUrl;
 
   @override
   void initState() {
@@ -74,7 +79,8 @@ class UploadScreenState extends State<UploadScreen>  {
     Future.delayed(Duration.zero, () {
       debugPrint("deliveryTypes: "+jsonEncode(deliveryTypes));
 
-      _getDocuments();
+      //_getDocuments();
+      _getOnboarding();
       _getMediaId();
       _getBrands();
       _getColors();
@@ -89,23 +95,29 @@ class UploadScreenState extends State<UploadScreen>  {
     super.dispose();
   }
 
-  _getDocuments() {
+  _startOnboarding() async {
+    if(onboardingUrl != null) {
+      await Navigator.of(context).push(
+          MaterialPageRoute(builder: (BuildContext context) =>
+              StripeWebviewScreen(
+                url: onboardingUrl!, title: 'Configurazione',)));
+
+      _getOnboarding();
+    }
+  }
+
+  _getOnboarding() {
     setState(() {
       _isLoadingDocuments = true;
     });
-    ApiManager(context).makeGetRequest('/payment/kyc', {}, (res) {
-      _documents = [];
-
-      var data = res["data"];
-      if (data != null) {
-        for (var doc in data) {
-          _documents.add(Document.fromJson(doc));
-        }
-      }
-
+    ApiManager(context).makePostRequest('/client/stripe-connect', {}, (res) async {
       setState(() {
         _isLoadingDocuments = false;
       });
+
+      if(res["data"] != null) {
+        onboardingUrl = res["data"]["url"];
+      }
     }, (res) {
       setState(() {
         _isLoadingDocuments = false;
@@ -142,15 +154,19 @@ class UploadScreenState extends State<UploadScreen>  {
   }
 
   _getMediaId() {
-    ApiManager(context).makePutRequest('/client/media', {}, (res) {
-      _mediaId = res["data"]["id"];
+    if(widget.editProduct != null) {
+      _mediaId = widget.editProduct!.mediaId.toString();
+    } else {
+      ApiManager(context).makePutRequest('/client/media', {}, (res) {
+        _mediaId = res["data"]["id"];
 
-      populateEditProduct();
+        populateEditProduct();
 
-      setState(() {
+        setState(() {
 
-      });
-    }, (res) {});
+        });
+      }, (res) {});
+    }
   }
 
   Widget getColorBullet(ProductColor c) {
@@ -171,6 +187,16 @@ class UploadScreenState extends State<UploadScreen>  {
     );
   }
 
+  deleteImage(ProductImage image) {
+    ApiManager(context).makeDeleteRequest('/client/media/' + _mediaId.toString() + '/images/' + image.id.toString(), (res) {
+      _imageUrls.remove(image);
+
+      setState(() {
+
+      });
+    }, (res) {});
+  }
+
   Future<bool> checkAndRequestCameraPermissions() async {
     PermissionStatus permission = await Permission.camera.status;
     if (permission != PermissionStatus.granted) {
@@ -189,7 +215,7 @@ class UploadScreenState extends State<UploadScreen>  {
       backgroundColor: Constants.PRIMARY_COLOR,
       body: Column(
         children: [
-          HeaderWidget(title: "Upload"),
+          HeaderWidget(title: "Upload", navigatorKey: TabScreenState.uploadNavKey,),
           Expanded(
             child: Container(
               width: MediaQuery.of(context).size.width,
@@ -204,13 +230,10 @@ class UploadScreenState extends State<UploadScreen>  {
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
                     children: [
-                      if(_documents.isEmpty) SizedBox(height: 15),
-                      if(_documents.isEmpty && !_isLoadingDocuments) InkWell(
+                      if(onboardingUrl != null) SizedBox(height: 15),
+                      if(onboardingUrl != null) InkWell(
                         onTap: () async {
-                          await Navigator.of(context).push(
-                              MaterialPageRoute(builder: (BuildContext context) => DocumentsScreen()));
-
-                          _getDocuments();
+                          _startOnboarding();
                         },
                         child: Card(
                           color: Color(0x88FF8A80),
@@ -219,12 +242,13 @@ class UploadScreenState extends State<UploadScreen>  {
                             padding: const EdgeInsets.all(16.0),
                             child: Column(
                               children: const [
-                                Text('Carica un tuo documento di identità per procedere con il caricamento della borsa',
+                                Text('Per procedere con il caricamento della borsa è necessario effettuare l\'autenticazione e caricare i documenti necessari',
                                     style: TextStyle(
                                       color: Constants.TEXT_COLOR,
                                       fontSize: 16,
                                       fontFamily: Constants.FONT,
-                                    )
+                                    ),
+                                  textAlign: TextAlign.center,
                                 ),
                                 SizedBox(height: 8),
                                 Text('Clicca qui',
@@ -241,9 +265,9 @@ class UploadScreenState extends State<UploadScreen>  {
                         ),
                       ),
                       AbsorbPointer(
-                        absorbing: _documents.isEmpty,
+                        absorbing: onboardingUrl != null,
                         child: Opacity(
-                          opacity: _documents.isEmpty ? 0.4 : 1,
+                          opacity: onboardingUrl != null ? 0.4 : 1,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
@@ -351,14 +375,32 @@ class UploadScreenState extends State<UploadScreen>  {
                                             )*/
 
                                         for (var img in _imageUrls)
-                                          ClipRRect(
-                                            child: CachedNetworkImage(
-                                              imageUrl: img,
-                                              fit: BoxFit.cover,
-                                              placeholder: (context, url) => Center(child: CircularProgressIndicator()),
-                                              errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
-                                            ),
-                                            borderRadius: BorderRadius.circular(12),
+                                          Stack(
+                                            children: [
+                                              SizedBox(
+                                                width: 80,
+                                                height: 80,
+                                                child: ClipRRect(
+                                                  child: CachedNetworkImage(
+                                                    imageUrl: img.image,
+                                                    fit: BoxFit.cover,
+                                                    placeholder: (context, url) => Center(child: CircularProgressIndicator()),
+                                                    errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
+                                                  ),
+                                                  borderRadius: BorderRadius.circular(12),
+                                                ),
+                                              ),
+                                              Positioned(
+                                                top: 0,
+                                                right: 0,
+                                                child: InkWell(
+                                                  onTap: () {
+                                                      deleteImage(img);
+                                                  },
+                                                  child: SvgPicture.asset("assets/images/cancel.svg"),
+                                                ),
+                                              )
+                                            ],
                                           )
                                       ]
                                     ),
@@ -714,7 +756,7 @@ class UploadScreenState extends State<UploadScreen>  {
                               ),
                               SizedBox(height: 32),
                               Text(
-                                "Prezzo di acquisto",
+                                "Prezzo di acquisto (min. 500€)",
                                 style: TextStyle(
                                     color: Constants.TEXT_COLOR,
                                     fontSize: 16,
@@ -907,7 +949,7 @@ class UploadScreenState extends State<UploadScreen>  {
                                           horizontal: 80, vertical: 14),
                                       shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(50))),
-                                  child: Text('Avanti'),
+                                  child: Text(widget.editProduct != null ? 'Salva' : 'Avanti'),
                                   onPressed: () async {
                                     next();
                                   },
@@ -1024,22 +1066,27 @@ class UploadScreenState extends State<UploadScreen>  {
   next() {
     debugPrint("next");
     if(_modelText.text.isEmpty) {
-      ApiManager.showFreeErrorToast(context, "Inserisci il modello");
+      ApiManager.showFreeErrorMessage(context, "Inserisci il modello");
       return;
     }
 
     if(_descriptionText.text.isEmpty) {
-      ApiManager.showFreeErrorToast(context, "Inserisci la descrizione");
+      ApiManager.showFreeErrorMessage(context, "Inserisci la descrizione");
       return;
     }
 
     if(_dailyPrice.text.isEmpty) {
-      ApiManager.showFreeErrorToast(context, "Inserisci il prezzo al giorno");
+      ApiManager.showFreeErrorMessage(context, "Inserisci il prezzo al giorno");
       return;
     }
 
     if(_sellingPrice.text.isEmpty) {
-      ApiManager.showFreeErrorToast(context, "Inserisci il prezzo di acquisto");
+      ApiManager.showFreeErrorMessage(context, "Inserisci il prezzo di acquisto");
+      return;
+    }
+
+    if(double.parse(_sellingPrice.text) < 500) {
+      ApiManager.showFreeErrorMessage(context, "Si accettano solo borse di lusso con un valore di acquisto superiore a €500");
       return;
     }
 
@@ -1098,7 +1145,7 @@ class UploadScreenState extends State<UploadScreen>  {
               _isUploading = false;
             });
 
-            _imageUrls.add(res["data"]["image"]["image"]);
+            _imageUrls.add(ProductImage.fromJson(res["data"]["image"]));
           }, (res) {
             debugPrint('Failed uploading photo');
             _images.remove(photo);

@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:sisterly/models/account.dart';
+import 'package:sisterly/models/chat.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/screens/product_screen.dart';
 import 'package:sisterly/screens/reset_screen.dart';
@@ -19,6 +20,7 @@ import 'package:sisterly/widgets/header_widget.dart';
 import 'package:sisterly/widgets/stars_widget.dart';
 
 import '../utils/constants.dart';
+import 'chat_screen.dart';
 import 'filters_screen.dart';
 import "package:sisterly/utils/utils.dart";
 
@@ -173,7 +175,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
                   ),
                   child: CachedNetworkImage(
                     height: 76,
-                    imageUrl: (product.images.isNotEmpty ? product.images.first : ""),
+                    imageUrl: (product.images.isNotEmpty ? product.images.first.image : ""),
                     placeholder: (context, url) => Center(child: CircularProgressIndicator()),
                     errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
                   )
@@ -252,7 +254,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         SizedBox(height: 8),
-                        _isLoading ? CircularProgressIndicator() : Row(
+                        _isLoading || _profile == null ? CircularProgressIndicator() : Row(
                           children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(68.0),
@@ -264,42 +266,72 @@ class ProfileScreenState extends State<ProfileScreen>  {
                               ),
                             ),
                             SizedBox(width: 12,),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  getUsername(),
-                                  style: TextStyle(
-                                      color: Constants.DARK_TEXT_COLOR,
-                                      fontSize: 20,
-                                      fontFamily: Constants.FONT
-                                  ),
-                                ),
-                                /*SizedBox(height: 6,),
-                                Text(
-                                  "Milano",
-                                  style: TextStyle(
-                                      color: Constants.LIGHT_TEXT_COLOR,
-                                      fontSize: 15,
-                                      fontFamily: Constants.FONT
-                                  ),
-                                ),*/
-                                SizedBox(height: 6,),
-                                Wrap(
-                                  spacing: 3,
-                                  children: [
-                                    if(_profile != null) StarsWidget(stars: _profile!.reviewsMedia!.toInt()),
-                                    Text(
-                                      _profile!.reviewsMedia!.toString(),
-                                      style: TextStyle(
-                                          color: Constants.DARK_TEXT_COLOR,
-                                          fontSize: 14,
-                                          fontFamily: Constants.FONT
-                                      ),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    getUsername(),
+                                    style: TextStyle(
+                                        color: Constants.DARK_TEXT_COLOR,
+                                        fontSize: 20,
+                                        fontFamily: Constants.FONT
                                     ),
-                                  ],
-                                )
-                              ],
+                                  ),
+                                  /*SizedBox(height: 6,),
+                                  Text(
+                                    "Milano",
+                                    style: TextStyle(
+                                        color: Constants.LIGHT_TEXT_COLOR,
+                                        fontSize: 15,
+                                        fontFamily: Constants.FONT
+                                    ),
+                                  ),*/
+                                  SizedBox(height: 6,),
+                                  Wrap(
+                                    spacing: 3,
+                                    children: [
+                                      if(_profile != null) StarsWidget(stars: _profile!.reviewsMedia!.toInt()),
+                                      Text(
+                                        _profile!.reviewsMedia!.toString(),
+                                        style: TextStyle(
+                                            color: Constants.DARK_TEXT_COLOR,
+                                            fontSize: 14,
+                                            fontFamily: Constants.FONT
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                ],
+                              ),
+                            ),
+                            if(_profile != null && _profile!.id != SessionData().userId) CircleAvatar(
+                              radius: 25,
+                              backgroundColor: Constants.SECONDARY_COLOR,
+                              child: IconButton(
+                                  onPressed: () {
+                                    var params = {
+                                      "email_user_to": _profile!.email
+                                    };
+
+                                    ApiManager(context).makePutRequest('/chat/', params, (res) {
+                                      if (res["errors"] != null) {
+                                        ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+                                      } else {
+                                        ApiManager(context).makeGetRequest('/chat/' + res["data"]["code"]  + '/', {}, (chatRes) {
+                                          Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChatScreen(chat: Chat.fromJson(chatRes["data"]), code: res["data"]["code"])));
+                                        }, (res) {
+
+                                        });
+                                      }
+                                    }, (res) {
+                                      if (res["errors"] != null) {
+                                        ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+                                      }
+                                    });
+                                  },
+                                  icon: SvgPicture.asset("assets/images/chat_white.svg", width: 25,)
+                              ),
                             )
                           ],
                         ),

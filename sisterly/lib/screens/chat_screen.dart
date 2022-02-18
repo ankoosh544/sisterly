@@ -5,6 +5,7 @@ import 'package:sisterly/models/account.dart';
 import 'package:sisterly/models/chat.dart';
 import 'package:sisterly/models/message.dart';
 import 'package:sisterly/models/product.dart';
+import 'package:sisterly/screens/profile_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:flutter/material.dart';
@@ -21,8 +22,9 @@ import "package:sisterly/utils/utils.dart";
 class ChatScreen extends StatefulWidget {
 
   final String code;
+  final Chat chat;
 
-  const ChatScreen({Key? key, required this.code}) : super(key: key);
+  const ChatScreen({Key? key, required this.code, required this.chat}) : super(key: key);
 
   @override
   ChatScreenState createState() => ChatScreenState();
@@ -130,7 +132,11 @@ class ChatScreenState extends State<ChatScreen>  {
       _isLoading = true;
     });
 
-    ApiManager(context).makePostRequest('/chat/' + widget.code + '/messages', {}, (res) {
+    var params = {
+      "count": 100000
+    };
+
+    ApiManager(context).makePostRequest('/chat/' + widget.code + '/messages', params, (res) {
       // print(res);
       setState(() {
         _isLoading = false;
@@ -145,7 +151,7 @@ class ChatScreenState extends State<ChatScreen>  {
         }
       }
 
-      _messages = _messages.reversed.toList();
+      //_messages = _messages.reversed.toList();
 
       debugPrint("initial messages "+_messages.length.toString());
       setState(() {
@@ -231,6 +237,10 @@ class ChatScreenState extends State<ChatScreen>  {
   }
 
   sendMessage() {
+    if(_messageController.text.trim().isEmpty) {
+      return;
+    }
+
     var params = {
       "chat_code": widget.code,
       "message": _messageController.text.toString()
@@ -258,7 +268,13 @@ class ChatScreenState extends State<ChatScreen>  {
       backgroundColor: Constants.PRIMARY_COLOR,
       body: Column(
         children: [
-          HeaderWidget(title: "Sisterly Chats"),
+          InkWell(
+            onTap: () {
+              Navigator.of(context).push(
+                  MaterialPageRoute(builder: (BuildContext context) => ProfileScreen(id: widget.chat.user.id)));
+            },
+              child: HeaderWidget(title: widget.chat.user.username.toString(), subtitleLink: "Vedi profilo",)
+          ),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(
@@ -302,7 +318,7 @@ class ChatScreenState extends State<ChatScreen>  {
                           children: [
                             Expanded(
                               child: TextField(
-                                keyboardType: TextInputType.number,
+                                keyboardType: TextInputType.text,
                                 cursorColor: Constants.PRIMARY_COLOR,
                                 style: const TextStyle(
                                   fontSize: 16,

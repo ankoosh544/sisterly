@@ -16,6 +16,7 @@ import 'package:sisterly/models/var.dart';
 import 'package:sisterly/screens/product_edit_success_screen.dart';
 import 'package:sisterly/screens/product_success_screen.dart';
 import 'package:sisterly/screens/sister_advice_screen.dart';
+import 'package:sisterly/screens/stripe_webview_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:flutter/material.dart';
@@ -52,6 +53,7 @@ class Upload2ScreenState extends State<Upload2Screen> {
   final TextEditingController _email = TextEditingController();
   final TextEditingController _phone = TextEditingController();
 
+  bool _isLoading = false;
   bool _hasAddress = false;
   bool _saveAddress = true;
   List<Address> _addresses = [];
@@ -231,7 +233,7 @@ class Upload2ScreenState extends State<Upload2Screen> {
                           )),
                       SizedBox(height: 32),
                       Center(
-                        child: ElevatedButton(
+                        child: _isLoading ? CircularProgressIndicator() : ElevatedButton(
                           style: ElevatedButton.styleFrom(
                               primary: Constants.SECONDARY_COLOR,
                               textStyle: const TextStyle(fontSize: 16),
@@ -271,30 +273,76 @@ class Upload2ScreenState extends State<Upload2Screen> {
   _createProduct() {
     debugPrint("_createProduct");
 
+    setState(() {
+      _isLoading = true;
+    });
+
     var params = widget.step1Params;
     params["delivery_kit_pk"] = _activeAddress!.id;
     params["lender_kit_to_send"] = _selectedLenderKit.id;
 
     if(widget.editProduct != null) {
       ApiManager(context).makePostRequest('/product/' + widget.editProduct!.id.toString() + "/", params, (res) {
+        setState(() {
+          _isLoading = false;
+        });
         if(res["errors"] != null) {
           ApiManager.showFreeErrorMessage(context, res["errors"].toString());
         } else {
           Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
               MaterialPageRoute(builder: (BuildContext context) => ProductEditSuccessScreen()), (_) => false);
         }
-      }, (res) {});
+      }, (res) {
+        setState(() {
+          _isLoading = false;
+        });
+      });
     } else {
       ApiManager(context).makePutRequest('/product/', params, (res) {
         if(res["errors"] != null) {
+          setState(() {
+            _isLoading = false;
+          });
           ApiManager.showFreeErrorMessage(context, res["errors"].toString());
         } else {
-          Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (BuildContext context) =>
-                  ProductSuccessScreen()), (_) => false);
+          debugPrint("product success " + jsonEncode(res["data"]));
+          askPayment(res["data"]["id"]);
         }
-      }, (res) {});
+      }, (res) {
+        setState(() {
+          _isLoading = false;
+        });
+      });
     }
+  }
+
+  askPayment(productId) {
+    ApiManager(context).makePutRequest('/payment/make/lender-kit/' + productId.toString(), {}, (res) async {
+      setState(() {
+        _isLoading = false;
+      });
+      if(res["errors"] != null) {
+        ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+      } else {
+        if(res["data"] != null && res["data"]["checkout_url"] != null) {
+          var result = await Navigator.of(context).push(
+              MaterialPageRoute(builder: (BuildContext context) => StripeWebviewScreen(title: "Pagamento", url: res["data"]["checkout_url"],)));
+
+          if(result == false) {
+            ApiManager.showFreeErrorMessage(context, "Pagamento fallito. Riprova.");
+          }
+        } else {
+          ApiManager.showFreeErrorMessage(context, "Pagamento fallito");
+        }
+        /*Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (BuildContext context) =>
+                ProductSuccessScreen()), (_) => false);*/
+      }
+    }, (res) {
+      setState(() {
+        _isLoading = false;
+      });
+    });
   }
 
   Widget inputField(
@@ -364,7 +412,7 @@ class Upload2ScreenState extends State<Upload2Screen> {
       child: IntrinsicHeight(
         child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(address.name,
+            Text(address.name.toString(),
                 style: TextStyle(
                     fontSize: 16,
                     fontFamily: Constants.FONT,
@@ -405,7 +453,7 @@ class Upload2ScreenState extends State<Upload2Screen> {
                     setState(() {
                       _addressToEdit = address;
                       _editAddress = true;
-                      _name.text = address.name;
+                      _name.text = address.name.toString();
                       _address.text = address.address1;
                       _address2.text = address.address2 ?? "";
                       _city.text = address.city;

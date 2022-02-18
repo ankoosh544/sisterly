@@ -78,7 +78,7 @@ class MyApp extends StatelessWidget {
         FocusManager.instance.primaryFocus?.unfocus();
       },
       child: MaterialApp(
-        title: 'Cents',
+        title: 'Sisterly',
         theme: appTheme,
         color: Colors.red,
         navigatorObservers: [

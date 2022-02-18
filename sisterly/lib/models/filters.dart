@@ -5,8 +5,8 @@ class Filters {
   List<int> colors = [];
   List<int> deliveryModes = [];
   double maxPrice = 1000;
-  DateTime availableFrom = DateTime.now();
-  DateTime availableTo = DateTime.now().add(Duration(days: 30));
+  DateTime? availableFrom;
+  DateTime? availableTo;
   bool onlySameCity = false;
   int? brand;
 

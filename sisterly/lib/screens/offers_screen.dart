@@ -5,6 +5,7 @@ import 'package:sisterly/models/offer.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/screens/choose_payment_screen.dart';
 import 'package:sisterly/screens/profile_screen.dart';
+import 'package:sisterly/screens/stripe_webview_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +15,8 @@ import 'package:sisterly/widgets/header_widget.dart';
 import 'package:sisterly/widgets/stars_widget.dart';
 import '../utils/constants.dart';
 import "package:sisterly/utils/utils.dart";
+
+import 'order_details_screen.dart';
 
 enum OffersScreenMode {
   received, sent
@@ -52,7 +55,7 @@ class OffersScreenState extends State<OffersScreen>  {
       _isLoading = true;
     });
 
-    ApiManager(context).makeGetRequest(_mode == OffersScreenMode.received ? "/product/offers" : "/product/cart", {}, (res) {
+    ApiManager(context).makeGetRequest(_mode == OffersScreenMode.received ? "/product/offers" : "/product/order/made", _mode == OffersScreenMode.received ? {} : { "count": 10000, "start": 0 }, (res) {
       // print(res);
       setState(() {
         _isLoading = false;
@@ -70,6 +73,7 @@ class OffersScreenState extends State<OffersScreen>  {
         }
       }
     }, (res) {
+      _offers = [];
       setState(() {
         _isLoading = false;
       });
@@ -194,7 +198,7 @@ class OffersScreenState extends State<OffersScreen>  {
                     width: 127,
                     height: 96,
                     fit: BoxFit.contain,
-                    imageUrl: offer.product.images.first,
+                    imageUrl: offer.product.images.first.image,
                     placeholder: (context, url) => Center(child: CircularProgressIndicator()),
                     errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg",),
                   ),
@@ -451,12 +455,62 @@ class OffersScreenState extends State<OffersScreen>  {
         _isLoading = false;
       });
 
-      Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChoosePaymentScreen(offer: offer)));
+      //Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChoosePaymentScreen(offer: offer)));
+      if (res["errors"] != null) {
+        ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+      } else {
+        makePayment(offer);
+      }
     }, (res) {
+      if (res["errors"] != null) {
+        ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+      } else {
+        ApiManager.showFreeErrorMessage(context, "Errore durante il pagamento, riprova più tardi e se il problema persiste contatta l'assistenza");
+      }
       setState(() {
         _isLoading = false;
       });
     });
+  }
+
+  makePayment(Offer offer) {
+    var params = {
+      /*"id": _activeCard!.id.toString(),*/
+      "is_card": true,
+      "JavaEnabled": false,
+      "Language": "it",
+      "ColorDepth": 1,
+      "JavascriptEnabled": true,
+      "ScreenHeight": MediaQuery.of(context).size.height,
+      "ScreenWidth": MediaQuery.of(context).size.width,
+      "TimeZoneOffset": "UTC+2",
+      "UserAgent": "Mobile",
+      "ip_address": "192.168.1.1"
+    };
+
+    ApiManager(context).makePutRequest("/payment/make/" + offer.id.toString(), params, (res) {
+      if(res["data"] != null && res["data"]["redirect_url"] != null) {
+        Navigator.of(context).push(
+            MaterialPageRoute(builder: (BuildContext context) => StripeWebviewScreen(title: "Pagamento", url: res["data"]["redirect_url"],)));
+      } else {
+        ApiManager.showFreeErrorMessage(context, "Pagamento fallito");
+      }
+    }, (res) {
+      if(res != null && res["errors"] != null) {
+        ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+      } else {
+        if (res["errors"] != null) {
+          ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+        } else {
+          ApiManager.showFreeErrorMessage(context, "Errore durante il pagamento, riprova più tardi e se il problema persiste contatta l'assistenza");
+        }
+      }
+      /*setState(() {
+        _isLoading = false;
+      });*/
+    });
+
+    //Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChoosePaymentScreen(address: _activeAddress!, shipping: _shipping, insurance: _insurance, product: widget.product)));
   }
 
   @override
@@ -553,7 +607,13 @@ class OffersScreenState extends State<OffersScreen>  {
                               physics: const NeverScrollableScrollPhysics(),
                               itemCount: _offers.length,
                               itemBuilder: (BuildContext context, int index) {
-                                return offerCell(_offers[index]);
+                                return InkWell(
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                          MaterialPageRoute(builder: (BuildContext context) => OrderDetailsScreen(offer: _offers[index])));
+                                    },
+                                    child: offerCell(_offers[index])
+                                );
                               }
                             ),
                           ) : Center(child: Text("Non ci sono offerte qui")),

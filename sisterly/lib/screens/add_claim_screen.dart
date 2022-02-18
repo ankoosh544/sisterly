@@ -174,7 +174,7 @@ class AddClaimScreenState extends State<AddClaimScreen> {
                           maxLines: 4,
                           decoration: InputDecoration(
                             hintText:
-                                "Esempio: descrizione delle condizioni, spiegazione di eventuali imperfezioni, a cosa stare attenti nell’utilizzo ecc",
+                                "Se ci sono dei difetti in più rispetto a quello delle foto/descrizione della lender. segnalali subito in modo da non assumetti le responsabilità per eventuali danni già presenti.",
                             hintStyle: const TextStyle(
                                 color: Constants.PLACEHOLDER_COLOR),
                             border: OutlineInputBorder(
@@ -290,7 +290,7 @@ class AddClaimScreenState extends State<AddClaimScreen> {
 
     var params = {"description": _descriptionText.text.toString()};
 
-    ApiManager(context).makePostRequest('/product/order/' + widget.offer!.id.toString() + "/complain", params, (res) {
+    ApiManager(context).makePutRequest('/product/order/' + widget.offer!.id.toString() + "/complain", params, (res) {
       if (res["errors"] != null) {
         ApiManager.showFreeErrorMessage(context, res["errors"].toString());
       } else {

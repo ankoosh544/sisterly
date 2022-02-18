@@ -10,6 +10,7 @@ import 'package:sisterly/screens/orders_screen.dart';
 import 'package:sisterly/screens/profile_screen.dart';
 import 'package:sisterly/screens/reviews_screen.dart';
 import 'package:sisterly/screens/sister_advice_screen.dart';
+import 'package:sisterly/screens/stripe_webview_screen.dart';
 import 'package:sisterly/screens/welcome_2_screen.dart';
 import 'package:sisterly/screens/welcome_screen.dart';
 import 'package:sisterly/screens/wishlist_screen.dart';
@@ -37,6 +38,7 @@ class AccountScreenState extends State<AccountScreen>  {
   bool _isLoading = false;
   Account? _profile;
   PackageInfo? _packageInfo;
+  String? _stripeLoginUrl;
 
   @override
   void initState() {
@@ -44,6 +46,7 @@ class AccountScreenState extends State<AccountScreen>  {
 
     Future.delayed(Duration.zero, () async {
       getUser();
+      getStripeLoginUrl();
 
       _packageInfo = await PackageInfo.fromPlatform();
     });
@@ -52,6 +55,20 @@ class AccountScreenState extends State<AccountScreen>  {
   @override
   void dispose() {
     super.dispose();
+  }
+
+
+  getStripeLoginUrl() {
+    ApiManager(context).makePostRequest('/client/stripe-connect/login', {}, (res) async {
+     setState(() {
+       if(res["data"] != null) {
+         _stripeLoginUrl = res["data"]["url"];
+       }
+
+     });
+    }, (res) {
+
+    });
   }
 
   getUser() {
@@ -271,14 +288,27 @@ class AccountScreenState extends State<AccountScreen>  {
                             },
                             child: getItem("assets/images/edit.svg", "Modifica il tuo Profilo")
                         ),
-                        InkWell(
-                            onTap: () async {
-                              await Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (BuildContext context) => DocumentsScreen()));
+                        Opacity(
+                          opacity: _stripeLoginUrl != null ? 1.0 : 0.4,
+                          child: InkWell(
+                              onTap: () async {
+                                if(_stripeLoginUrl != null) {
+                                  await Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                          builder: (BuildContext context) =>
+                                              StripeWebviewScreen(
+                                                  url: _stripeLoginUrl!,
+                                                  title: "Documenti")));
 
-                              getUser();
-                            },
-                            child: getItem("assets/images/document.svg", "Carica documenti")
+                                  //_stripeLoginUrl
+
+                                  getUser();
+                                } else {
+
+                                }
+                              },
+                              child: getItem("assets/images/document.svg", "Wallet")
+                          ),
                         ),
                         InkWell(
                             onTap: () {

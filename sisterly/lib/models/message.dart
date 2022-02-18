@@ -17,8 +17,8 @@ class Message {
     Message message = Message(
         json["chat_code"],
         json["message"],
-      json["send_by_user"],
-        json["send_at"] != null ? DateTime.parse(json["send_at"]) : null,
+        json["send_by_user"],
+        json["send_at"] != null ? DateTime.parse(json["send_at"] + "Z") : null,
     );
 
     return message;

@@ -41,7 +41,7 @@ class NfcScreenState extends State<NfcScreen> {
       startScan();
 
       //test purpose
-      goToProduct(42);
+      //goToProduct(42);
     });
   }
 

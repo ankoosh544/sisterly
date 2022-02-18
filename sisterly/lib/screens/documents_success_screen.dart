@@ -1,36 +1,41 @@
-import 'package:sisterly/models/offer.dart';
 import 'package:sisterly/screens/home_screen.dart';
 import 'package:sisterly/screens/signup_screen.dart';
 import 'package:sisterly/screens/tab_screen.dart';
+import 'package:sisterly/screens/upload_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:sisterly/utils/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sisterly/widgets/custom_app_bar.dart';
 
 import '../utils/constants.dart';
+import 'forgot_screen.dart';
+import 'login_screen.dart';
 
-class PaymentStatusScreen extends StatefulWidget {
-
-  const PaymentStatusScreen({Key? key}) : super(key: key);
+class DocumentsSuccessScreen extends StatefulWidget {
 
   @override
-  PaymentStatusScreenState createState() => PaymentStatusScreenState();
+  DocumentsSuccessScreenState createState() => DocumentsSuccessScreenState();
 }
 
-class PaymentStatusScreenState extends State<PaymentStatusScreen> {
-
-  String msg = "Pagamento completato";
-  String icon = "assets/images/success.svg";
+class DocumentsSuccessScreenState extends State<DocumentsSuccessScreen> {
 
   @override
   void initState() {
     super.initState();
+
   }
 
   next() async {
-    Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (BuildContext context) => TabScreen()), (_) => false);
+    /*Navigator.of(context, rootNavigator: false).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (BuildContext context) => UploadScreen()), (_) => false);*/
+    //Navigator.of(context).popUntil((route) => route.isFirst);
+    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+        MaterialPageRoute(
+            builder: (BuildContext context) => TabScreen(startingTab: 4,)),
+            (_) => false);
   }
 
   @override
@@ -54,7 +59,7 @@ class PaymentStatusScreenState extends State<PaymentStatusScreen> {
                 child: SizedBox(),
               ),
               Text(
-                msg,
+                "Hey Sister",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Constants.PRIMARY_COLOR,
@@ -62,19 +67,19 @@ class PaymentStatusScreenState extends State<PaymentStatusScreen> {
                   fontSize: 28,
                 ),
               ),
-              /*const SizedBox(height: 40),
-              const Text("Se verrà accettata potrai procedere al pagamento per la conferma",
+              const SizedBox(height: 40),
+              const Text("Grazie per aver caricato i documenti",
                   style: TextStyle(
                     color: Constants.TEXT_COLOR,
                     fontSize: 16,
                     fontFamily: Constants.FONT,
                   ),
                 textAlign: TextAlign.center,
-              ),*/
+              ),
               const Expanded(
                 child: SizedBox(),
               ),
-              SvgPicture.asset(icon),
+              SvgPicture.asset("assets/images/success.svg"),
               const Expanded(
                 child: SizedBox(),
               ),
@@ -90,7 +95,7 @@ class PaymentStatusScreenState extends State<PaymentStatusScreen> {
                             horizontal: 80, vertical: 14),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(50))),
-                    child: Text('Vai alla home'),
+                    child: Text('Procedi con il caricamento', textAlign: TextAlign.center,),
                     onPressed: () {
                       next();
                     },

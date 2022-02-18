@@ -92,7 +92,7 @@ class SearchScreenState extends State<SearchScreen>  {
                     // child: Image.asset("assets/images/product.png", height: 169,),
                     child: CachedNetworkImage(
                       height: 169,
-                      imageUrl: (product.images.isNotEmpty ? product.images.first : ""),
+                      imageUrl: (product.images.isNotEmpty ? product.images.first.image : ""),
                       placeholder: (context, url) => Center(child: CircularProgressIndicator()),
                       errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
                     ),
@@ -194,8 +194,11 @@ class SearchScreenState extends State<SearchScreen>  {
 
     params["start"] = 0;
     params["count"] = 2000;
-    params["start_date"] = DateFormat("yyyy-MM-dd").format(_filters.availableFrom);
-    params["end_date"] = DateFormat("yyyy-MM-dd").format(_filters.availableTo);
+
+    if(_filters.availableFrom != null && _filters.availableTo != null) {
+      params["start_date"] = DateFormat("yyyy-MM-dd").format(_filters.availableFrom!);
+      params["end_date"] = DateFormat("yyyy-MM-dd").format(_filters.availableTo!);
+    }
 
     setState(() {
       _isLoading = true;

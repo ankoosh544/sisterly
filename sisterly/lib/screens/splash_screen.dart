@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:sisterly/models/account.dart';
 import 'package:sisterly/screens/home_screen.dart';
 import 'package:sisterly/screens/login_screen.dart';
@@ -31,10 +32,12 @@ class SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Timer.run(() {
+    Timer.run(() async {
       debugPrint("splash screen initState");
 
       loadConfig();
+
+      final status = await AppTrackingTransparency.requestTrackingAuthorization();
     });
   }
 
@@ -115,7 +118,8 @@ class SplashScreenState extends State<SplashScreen> {
         Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => TabScreen()), (_) => false);
       });
     }, (res) {
-
+      debugPrint("access account failed");
+      SessionData().logout(context);
     });
 
   }

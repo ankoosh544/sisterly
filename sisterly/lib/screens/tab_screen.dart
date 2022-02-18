@@ -12,7 +12,9 @@ import '../utils/constants.dart';
 
 class TabScreen extends StatefulWidget {
 
-  const TabScreen({Key? key}) : super(key: key);
+  final int startingTab;
+
+  const TabScreen({Key? key, this.startingTab = 0}) : super(key: key);
 
   @override
   TabScreenState createState() => TabScreenState();
@@ -28,6 +30,7 @@ class TabScreenState extends State<TabScreen>  {
   void initState() {
     super.initState();
 
+    selectedTab = widget.startingTab;
   }
 
   @override

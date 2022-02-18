@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:sisterly/models/account.dart';
 import 'package:sisterly/models/offer.dart';
 import 'package:sisterly/models/product.dart';
+import 'package:sisterly/screens/order_details_screen.dart';
 import 'package:sisterly/screens/profile_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
@@ -189,7 +190,7 @@ class OrdersScreenState extends State<OrdersScreen>  {
                     width: 127,
                     height: 96,
                     fit: BoxFit.contain,
-                    imageUrl: offer.product.images.first,
+                    imageUrl: offer.product.images.isNotEmpty ? offer.product.images.first.image : "",
                     placeholder: (context, url) => Center(child: CircularProgressIndicator()),
                     errorWidget: (context, url, error) => Icon(Icons.error),
                   ),
@@ -356,7 +357,13 @@ class OrdersScreenState extends State<OrdersScreen>  {
                               physics: const NeverScrollableScrollPhysics(),
                               itemCount: _orders.length,
                               itemBuilder: (BuildContext context, int index) {
-                                return offerCell(_orders[index]);
+                                return InkWell(
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                        MaterialPageRoute(builder: (BuildContext context) => OrderDetailsScreen(offer: _orders[index])));
+                                  },
+                                    child: offerCell(_orders[index])
+                                );
                               }
                             ),
                           ) : Center(child: Text("Non ci sono noleggi qui")),

@@ -197,16 +197,28 @@ class _FiltersScreenState extends State<FiltersScreen> {
     );
   }
 
-  setFromDate(DateTime date) {
-    _fromDayText.text = date.day.toString();
-    _fromMonthText.text = date.month.toString();
-    _fromYearText.text = date.year.toString();
+  setFromDate(DateTime? date) {
+    if(date != null) {
+      _fromDayText.text = date.day.toString();
+      _fromMonthText.text = date.month.toString();
+      _fromYearText.text = date.year.toString();
+    } else {
+      _fromDayText.text = "";
+      _fromMonthText.text = "";
+      _fromYearText.text = "";
+    }
   }
 
-  setToDate(DateTime date) {
-    _toDayText.text = date.day.toString();
-    _toMonthText.text = date.month.toString();
-    _toYearText.text = date.year.toString();
+  setToDate(DateTime? date) {
+    if(date != null) {
+      _toDayText.text = date.day.toString();
+      _toMonthText.text = date.month.toString();
+      _toYearText.text = date.year.toString();
+    } else {
+      _toDayText.text = "";
+      _toMonthText.text = "";
+      _toYearText.text = "";
+    }
   }
   
   @override
@@ -528,7 +540,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                                 debugPrint("show date picker");
                                 final DateTime? picked = await showDatePicker(
                                   context: context,
-                                  initialDate: _filters.availableFrom,
+                                  initialDate: _filters.availableFrom ?? DateTime.now(),
                                   firstDate: DateTime.now().subtract(Duration(days: 1)),
                                   lastDate: DateTime.now().add(Duration(days: 700)),
                                 );
@@ -537,11 +549,11 @@ class _FiltersScreenState extends State<FiltersScreen> {
                                   if(picked != null) {
                                     _filters.availableFrom = picked;
 
-                                    setFromDate(_filters.availableFrom);
+                                    setFromDate(_filters.availableFrom!);
 
-                                    if(_filters.availableTo.isBefore(_filters.availableFrom)) {
+                                    if(_filters.availableTo!.isBefore(_filters.availableFrom!)) {
                                       _filters.availableTo = _filters.availableFrom;
-                                      setToDate(_filters.availableTo);
+                                      setToDate(_filters.availableTo!);
                                     }
                                   }
                                 });
@@ -689,7 +701,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                                 debugPrint("show date picker TO");
                                 final DateTime? picked = await showDatePicker(
                                   context: context,
-                                  initialDate: _filters.availableTo,
+                                  initialDate: _filters.availableTo ?? DateTime.now().add(Duration(days: 7)),
                                   firstDate: DateTime.now(),
                                   lastDate: DateTime.now().add(Duration(days: 700)),
                                 );
@@ -698,14 +710,14 @@ class _FiltersScreenState extends State<FiltersScreen> {
                                   if(picked != null) {
                                     _filters.availableTo = picked;
 
-                                    setToDate(_filters.availableTo);
+                                    setToDate(_filters.availableTo!);
 
-                                    if (_filters.availableFrom.isAfter(
-                                        _filters.availableTo)) {
+                                    if (_filters.availableFrom!.isAfter(
+                                        _filters.availableTo!)) {
                                       debugPrint("Correct date");
                                       _filters.availableFrom =
                                           _filters.availableTo;
-                                      setFromDate(_filters.availableFrom);
+                                      setFromDate(_filters.availableFrom!);
                                     }
                                   }
                                 });

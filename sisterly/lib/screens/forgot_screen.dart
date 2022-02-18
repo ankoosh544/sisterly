@@ -49,9 +49,15 @@ class ForgotScreenState extends State<ForgotScreen>
     ApiManager(context).makePostRequest('/client/reset_password', {
       "email": _emailFilter.text.toLowerCase().trim()
     }, (res) {
-      forgotSuccess();
+      if (res["errors"] != null) {
+        ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+      } else {
+        forgotSuccess();
+      }
     }, (res) {
-      forgotSuccess();
+      if (res["errors"] != null) {
+        ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+      }
     });
   }
 

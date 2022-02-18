@@ -1,5 +1,6 @@
 import 'package:sisterly/models/delivery_mode.dart';
 import 'package:sisterly/models/delivery_mode_offer.dart';
+import 'package:sisterly/models/product_image.dart';
 import 'package:sisterly/models/var.dart';
 
 import 'account.dart';
@@ -8,7 +9,7 @@ import 'lender_kit.dart';
 class Product {
   final int id;
   final String model;
-  List<String> images = [];
+  List<ProductImage> images = [];
   List<String> videos = [];
   final Account owner;
   final int brandId;
@@ -29,6 +30,7 @@ class Product {
   final String? year;
   final int? yearId;
   final DeliveryMode? deliveryType;
+  final int? mediaId;
   bool usePriceAlgorithm;
   bool useDiscount;
   final LenderKit? lenderKitToSend;
@@ -57,7 +59,8 @@ class Product {
       this.deliveryType,
       this.usePriceAlgorithm,
       this.useDiscount,
-      this.lenderKitToSend);
+      this.lenderKitToSend,
+      this.mediaId);
 
   static getArrayDesc(item) {
     if (item.isNotEmpty && item.length > 1) {
@@ -92,14 +95,19 @@ class Product {
         DeliveryMode.fromJson(json["delivery_type"]),
       json["use_price_algorithm"] ?? false,
       json["use_discount"] ?? false,
-      LenderKit.fromJson(json["lender_kit_to_send"])
+      LenderKit.fromJson(json["lender_kit_to_send"]),
+      json["media"]["id"]
     );
 
     var media = json["media"];
 
-    for (var img in media["images"]) {
-      prod.images.add(img["image"]);
+    for(var img in media["images"]) {
+      prod.images.add(ProductImage.fromJson(img));
     }
+
+    prod.images.sort((a, b) {
+      return a.order - b.order;
+    });
 
     return prod;
   }

@@ -4,6 +4,8 @@ import 'package:sisterly/models/account.dart';
 import 'package:sisterly/models/offer.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/screens/choose_payment_screen.dart';
+import 'package:sisterly/screens/manage_nfc_screen.dart';
+import 'package:sisterly/screens/nfc_choose_screen.dart';
 import 'package:sisterly/screens/profile_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
@@ -49,7 +51,7 @@ class NfcSelectOfferScreenState extends State<NfcSelectOfferScreen>  {
       _isLoading = true;
     });
 
-    ApiManager(context).makeGetRequest("/product/" + widget.productId.toString() + "/offer/", {}, (res) {
+    ApiManager(context).makeGetRequest("/product/" + widget.productId.toString() + "/offer/nfc", {}, (res) {
       // print(res);
       setState(() {
         _isLoading = false;
@@ -61,9 +63,7 @@ class NfcSelectOfferScreenState extends State<NfcSelectOfferScreen>  {
       if (data != null) {
         for (var prod in data) {
           var offer = Offer.fromJson(prod);
-          if(isValidOffer(offer)) {
-            _offers.add(offer);
-          }
+          _offers.add(offer);
         }
       }
     }, (res) {
@@ -178,8 +178,8 @@ class NfcSelectOfferScreenState extends State<NfcSelectOfferScreen>  {
                     width: 127,
                     height: 96,
                     fit: BoxFit.contain,
-                    imageUrl: offer.product.images.first,
-                    placeholder: (context, url) => Center(child: CircularProgressIndicator()),
+                    imageUrl: offer.product.images.first.image,
+                    placeholder: (context, url) => SvgPicture.asset("assets/images/placeholder_product.svg",),
                     errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg",),
                   ),
                 ),
@@ -234,7 +234,8 @@ class NfcSelectOfferScreenState extends State<NfcSelectOfferScreen>  {
                             borderRadius: BorderRadius.circular(50))),
                     child: Text('Seleziona'),
                     onPressed: () {
-                      //payNow(offer);
+                      Navigator.of(context).push(
+                          MaterialPageRoute(builder: (BuildContext context) => ManageNfcScreen(offer: offer, product: offer.product,)));
                     },
                   ),
                 ),
@@ -244,16 +245,6 @@ class NfcSelectOfferScreenState extends State<NfcSelectOfferScreen>  {
         ),
       ),
     );
-  }
-
-  isValidOffer(Offer offer) {
-    switch(offer.state.id) {
-      case 1: return true;
-      case 2: return true;
-      case 3: return true;
-      case 7: return true;
-      default: return false;
-    }
   }
 
   /*accept(Offer offer) {

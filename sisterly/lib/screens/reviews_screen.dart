@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:sisterly/models/account.dart';
 import 'package:sisterly/models/product.dart';
+import 'package:sisterly/models/review.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:flutter/material.dart';
@@ -23,7 +24,7 @@ class ReviewsScreen extends StatefulWidget {
 class ReviewsScreenState extends State<ReviewsScreen>  {
 
   bool _isLoading = false;
-  List<Product> _reviews = [];
+  List<Review> _reviews = [];
   Account? _profile;
   bool _viewAll = false;
 
@@ -75,7 +76,7 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
       var data = res["data"];
       if (data != null) {
         for (var prod in data) {
-          _reviews.add(Product.fromJson(prod));
+          _reviews.add(Review.fromJson(prod));
         }
       }
     }, (res) {
@@ -90,7 +91,7 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
     return _profile!.username!.capitalize();
   }
 
-  Widget reviewCell(review) {
+  Widget reviewCell(Review review) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
@@ -113,8 +114,15 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
             Row(
               children: [
                 ClipRRect(
-                    borderRadius: BorderRadius.circular(50.0),
-                    child: Image.asset("assets/images/product.png", width: 50, height: 50, fit: BoxFit.cover,)
+                  borderRadius: BorderRadius.circular(50.0),
+                  child: CachedNetworkImage(
+                    width: 48,
+                    height: 48,
+                    fit: BoxFit.cover,
+                    imageUrl: review.user.image!,
+                    placeholder: (context, url) => Center(child: CircularProgressIndicator()),
+                    errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder.svg",),
+                  ),
                 ),
                 SizedBox(width: 12,),
                 Expanded(
@@ -122,7 +130,7 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Beatrice Pedrali",
+                        review.user.username.toString(),
                         style: TextStyle(
                             color: Constants.DARK_TEXT_COLOR,
                             fontSize: 16,
@@ -133,17 +141,12 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
                       Wrap(
                         spacing: 3,
                         children: [
-                          SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                          SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                          SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                          SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
-                          SvgPicture.asset("assets/images/star.svg", width: 11, height: 11,),
+                          StarsWidget(stars: review.user.reviewsMedia!.toInt()),
                           Text(
-                            "5.0",
+                            review.stars.toString(),
                             style: TextStyle(
                                 color: Constants.DARK_TEXT_COLOR,
                                 fontSize: 14,
-                                fontWeight: FontWeight.bold,
                                 fontFamily: Constants.FONT
                             ),
                           ),
@@ -152,7 +155,7 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
                     ],
                   ),
                 ),
-                SizedBox(width: 12,),
+                /*SizedBox(width: 12,),
                 Text(
                   "1 day ago",
                   style: TextStyle(
@@ -160,12 +163,12 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
                       fontSize: 14,
                       fontFamily: Constants.FONT
                   ),
-                ),
+                ),*/
               ],
             ),
             SizedBox(height: 12,),
             Text(
-              "There is now an abundance of readable dummy texts. These are usually used when a text is required purely to fill a space.",
+              review.description,
               style: TextStyle(
                   color: Constants.TEXT_COLOR,
                   fontSize: 14,
@@ -201,7 +204,7 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         SizedBox(height: 8),
-                        _isLoading ? CircularProgressIndicator() : Row(
+                        _isLoading || _profile == null ? CircularProgressIndicator() : Row(
                           children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(68.0),

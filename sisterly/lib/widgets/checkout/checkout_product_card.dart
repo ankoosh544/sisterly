@@ -38,12 +38,13 @@ class CheckoutProductCard extends StatelessWidget {
             ),
             child: CachedNetworkImage(
               height: 76,
-              imageUrl: (product.images.isNotEmpty ? product.images.first : ""),
+              width: 100,
+              imageUrl: (product.images.isNotEmpty ? product.images.first.image : ""),
               placeholder: (context, url) => Center(child: CircularProgressIndicator()),
               errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
             ),
           ),
-          Flexible(
+          Expanded(
             child: Padding(
               padding: EdgeInsets.all(10),
               child: Column(
@@ -59,17 +60,6 @@ class CheckoutProductCard extends StatelessWidget {
                       fontSize: 16,
                     ),
                   ),
-                  SizedBox(height: 12),
-                  Text(
-                    "${Utils.formatCurrency(product.priceOffer)} al giorno",
-                    textAlign: TextAlign.left,
-                    style: TextStyle(
-                      color: Constants.PRIMARY_COLOR,
-                      fontSize: 18,
-                      fontFamily: Constants.FONT,
-                      fontWeight: FontWeight.bold
-                    ),
-                  )
                 ]
               ),
             ),

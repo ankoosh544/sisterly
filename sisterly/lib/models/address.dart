@@ -1,6 +1,6 @@
 class Address {
   final int id;
-  final String name;
+  final String? name;
   final String address1;
   final String? address2;
   final String country;
@@ -16,6 +16,10 @@ class Address {
 
   factory Address.fromJson(Map<String, dynamic> json) {
     return Address(json["id"], json["name"], json["address1"], json["address2"], json["country"], json["province"], json["zip"], json["note"], json["city"], json["active"], json["email"], json["phone"]);
+  }
+
+  factory Address.fromJsonOffer(Map<String, dynamic> json) {
+    return Address(json["id"], json["name"], json["address1"], json["address2"], json["country"], json["province"], json["zip"], json["note"], json["city"], true, null, null);
   }
 
   Map<String, dynamic> toJson() {

@@ -16,7 +16,7 @@ class Account {
   Account(this.id, this.email, this.description, this.firstName, this.lastName, this.username, this.image, this.emailConfirmed, this.reviewsMedia, this.holidayMode);
 
   factory Account.fromJson(Map<String, dynamic> json) {
-    debugPrint("Account.fromJson " + json.toString());
+    //debugPrint("Account.fromJson " + json.toString());
     return Account(json["id"], json["email"], json["description"], json["first_name"], json["last_name"], json["username"], json["image"], json["email_confirmed"], json["reviews_media"] + .0, json["holiday_mode"]);
   }
 

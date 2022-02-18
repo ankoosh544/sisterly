@@ -117,7 +117,7 @@ class ApiManager {
           failure(401);
         }
       } else {
-        debugPrint("internalMakePostRequest " + url + " success. Body: " + body);
+        log("internalMakePostRequest " + url + " success. Body: " + body);
         success(bodyResponse);
       }
     } catch(ex) {
@@ -148,7 +148,7 @@ class ApiManager {
     }
 
     debugPrint("makeGetRequest final url "+SessionData().serverUrl + endpoint + paramsString);
-    debugPrint("makeGetRequest token "+token);
+    debugPrint("makeGetRequest token "+token.toString());
 
     try {
       var response = await http.get(Uri.parse(SessionData().serverUrl + endpoint + paramsString), headers: {
@@ -163,7 +163,7 @@ class ApiManager {
       int statusCode = response.statusCode;
       String json = response.body;
 
-      debugPrint("Status: "+statusCode.toString()+"  body: "+ json);
+      log("Status: "+statusCode.toString()+"  body: "+ json);
 
       try {
         var bodyResponse = jsonDecode(json);

@@ -32,7 +32,6 @@ class WelcomeScreenState extends State<WelcomeScreen> {
     Timer.run(() async {
       debugPrint("welcome screen initState");
 
-      final status = await AppTrackingTransparency.requestTrackingAuthorization();
     });
   }
 
@@ -81,55 +80,61 @@ class WelcomeScreenState extends State<WelcomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  SizedBox(height: getTopMargin(),),
-                  Center(
-                    child: SvgPicture.asset("assets/images/sisterly_logo.svg",
-                      width: getLogoSize(),
-                      height: getLogoSize(),
-                    ),
-                  ),
-                  SizedBox(height: 70,),
-                  const Text(
-                    "Hey Sister",
-                    style: TextStyle(
-                        color: Constants.PRIMARY_COLOR,
-                        fontSize: 16,
-                        fontFamily: Constants.FONT
-                    ),
-                  ),
-                  SizedBox(height: 8,),
-                  Wrap(
-                    children: const [
-                      Text(
-                        "Benvenuto/a in ",
-                        style: TextStyle(
-                            color: Constants.PRIMARY_COLOR,
-                            fontSize: 25,
-                            fontFamily: Constants.FONT
-                        ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(height: getTopMargin(),),
+                          Center(
+                            child: SvgPicture.asset("assets/images/sisterly_logo.svg",
+                              width: getLogoSize(),
+                              height: getLogoSize(),
+                            ),
+                          ),
+                          SizedBox(height: 70,),
+                          const Text(
+                            "Hey Sister",
+                            style: TextStyle(
+                                color: Constants.PRIMARY_COLOR,
+                                fontSize: 16,
+                                fontFamily: Constants.FONT
+                            ),
+                          ),
+                          SizedBox(height: 8,),
+                          Wrap(
+                            children: const [
+                              Text(
+                                "Benvenuto/a in ",
+                                style: TextStyle(
+                                    color: Constants.PRIMARY_COLOR,
+                                    fontSize: 25,
+                                    fontFamily: Constants.FONT
+                                ),
+                              ),
+                              Text(
+                                "Sisterly!",
+                                style: TextStyle(
+                                    color: Constants.PRIMARY_COLOR,
+                                    fontSize: 25,
+                                    fontFamily: Constants.FONT,
+                                    fontWeight: FontWeight.bold
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24,),
+                          const Text(
+                            "La prima piattaforma di noleggio di borse di lusso tra utenti.",
+                            style: TextStyle(
+                                color: Constants.PRIMARY_COLOR,
+                                fontSize: 16,
+                                fontFamily: Constants.FONT
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        "Sisterly!",
-                        style: TextStyle(
-                            color: Constants.PRIMARY_COLOR,
-                            fontSize: 25,
-                            fontFamily: Constants.FONT,
-                          fontWeight: FontWeight.bold
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24,),
-                  const Text(
-                    "La prima piattaforma di noleggio di borse di lusso tra utenti.",
-                    style: TextStyle(
-                        color: Constants.PRIMARY_COLOR,
-                        fontSize: 16,
-                        fontFamily: Constants.FONT
                     ),
-                  ),
-                  const Expanded(
-                    child: SizedBox(),
                   ),
                   Center(
                     child: ElevatedButton(

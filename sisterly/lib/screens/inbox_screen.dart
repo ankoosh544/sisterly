@@ -1,13 +1,14 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:intl/intl.dart';
 import 'package:sisterly/models/account.dart';
 import 'package:sisterly/models/chat.dart';
-import 'package:sisterly/models/product.dart';
+import 'package:sisterly/models/app_notifications.dart';
+import 'package:sisterly/screens/search_user_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sisterly/widgets/header_widget.dart';
-import 'package:sisterly/widgets/stars_widget.dart';
 
 import '../utils/constants.dart';
 import "package:sisterly/utils/utils.dart";
@@ -30,6 +31,7 @@ class InboxScreenState extends State<InboxScreen>  {
 
   bool _isLoading = false;
   List<Chat> _conversations = [];
+  List<AppNotification> _notifications = [];
   InboxScreenMode _mode = InboxScreenMode.messages;
 
   @override
@@ -38,6 +40,7 @@ class InboxScreenState extends State<InboxScreen>  {
 
     Future.delayed(Duration.zero, () {
       getConversations();
+      getNotifications();
     });
   }
 
@@ -72,10 +75,67 @@ class InboxScreenState extends State<InboxScreen>  {
     });
   }
 
+  getNotifications() {
+    setState(() {
+      _isLoading = true;
+    });
+
+    ApiManager(context).makeGetRequest('/client/all_notifications', {}, (res) {
+      // print(res);
+      setState(() {
+        _isLoading = false;
+      });
+
+      _notifications = [];
+
+      var data = res["data"];
+      if (data != null) {
+        for (var chat in data) {
+          _notifications.add(AppNotification.fromJson(chat));
+        }
+      }
+    }, (res) {
+      setState(() {
+        _isLoading = false;
+      });
+    });
+  }
+
+  String getVerboseDateTimeRepresentation(DateTime dateTime) {
+    DateTime now = DateTime.now();
+    DateTime justNow = now.subtract(Duration(minutes: 1));
+    DateTime localDateTime = dateTime.toLocal();
+
+    if (!localDateTime.difference(justNow).isNegative) {
+      return "Adesso";
+    }
+
+    String roughTimeString = DateFormat('jm').format(dateTime);
+
+    if (localDateTime.day == now.day && localDateTime.month == now.month && localDateTime.year == now.year) {
+      return roughTimeString;
+    }
+
+    DateTime yesterday = now.subtract(Duration(days: 1));
+
+    if (localDateTime.day == yesterday.day && localDateTime.month == now.month && localDateTime.year == now.year) {
+      return "Ieri";
+    }
+
+    if (now.difference(localDateTime).inDays < 4) {
+      String weekday = DateFormat('EEEE').format(localDateTime);
+
+      return '$weekday, $roughTimeString';
+    }
+
+    return '${DateFormat('yMd').format(dateTime)}, $roughTimeString';
+  }
+
   Widget conversationCell(Chat chat) {
     return InkWell(
-      onTap: () {
-        Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChatScreen(code: chat.code)));
+      onTap: () async {
+        await Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChatScreen(chat: chat, code: chat.code)));
+        getConversations();
       },
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 8),
@@ -97,6 +157,7 @@ class InboxScreenState extends State<InboxScreen>  {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(52.0),
@@ -108,19 +169,134 @@ class InboxScreenState extends State<InboxScreen>  {
                     ),
                   ),
                   SizedBox(width: 12,),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        getUsername(chat.user),
-                        style: TextStyle(
-                            color: Constants.DARK_TEXT_COLOR,
-                            fontSize: 16,
-                            fontFamily: Constants.FONT,
-                          fontWeight: FontWeight.bold
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                getUsername(chat.user),
+                                style: TextStyle(
+                                    color: Constants.DARK_TEXT_COLOR,
+                                    fontSize: 16,
+                                    fontFamily: Constants.FONT,
+                                  fontWeight: FontWeight.bold
+                                ),
+                              ),
+                            ),
+                            if(chat.lastMessage != null) Text(
+                              getVerboseDateTimeRepresentation(chat.lastMessage!.sendAt!.toLocal()),
+                              style: TextStyle(
+                                  color: Constants.LIGHT_GREY_COLOR,
+                                  fontSize: 14,
+                                  fontFamily: Constants.FONT
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
+                        if(chat.lastMessage != null) SizedBox(height: 6),
+                        if(chat.lastMessage != null) Text(
+                          chat.lastMessage!.message.toString(),
+                          style: TextStyle(
+                              color: Constants.DARK_TEXT_COLOR,
+                              fontSize: 16,
+                              fontFamily: Constants.FONT
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget notificationCell(AppNotification notification) {
+    return InkWell(
+      onTap: () async {
+        /*await Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChatScreen(chat: chat, code: chat.code)));
+        getConversations();*/
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              spreadRadius: 0,
+              blurRadius: 6,
+              offset: Offset(0, 0), // changes position of shadow
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    elevation: 10,
+                    shadowColor: Colors.black38,
+                    child: Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: SvgPicture.asset("assets/images/sisterly_logo.svg", width: 30,),
+                    )
+                  ),
+                  SizedBox(width: 12,),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                notification.title,
+                                style: TextStyle(
+                                    color: Constants.DARK_TEXT_COLOR,
+                                    fontSize: 16,
+                                    fontFamily: Constants.FONT,
+                                    fontWeight: FontWeight.bold
+                                ),
+                              ),
+                            ),
+                            if(notification.sendAt != null) Text(
+                              getVerboseDateTimeRepresentation(notification.sendAt!),
+                              style: TextStyle(
+                                  color: Constants.LIGHT_GREY_COLOR,
+                                  fontSize: 14,
+                                  fontFamily: Constants.FONT
+                              ),
+                            ),
+                          ],
+                        ),
+                        if(notification.message != null) SizedBox(height: 6),
+                        if(notification.message != null) Text(
+                          notification.message.toString(),
+                          style: TextStyle(
+                              color: Constants.DARK_TEXT_COLOR,
+                              fontSize: 16,
+                              fontFamily: Constants.FONT
+                          ),
+                        ),
+                      ],
+                    ),
                   )
                 ],
               ),
@@ -139,6 +315,15 @@ class InboxScreenState extends State<InboxScreen>  {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Constants.PRIMARY_COLOR,
+      floatingActionButtonLocation: FloatingActionButtonLocation.miniEndFloat,
+      floatingActionButton: _mode == InboxScreenMode.messages ? FloatingActionButton(
+        backgroundColor: Constants.SECONDARY_COLOR,
+        child: SvgPicture.asset("assets/images/chat_white.svg", width: 25,),
+        onPressed: () async {
+          await Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => SearchUserScreen()));
+          getConversations();
+        },
+      ) : null,
       body: Column(
         children: [
           HeaderWidget(title: "Sisterly Chats"),
@@ -159,8 +344,8 @@ class InboxScreenState extends State<InboxScreen>  {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       SizedBox(height: 8),
-                      /*Container(
-                        padding: const EdgeInsets.*all(4),
+                      Container(
+                        padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(60),
@@ -189,6 +374,7 @@ class InboxScreenState extends State<InboxScreen>  {
                               ),
                               child: Text('Messaggi', style: TextStyle(color: _mode == InboxScreenMode.messages ? Colors.white : Constants.TEXT_COLOR),),
                               onPressed: () {
+                                getConversations();
                                 setState(() {
                                   _mode = InboxScreenMode.messages;
                                 });
@@ -207,6 +393,7 @@ class InboxScreenState extends State<InboxScreen>  {
                               ),
                               child: Text('Notifiche', style: TextStyle(color: _mode == InboxScreenMode.notifications ? Colors.white : Constants.TEXT_COLOR),),
                               onPressed: () {
+                                getNotifications();
                                 setState(() {
                                   _mode = InboxScreenMode.notifications;
                                 });
@@ -215,16 +402,21 @@ class InboxScreenState extends State<InboxScreen>  {
                           ],
                         ),
                       ),
-                      SizedBox(height: 16,),*/
+                      SizedBox(height: 16,),
                       Expanded(
                         child: _isLoading ? Center(child: CircularProgressIndicator()) : _conversations.isNotEmpty ? MediaQuery.removePadding(
                           context: context,
                           removeTop: true,
-                          child: ListView.builder(
-                            itemCount: _conversations.length,
-                            itemBuilder: (BuildContext context, int index) {
-                              return conversationCell(_conversations[index]);
-                            }
+                          child: _mode == InboxScreenMode.notifications ? ListView.builder(
+                              itemCount: _notifications.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                return notificationCell(_notifications[index]);
+                              }
+                          ) : ListView.builder(
+                              itemCount: _conversations.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                return conversationCell(_conversations[index]);
+                              }
                           ),
                         ) : Text("Non ci sono chat al momento"),
                       ),
