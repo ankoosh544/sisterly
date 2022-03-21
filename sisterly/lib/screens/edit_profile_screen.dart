@@ -128,7 +128,7 @@ class EditProfileScreenState extends State<EditProfileScreen>  {
         setState(() {
           _isLoading = false;
         });
-      });
+      }, "image");
     } else {
       ApiManager(context).makePostRequest('/client/update', params, (res) {
         // print(res);

@@ -59,7 +59,7 @@ class HomeScreenState extends State<HomeScreen>  {
     var params = {
       "player_id": osUserID.toString()
     };
-    ApiManager(context).makePostRequest('/client/playerId', params, (res) {
+    ApiManager(context).makePostRequest('/client/player_id', params, (res) {
 
     }, (res) {
 

@@ -1,12 +1,22 @@
-class Document {
-  final String id;
-  final String status;
-  final String type;
+import 'document_type.dart';
 
-  Document(this.id, this.status, this.type);
+class Document {
+  final int id;
+  final String front;
+  final String? back;
+  final DocumentType documentType;
+  final DateTime? expirationDate;
+
+  Document(
+      this.id, this.front, this.back, this.documentType, this.expirationDate);
 
   factory Document.fromJson(Map<String, dynamic> json) {
-    Document document = Document(json["id"], json["status"], json["type"]);
+    Document document = Document(
+        json["id"],
+        json["front"],
+        json["back"],
+        DocumentType.fromJson(json["document_type"]),
+        json["expiration_date"] != null ? DateTime.tryParse(json["expiration_date"]) : null);
     return document;
   }
 }

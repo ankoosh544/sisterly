@@ -107,14 +107,14 @@ class SplashScreenState extends State<SplashScreen> {
   }
 
   access() {
-    ApiManager(context).makeGetRequest('/client/properties', {}, (res) {
+    ApiManager(context).makeGetRequest('/client/properties', {}, (res) async {
+      Account account = Account.fromJson(res["data"]);
+
+      var preferences = await SharedPreferences.getInstance();
+      preferences.setInt(Constants.PREFS_USERID, account.id!);
+      SessionData().userId = account.id;
+
       setState(() async {
-        Account account = Account.fromJson(res["data"]);
-
-        var preferences = await SharedPreferences.getInstance();
-        preferences.setInt(Constants.PREFS_USERID, account.id!);
-        SessionData().userId = account.id;
-
         Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => TabScreen()), (_) => false);
       });
     }, (res) {

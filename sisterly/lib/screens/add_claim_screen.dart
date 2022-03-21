@@ -100,7 +100,7 @@ class AddClaimScreenState extends State<AddClaimScreen> {
           setState(() {
             _isUploading = false;
           });
-        });
+        }, "image");
       }
 
       setState(() {

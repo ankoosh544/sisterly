@@ -303,14 +303,36 @@ class _FiltersScreenState extends State<FiltersScreen> {
                               ),
                             ),
                             SizedBox(height: 40,),
-                            Text(
-                              "Brand",
-                              style: TextStyle(
-                                  color: Constants.DARK_TEXT_COLOR,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: Constants.FONT),
-                              textAlign: TextAlign.center,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "Brand",
+                                  style: TextStyle(
+                                      color: Constants.DARK_TEXT_COLOR,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: Constants.FONT),
+                                  textAlign: TextAlign.center,
+                                ),
+                                SizedBox(width: 16,),
+                                if(_filters.brand != null && _filters.brand! > 0) InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _filters.brand = null;
+                                    });
+                                  },
+                                  child: Text(
+                                    "Cancella",
+                                    style: TextStyle(
+                                        color: Constants.SECONDARY_COLOR,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: Constants.FONT),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                )
+                              ],
                             ),
                             SizedBox(height: 8,),
                             if (_brands.isNotEmpty)  Container(

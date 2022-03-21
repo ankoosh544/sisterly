@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sisterly/models/address.dart';
 import 'package:sisterly/models/brand.dart';
@@ -13,6 +14,7 @@ import 'package:sisterly/models/material.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/models/product_color.dart';
 import 'package:sisterly/models/var.dart';
+import 'package:sisterly/screens/add_document_screen.dart';
 import 'package:sisterly/screens/product_success_screen.dart';
 import 'package:sisterly/screens/sister_advice_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
@@ -25,6 +27,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:sisterly/widgets/header_widget.dart';
 
 import '../utils/constants.dart';
+import '../widgets/alert/custom_alert.dart';
 
 class DocumentsScreen extends StatefulWidget {
 
@@ -37,11 +40,6 @@ class DocumentsScreen extends StatefulWidget {
 }
 
 class DocumentsScreenState extends State<DocumentsScreen>  {
-
-  final ImagePicker picker = ImagePicker();
-  List<XFile> _images = [];
-  List<String> _imageUrls = [];
-  bool _isUploading = false;
 
   List<Document> _documents = [];
   bool _isLoading = false;
@@ -59,7 +57,7 @@ class DocumentsScreenState extends State<DocumentsScreen>  {
     setState(() {
       _isLoading = true;
     });
-    ApiManager(context).makeGetRequest('/payment/kyc', {}, (res) {
+    ApiManager(context).makeGetRequest('/client/document', {}, (res) {
       _documents = [];
 
       var data = res["data"];
@@ -84,75 +82,162 @@ class DocumentsScreenState extends State<DocumentsScreen>  {
     super.dispose();
   }
 
-  Future<bool> checkAndRequestCameraPermissions() async {
-    PermissionStatus permission = await Permission.camera.status;
-    if (permission != PermissionStatus.granted) {
-      Map<Permission, PermissionStatus> statuses = await [
-        Permission.camera
-      ].request();
-      return statuses[Permission.camera] == PermissionStatus.granted;
-    } else {
-      return true;
-    }
-  }
-
-  getTypeLabel(String slug) {
-    switch(slug) {
-      case 'IDENTITY_PROOF': return "Prova di identità";
-      case 'REGISTRATION_PROOF': return "Prova di registrazione";
-      case 'ARTICLES_OF_ASSOCIATION': return "Statuto";
-      case 'SHAREHOLDER_DECLARATION': return "Dichiarazione";
-      case 'ADDRESS_PROOF': return "Prova di indirizzo";
-    }
-  }
-
-  getStatusLabel(String slug) {
-    switch(slug) {
-      case 'CREATED': return "Creato";
-      case 'VALIDATION_ASKED': return "Validazione richiesta";
-      case 'VALIDATED': return "Validato";
-      case 'REFUSED': return "Rifiutato";
-      case 'OUT_OF_DATE': return "Scaduto";
-    }
-  }
-
   documentCell(Document document) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              getTypeLabel(document.type),
-              textAlign: TextAlign.left,
-              style: TextStyle(
-                color: Constants.TEXT_COLOR,
-                fontFamily: Constants.FONT,
-                fontSize: 18,
-                fontWeight: FontWeight.bold
-              ),
+    return Stack(
+      children: [
+        Card(
+          margin: const EdgeInsets.only(bottom: 16),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      getGenericName(document.documentType.id, documentTypes),
+                      textAlign: TextAlign.left,
+                      style: TextStyle(
+                        color: Constants.TEXT_COLOR,
+                        fontFamily: Constants.FONT,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold
+                      ),
+                    ),
+
+                  ],
+                ),
+                SizedBox(height: 8,),
+                if(document.expirationDate != null) Text(
+                  DateFormat("dd/MM/yyyy").format(document.expirationDate!),
+                  textAlign: TextAlign.left,
+                  style: TextStyle(
+                      color: Constants.TEXT_COLOR,
+                      fontFamily: Constants.FONT,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold
+                  ),
+                ),
+                SizedBox(height: 8,),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            primary: Constants.PRIMARY_COLOR,
+                            textStyle: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold
+                            ),
+                            side: const BorderSide(color: Constants.PRIMARY_COLOR, width: 1),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(50),
+                            )
+                        ),
+                        child: Text('Vedi fronte'),
+                        onPressed: () async {
+                          Utils.launchURL(document.front);
+                        },
+                      ),
+                    ),
+                    if(document.back != null && document.back!.isNotEmpty) SizedBox(width: 12),
+                    if(document.back != null && document.back!.isNotEmpty) Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            primary: Constants.PRIMARY_COLOR,
+                            textStyle: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold
+                            ),
+                            side: const BorderSide(color: Constants.PRIMARY_COLOR, width: 1),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(50),
+                            )
+                        ),
+                        child: Text('Vedi retro'),
+                        onPressed: () async {
+                          Utils.launchURL(document.back!);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            SizedBox(height: 8,),
-            Text(
-              getStatusLabel(document.status),
-              textAlign: TextAlign.left,
-              style: TextStyle(
-                color: Constants.TEXT_COLOR,
-                fontFamily: Constants.FONT,
-                fontSize: 16,
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
+        Positioned(
+          right: 0,
+            top: 0,
+            child: InkWell(
+                onTap: () {
+                  CustomAlert.show(context,
+                      //title: AppLocalizations.of(context).translate("generic_success"),
+                      confirmButtonColor: Constants.SECONDARY_COLOR,
+                      subtitle: "Vuoi procedere con l'eliminazione?",
+                      showCancelButton: true,
+                      cancelButtonText: "Annulla",
+                      cancelButtonColor: Colors.white,
+                      //style: CustomAlertStyle.success,
+                      onPress: (bool isConfirm) {
+                        Navigator.of(context, rootNavigator: true).pop();
+
+                       if(isConfirm) {
+                         delete(document);
+                       }
+
+                        return false;
+                      });
+                },
+                child: SvgPicture.asset("assets/images/cancel.svg", width: 40, height: 40,)
+            )
+        )
+      ],
     );
+  }
+
+  delete(Document document) {
+    setState(() {
+      _isLoading = true;
+    });
+
+    ApiManager(context).makeDeleteRequest("/client/document/" + document.id.toString(), (res) {
+      // print(res);
+      setState(() {
+        _isLoading = false;
+      });
+
+      ApiManager.showFreeSuccessMessage(context, "Documento eliminato!");
+
+      getDocuments();
+    }, (res) {
+      setState(() {
+        _isLoading = false;
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Constants.PRIMARY_COLOR,
+      floatingActionButtonLocation: FloatingActionButtonLocation.miniCenterDocked,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 20),
+        child: FloatingActionButton(
+          backgroundColor: Constants.SECONDARY_COLOR,
+          child: SvgPicture.asset("assets/images/plus.svg"),
+          onPressed: () async {
+            await Navigator.of(context).push(
+                MaterialPageRoute(builder: (BuildContext context) => AddDocumentScreen()));
+
+            getDocuments();
+          },
+        ),
+      ),
       body: Column(
         children: [
           HeaderWidget(title: "Documenti"),
@@ -165,138 +250,21 @@ class DocumentsScreenState extends State<DocumentsScreen>  {
                   borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(30),
                       topRight: Radius.circular(30))),
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      SizedBox(height: 8),
-                      Text(
-                        "Carica l’immagine fronte retro del tuo documento di identità o passaporto in corso di validità",
-                        style: TextStyle(
-                            color: Constants.DARK_TEXT_COLOR,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: Constants.FONT
-                        ),
-                      ),
-                      SizedBox(height: 24,),
-                      Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15),
-                          color: Constants.SECONDARY_COLOR_LIGHT
-                        ),
-                        child: Column(
-                          children: [
-                            SizedBox(height: 10),
-                            // Text(
-                            //   "Add up to 20 photos",
-                            //   style: TextStyle(
-                            //       color: Constants.LIGHT_TEXT_COLOR,
-                            //       fontSize: 14,
-                            //       fontFamily: Constants.FONT
-                            //   )
-                            // ),
-                            SizedBox(height: 10),
-                            TextButton(
-                              style: ButtonStyle(
-                                backgroundColor: MaterialStateProperty.all(Constants.SECONDARY_COLOR),
-                                padding: MaterialStateProperty.all(EdgeInsets.symmetric(horizontal: 46, vertical: 14)),
-                                shape: MaterialStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)))
-                              ),
-                              child: Text(
-                                "Carica foto",
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontFamily: Constants.FONT
-                                )
-                              ),
-                              onPressed: () async {
-                                ImageSource? source = await showDialog<ImageSource>(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                      content: Text("Scegli immagine da"),
-                                      actions: [
-                                        FlatButton(
-                                          child: Text("Scatta ora"),
-                                          onPressed: () => Navigator.pop(context, ImageSource.camera),
-                                        ),
-                                        FlatButton(
-                                          child: Text("Galleria"),
-                                          onPressed: () => Navigator.pop(context, ImageSource.gallery),
-                                        ),
-                                      ]
-                                  ),
-                                );
-
-                                if(source == ImageSource.camera) {
-                                  _images = [(await picker.pickImage(source: ImageSource.camera))!];
-                                } else {
-                                  _images = (await picker.pickMultiImage())!;
-                                }
-
-                                _upload();
-                                setState(() {});
-                              },
-                            ),
-                            SizedBox(height: 12),
-                            if(_isUploading) CircularProgressIndicator(),
-                            SizedBox(height: 16),
-                            if (_imageUrls.isNotEmpty) GridView.count(
-                              shrinkWrap: true,
-                              crossAxisCount: 4,
-                              mainAxisSpacing: 5.0,
-                              crossAxisSpacing: 5.0,
-                              physics: NeverScrollableScrollPhysics(),
-                              children: [
-                                  /*for (var img in _images)
-                                    ClipRRect(
-                                        child: Image.file(File(img.path), fit: BoxFit.cover),
-                                      borderRadius: BorderRadius.circular(12),
-                                    )*/
-
-                                for (var img in _imageUrls)
-                                  ClipRRect(
-                                    child: CachedNetworkImage(
-                                      imageUrl: img,
-                                      fit: BoxFit.cover,
-                                      placeholder: (context, url) => Center(child: CircularProgressIndicator()),
-                                      errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
-                                    ),
-                                    borderRadius: BorderRadius.circular(12),
-                                  )
-                              ]
-                            ),
-                            SizedBox(height: 10)
-                          ]
-                        )
-                      ),
-                      SizedBox(height: 60),
-                      Text(
-                        "Documenti caricati",
-                        style: TextStyle(
-                            color: Constants.DARK_TEXT_COLOR,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: Constants.FONT
-                        ),
-                      ),
-                      SizedBox(width: 8,),
-                      ListView.builder(
-                        shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Expanded(
+                      child: _documents.isEmpty ? Center(child: Text("Nessun documento caricato")) : ListView.builder(
+                        padding: const EdgeInsets.all(0),
                           itemCount: _documents.length,
                           itemBuilder: (BuildContext context, int index) {
                             return documentCell(_documents[index]);
                           }
                       ),
-                      SizedBox(height: 60)
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -304,39 +272,6 @@ class DocumentsScreenState extends State<DocumentsScreen>  {
         ],
       ),
     );
-  }
-
-  _upload() {
-    if (_images.isNotEmpty) {
-      setState(() {
-        _isUploading = true;
-      });
-
-        int i = 1;
-        for (var photo in _images) {
-          var params = {
-            "order": i++
-          };
-          ApiManager(context).makeUploadRequest(context, "POST", '/payment/kyc', photo.path, params, (res) {
-            debugPrint('Photo uploaded');
-            setState(() {
-              _isUploading = false;
-            });
-
-            getDocuments();
-          }, (res) {
-            debugPrint('Failed uploading photo');
-            _images.remove(photo);
-            setState(() {
-              _isUploading = false;
-            });
-          });
-        }
-
-        setState(() {
-
-        });
-    }
   }
 
 }

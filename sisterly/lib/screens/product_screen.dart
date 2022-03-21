@@ -1,7 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:sisterly/models/chat.dart';
+import 'package:sisterly/models/document.dart';
 import 'package:sisterly/models/product.dart';
+import 'package:sisterly/models/product_availability.dart';
 import 'package:sisterly/screens/checkout_screen.dart';
 import 'package:sisterly/screens/fullscreen_gallery_screen.dart';
 import 'package:sisterly/screens/profile_screen.dart';
@@ -16,11 +19,15 @@ import 'package:sisterly/widgets/stars_widget.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../utils/constants.dart';
 import 'chat_screen.dart';
+import 'package:image_picker/image_picker.dart';
+
+import 'documents_screen.dart';
 
 class ProductScreen extends StatefulWidget {
   final Product product;
+  final bool inReview;
 
-  const ProductScreen(this.product, {Key? key}) : super(key: key);
+  const ProductScreen(this.product, {Key? key, this.inReview = false}) : super(key: key);
 
   @override
   ProductScreenState createState() => ProductScreenState();
@@ -34,7 +41,13 @@ class ProductScreenState extends State<ProductScreen>  {
   DateTime? _rangeStart;
   DateTime? _rangeEnd;
   DateTime? _selectedDay;
+  ProductAvailability? _availability;
   RangeSelectionMode _rangeSelectionMode = RangeSelectionMode.toggledOn;
+  List<XFile> _videos = [];
+  final ImagePicker _picker = ImagePicker();
+  bool _isUploadingVideo = false;
+  bool _isLoadingAvailability = false;
+  List<Document> _documents = [];
 
   @override
   void initState() {
@@ -42,12 +55,33 @@ class ProductScreenState extends State<ProductScreen>  {
 
     Future.delayed(Duration.zero, () {
       getProductsFavorite();
+      getProductAvailabilty();
+      _getDocuments();
     });
   }
 
   @override
   void dispose() {
     super.dispose();
+  }
+
+  _getDocuments() {
+    ApiManager(context).makeGetRequest('/client/document', {}, (res) {
+      _documents = [];
+
+      var data = res["data"];
+      if (data != null) {
+        for (var doc in data) {
+          _documents.add(Document.fromJson(doc));
+        }
+      }
+
+      setState(() {
+
+      });
+    }, (res) {
+
+    });
   }
 
   Widget getInfoRow(String label, String value) {
@@ -98,6 +132,29 @@ class ProductScreenState extends State<ProductScreen>  {
     });
   }
 
+  getProductAvailabilty() {
+    setState(() {
+      _isLoadingAvailability = true;
+    });
+
+    var params = {
+      "year": _focusedDay.year.toString(),
+      "month": _focusedDay.month.toString(),
+    };
+
+    ApiManager(context).makeGetRequest('/product/' + widget.product.id.toString() + '/valid_dates/', params, (res) {
+      _availability = ProductAvailability.fromJson(res["data"]);
+
+      setState(() {
+        _isLoadingAvailability = false;
+      });
+    }, (res) {
+      setState(() {
+        _isLoadingAvailability = false;
+      });
+    });
+  }
+
   contact() {
     var params = {
       "email_user_to": widget.product.owner.email
@@ -130,6 +187,69 @@ class ProductScreenState extends State<ProductScreen>  {
     }, (res) {
 
     });
+  }
+
+  askUploadVideo() async {
+    ImageSource? source = await showDialog<ImageSource>(
+      context: context,
+      builder: (context) => AlertDialog(
+          content: Text("Scegli video da"),
+          actions: [
+            FlatButton(
+              child: Text("Registra ora"),
+              onPressed: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            FlatButton(
+              child: Text("Galleria"),
+              onPressed: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ]
+      ),
+    );
+
+    if(source == ImageSource.camera) {
+      _videos = [(await _picker.pickVideo(source: ImageSource.camera))!];
+      uploadVideo();
+    } else if(source == ImageSource.gallery) {
+      _videos = [(await _picker.pickVideo(source: ImageSource.gallery))!];
+      uploadVideo();
+    }
+
+    setState(() {});
+  }
+
+  uploadVideo() {
+    if (_videos.isNotEmpty) {
+      setState(() {
+        _isUploadingVideo = true;
+      });
+      debugPrint("uploading " + _videos.length.toString() + " videos");
+      int i = 1;
+
+      var params = {
+        "order": i++
+      };
+      ApiManager(context).makeUploadRequest(context, "PUT", '/client/media/' + widget.product.mediaId.toString() + '/videos', _videos[0].path, params, (res) {
+        debugPrint('Video uploaded');
+        setState(() {
+          _isUploadingVideo = false;
+        });
+
+        ApiManager.showFreeSuccessMessageWithCallback(context, "Video uploaded successfully!", () {
+          Navigator.pop(context);
+        });
+      }, (res) {
+        debugPrint('Failed uploading video');
+        _videos.clear();
+        setState(() {
+          _isUploadingVideo = false;
+        });
+      }, "video");
+
+      setState(() {
+
+      });
+    }
   }
 
   @override
@@ -440,6 +560,7 @@ class ProductScreenState extends State<ProductScreen>  {
                                 fontFamily: Constants.FONT
                             ),
                           ),
+                          if(_isLoadingAvailability) SizedBox(width: 16, height: 16, child: CircularProgressIndicator()),
                           Wrap(
                             children: [
                               InkWell(
@@ -475,137 +596,198 @@ class ProductScreenState extends State<ProductScreen>  {
                         ],
                       ),
                       SizedBox(height: 12,),
-                      TableCalendar(
-                        firstDay: DateTime.now().add(Duration(days: 1)),
-                        lastDay: DateTime.utc(2040, 3, 14),
-                        focusedDay: _focusedDay,
-                        rowHeight: 28,
-                        rangeStartDay: _rangeStart,
-                        rangeEndDay: _rangeEnd,
-                        rangeSelectionMode: _rangeSelectionMode,
-                        onDaySelected: (selectedDay, focusedDay) {
-                          if (!isSameDay(_selectedDay, selectedDay)) {
-                            setState(() {
-                              _selectedDay = selectedDay;
-                              _focusedDay = focusedDay;
-                              _rangeStart = null; // Important to clean those
-                              _rangeEnd = null;
-                              _rangeSelectionMode = RangeSelectionMode.toggledOff;
-                            });
-                          }
-                        },
-                        onRangeSelected: (start, end, focusedDay) {
-                          setState(() {
-                            _selectedDay = null;
-                            _focusedDay = focusedDay;
-                            _rangeStart = start;
-                            _rangeEnd = end;
-                            _rangeSelectionMode = RangeSelectionMode.toggledOn;
-                          });
-                        },
-                        onCalendarCreated: (controller) => _calendarController = controller,
-                        onPageChanged: (focusedDay) {
-                          debugPrint("focusedDay "+focusedDay.toString());
-                          setState(() {
-                            _focusedDay = focusedDay;
-                          });
-                        },
-                        startingDayOfWeek: StartingDayOfWeek.monday,
-                        daysOfWeekStyle: DaysOfWeekStyle(
-                          decoration: BoxDecoration(
-                            border: Border(bottom: BorderSide(color: Colors.black12)),
+                      Opacity(
+                        opacity: _isLoadingAvailability ? 0.4 : 1,
+                        child: AbsorbPointer(
+                          absorbing: _isLoadingAvailability,
+                          child: TableCalendar(
+                            firstDay: DateTime.now().add(Duration(days: 1)),
+                            lastDay: DateTime.utc(2040, 3, 14),
+                            focusedDay: _focusedDay,
+                            rowHeight: 28,
+                            rangeStartDay: _rangeStart,
+                            rangeEndDay: _rangeEnd,
+                            rangeSelectionMode: _rangeSelectionMode,
+                            enabledDayPredicate: (day) {
+                              if(_availability != null && _availability!.validDays.contains(day.day)) {
+                                return true;
+                              }
+
+                              return false;
+                            },
+                            onDaySelected: (selectedDay, focusedDay) {
+                              if (!isSameDay(_selectedDay, selectedDay)) {
+                                setState(() {
+                                  _selectedDay = selectedDay;
+                                  _focusedDay = focusedDay;
+                                  _rangeStart = null; // Important to clean those
+                                  _rangeEnd = null;
+                                  _rangeSelectionMode = RangeSelectionMode.toggledOff;
+
+                                  getProductAvailabilty();
+                                });
+                              }
+                            },
+                            onRangeSelected: (start, end, focusedDay) {
+                              setState(() {
+                                _selectedDay = null;
+                                _focusedDay = focusedDay;
+                                _rangeStart = start;
+                                _rangeEnd = end;
+                                _rangeSelectionMode = RangeSelectionMode.toggledOn;
+
+                                getProductAvailabilty();
+                              });
+                            },
+                            onCalendarCreated: (controller) => _calendarController = controller,
+                            onPageChanged: (focusedDay) {
+                              debugPrint("focusedDay "+focusedDay.toString());
+                              setState(() {
+                                _focusedDay = focusedDay;
+                              });
+
+                              getProductAvailabilty();
+                            },
+                            startingDayOfWeek: StartingDayOfWeek.monday,
+                            daysOfWeekStyle: DaysOfWeekStyle(
+                              decoration: BoxDecoration(
+                                border: Border(bottom: BorderSide(color: Colors.black12)),
+                              ),
+                            ),
+                            daysOfWeekHeight: 40,
+                            calendarBuilders: CalendarBuilders(
+                              dowBuilder: (context, day) {
+                                final text = DateFormat.E("it_IT").format(day).capitalize();
+
+                                return Center(
+                                  child: Text(
+                                    text,
+                                    style: TextStyle(color: Color(0xff333333)),
+                                  ),
+                                );
+                              },
+                              withinRangeBuilder: (context, day, focusedDay) {
+                                //debugPrint("defaultBuilder");
+                                return Container(
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                      color: Constants.SECONDARY_COLOR
+                                  ),
+                                  child: FittedBox(
+                                      child: Container(
+                                          padding: const EdgeInsets.all(5),
+                                          child: Text(day.day.toString(), style: TextStyle(color: Colors.black, fontSize: 12),)
+                                      )
+                                  ),
+                                );
+                              },
+                              rangeStartBuilder: (context, day, focusedDay) {
+                                //debugPrint("defaultBuilder");
+                                return Container(
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                      color: Constants.SECONDARY_COLOR
+                                  ),
+                                  child: FittedBox(
+                                      child: Container(
+                                          padding: const EdgeInsets.all(5),
+                                          child: Text(day.day.toString(), style: TextStyle(color: Colors.black, fontSize: 12),)
+                                      )
+                                  ),
+                                );
+                              },
+                              rangeEndBuilder: (context, day, focusedDay) {
+                                //debugPrint("defaultBuilder");
+                                return Container(
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                      color: Constants.SECONDARY_COLOR
+                                  ),
+                                  child: FittedBox(
+                                      child: Container(
+                                          padding: const EdgeInsets.all(5),
+                                          child: Text(day.day.toString(), style: TextStyle(color: Colors.black, fontSize: 12),)
+                                      )
+                                  ),
+                                );
+                              },
+                              defaultBuilder: (context, day, focusedDay) {
+                                //debugPrint("defaultBuilder");
+                                return Container(
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: Color(0x40ffa8a8)
+                                  ),
+                                  child: FittedBox(
+                                      child: Container(
+                                          padding: const EdgeInsets.all(5),
+                                          child: Text(day.day.toString(), style: TextStyle(color: Colors.black, fontSize: 12),)
+                                      )
+                                  ),
+                                );
+                              },
+                              disabledBuilder: (context, day, focusedDay) {
+                                //debugPrint("defaultBuilder");
+                                return Container(
+                                  alignment: Alignment.center,
+                                  child: FittedBox(
+                                      child: Container(
+                                          padding: const EdgeInsets.all(5),
+                                          child: Text(day.day.toString(), style: TextStyle(color: Color(0xffcccccc), fontSize: 12),)
+                                      )
+                                  ),
+                                );
+                              },
+                            ),
+
+                            headerVisible: false,
+                            locale: "it_IT",
                           ),
                         ),
-                        daysOfWeekHeight: 40,
-                        calendarBuilders: CalendarBuilders(
-                          dowBuilder: (context, day) {
-                            final text = DateFormat.E("it_IT").format(day).capitalize();
-
-                            return Center(
-                              child: Text(
-                                text,
-                                style: TextStyle(color: Color(0xff333333)),
-                              ),
-                            );
-                          },
-                          withinRangeBuilder: (context, day, focusedDay) {
-                            //debugPrint("defaultBuilder");
-                            return Container(
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                  color: Constants.SECONDARY_COLOR
-                              ),
-                              child: FittedBox(
-                                  child: Container(
-                                      padding: const EdgeInsets.all(5),
-                                      child: Text(day.day.toString(), style: TextStyle(color: Colors.black, fontSize: 12),)
-                                  )
-                              ),
-                            );
-                          },
-                          rangeStartBuilder: (context, day, focusedDay) {
-                            //debugPrint("defaultBuilder");
-                            return Container(
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                  color: Constants.SECONDARY_COLOR
-                              ),
-                              child: FittedBox(
-                                  child: Container(
-                                      padding: const EdgeInsets.all(5),
-                                      child: Text(day.day.toString(), style: TextStyle(color: Colors.black, fontSize: 12),)
-                                  )
-                              ),
-                            );
-                          },
-                          rangeEndBuilder: (context, day, focusedDay) {
-                            //debugPrint("defaultBuilder");
-                            return Container(
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                  color: Constants.SECONDARY_COLOR
-                              ),
-                              child: FittedBox(
-                                  child: Container(
-                                      padding: const EdgeInsets.all(5),
-                                      child: Text(day.day.toString(), style: TextStyle(color: Colors.black, fontSize: 12),)
-                                  )
-                              ),
-                            );
-                          },
-                          defaultBuilder: (context, day, focusedDay) {
-                            //debugPrint("defaultBuilder");
-                            return Container(
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: Color(0x40ffa8a8)
-                              ),
-                              child: FittedBox(
-                                  child: Container(
-                                      padding: const EdgeInsets.all(5),
-                                      child: Text(day.day.toString(), style: TextStyle(color: Colors.black, fontSize: 12),)
-                                  )
-                              ),
-                            );
-                          },
-                          disabledBuilder: (context, day, focusedDay) {
-                            //debugPrint("defaultBuilder");
-                            return Container(
-                              alignment: Alignment.center,
-                              child: FittedBox(
-                                  child: Container(
-                                      padding: const EdgeInsets.all(5),
-                                      child: Text(day.day.toString(), style: TextStyle(color: Color(0xffcccccc), fontSize: 12),)
-                                  )
-                              ),
-                            );
-                          },
-                        ),
-
-                        headerVisible: false,
-                        locale: "it_IT",
                       ),
-                      SizedBox(height: 40,),
+                      if(widget.product.usePriceAlgorithm) SizedBox(height: 40,),
+                      if(widget.product.usePriceAlgorithm) Text(
+                        "Questa borsa rientra in un gruppo ristretto di prodotti ai quali si applicano scontistiche particolari per noleggi con durate superiori a 3 giorni"
+                      ),
+                      SizedBox(height: 16,),
+                      if(_documents.isEmpty) SizedBox(height: 15),
+                      if(_documents.isEmpty) InkWell(
+                        onTap: () async {
+                          await Navigator.of(context, rootNavigator: true).push(
+                              MaterialPageRoute(builder: (BuildContext context) => DocumentsScreen()));
+
+                          _getDocuments();
+                        },
+                        child: Card(
+                          color: Color(0x88FF8A80),
+                          elevation: 0,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              children: const [
+                                Text('Per procedere con la prenotazione della borsa è necessario caricare i documenti necessari',
+                                  style: TextStyle(
+                                    color: Constants.TEXT_COLOR,
+                                    fontSize: 16,
+                                    fontFamily: Constants.FONT,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                SizedBox(height: 8),
+                                Text('Clicca qui',
+                                    style: TextStyle(
+                                      color: Constants.TEXT_COLOR,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: Constants.FONT,
+                                    )
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      if(_documents.isEmpty) SizedBox(height: 15),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -643,6 +825,11 @@ class ProductScreenState extends State<ProductScreen>  {
                               ),
                               child: Text('Prenota'),
                               onPressed: () {
+                                if(_documents.isEmpty) {
+                                  ApiManager.showFreeErrorMessage(context, "Per procedere con la prenotazione della borsa è necessario caricare i documenti necessari");
+                                  return;
+                                }
+
                                 if(widget.product.owner.holidayMode!) {
                                   ApiManager.showFreeErrorMessage(context, "L'utente in questione ha attivato la modalità vacanza, non sarà possibile prenotare la borsa fino al suo rientro. Riprova tra qualche giorno");
                                   return;
@@ -657,6 +844,7 @@ class ProductScreenState extends State<ProductScreen>  {
                                   ApiManager.showFreeErrorMessage(context, "Seleziona un periodo minimo di 3 giorni.");
                                   return;
                                 }
+
 
                                 Navigator.of(context).push(
                                     MaterialPageRoute(builder: (BuildContext context) => CheckoutScreen(product: widget.product, startDate: _rangeStart!, endDate: _rangeEnd!)));
@@ -682,6 +870,30 @@ class ProductScreenState extends State<ProductScreen>  {
                             ),
                           ),
                         ],
+                      ),
+                      if(widget.product.owner.id == SessionData().userId && widget.inReview) Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: _isUploadingVideo ? Center(child: CircularProgressIndicator()) : Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    primary: Constants.SECONDARY_COLOR,
+                                    textStyle: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold
+                                    ),
+                                    padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
+                                ),
+                                child: Text('Carica video'),
+                                onPressed: () {
+                                  askUploadVideo();
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       if(widget.product.owner.id == SessionData().userId) SizedBox(height: 190,)
                     ],

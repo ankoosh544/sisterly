@@ -1,6 +1,7 @@
 import 'package:sisterly/models/delivery_mode.dart';
 import 'package:sisterly/models/delivery_mode_offer.dart';
 import 'package:sisterly/models/product_image.dart';
+import 'package:sisterly/models/product_video.dart';
 import 'package:sisterly/models/var.dart';
 
 import 'account.dart';
@@ -10,7 +11,7 @@ class Product {
   final int id;
   final String model;
   List<ProductImage> images = [];
-  List<String> videos = [];
+  List<ProductVideo> videos = [];
   final Account owner;
   final int brandId;
   final String brandName;
@@ -108,6 +109,10 @@ class Product {
     prod.images.sort((a, b) {
       return a.order - b.order;
     });
+
+    for(var vid in media["videos"]) {
+      prod.videos.add(ProductVideo.fromJson(vid));
+    }
 
     return prod;
   }

@@ -27,7 +27,7 @@ class FullscreenGalleryScreenState extends State<FullscreenGalleryScreen>  {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0x33000000),
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
           Column(
@@ -36,6 +36,9 @@ class FullscreenGalleryScreenState extends State<FullscreenGalleryScreen>  {
                 itemCount: widget.images.length,
                 itemBuilder: (BuildContext context, int itemIndex, int pageViewIndex) =>
                     PhotoView(
+                      backgroundDecoration: BoxDecoration(
+                        color: Color(0xfff5f5f5)
+                      ),
                       imageProvider: CachedNetworkImageProvider((widget.images[itemIndex].isNotEmpty ? widget.images[itemIndex] : "")),
                     ),
                 options: CarouselOptions(

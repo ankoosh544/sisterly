@@ -164,12 +164,13 @@ class CustomAlertDialogState extends State<CustomAlertDialog> with SingleTickerP
     if (_options.style != CustomAlertStyle.loading) {
       if (_options.showCancelButton) {
         listOfChildren.add(Padding(
-          padding: const EdgeInsets.all(10.0),
+          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 16),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               Expanded(
                 child: RaisedButton(
+                  elevation: 0,
                   padding: EdgeInsets.zero,
                   onPressed: cancel,
                   shape: RoundedRectangleBorder(
@@ -178,7 +179,7 @@ class CustomAlertDialogState extends State<CustomAlertDialog> with SingleTickerP
                   color: _options.cancelButtonColor ?? CustomAlert.cancel,
                   child: Text(
                     _options.cancelButtonText ?? CustomAlert.cancelText,
-                    style: TextStyle(color: Colors.white, fontSize: 16.0),
+                    style: TextStyle(color: Colors.black, fontSize: 16.0),
                   ),
                 ),
               ),

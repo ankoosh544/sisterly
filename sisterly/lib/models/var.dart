@@ -26,8 +26,16 @@ List<Generic> bagSizes = [
 ];
 
 List<Generic> lenderKits = [
-  Generic(1, 'Solo tag NFC (obbligatorio)'),
-  Generic(2, 'Lender Kit completo (Tag + Bag)')
+  Generic(1, 'Solo tag NFC (obbligatorio) - 4€'),
+  Generic(2, 'Lender Kit completo (Tag + Bag) - 15€'),
+  Generic(3, 'Ritiro NFC in ufficio Sisterly - 0€')
+];
+
+List<Generic> documentTypes = [
+  Generic(1, "Carta d'identità"),
+  Generic(2, "Passaporto"),
+  Generic(3, 'Patente di guida'),
+  Generic(4, 'Bolletta')
 ];
 
 /*

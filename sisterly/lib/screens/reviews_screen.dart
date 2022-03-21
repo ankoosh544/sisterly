@@ -15,7 +15,9 @@ import "package:sisterly/utils/utils.dart";
 
 class ReviewsScreen extends StatefulWidget {
 
-  const ReviewsScreen({Key? key}) : super(key: key);
+  final int userId;
+
+  const ReviewsScreen({Key? key, required this.userId}) : super(key: key);
 
   @override
   ReviewsScreenState createState() => ReviewsScreenState();
@@ -47,7 +49,7 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
     setState(() {
       _isLoading = true;
     });
-    ApiManager(context).makeGetRequest('/client/properties', {}, (res) {
+    ApiManager(context).makeGetRequest('/client/' + widget.userId.toString(), {}, (res) {
       // print(res);
       setState(() {
         _isLoading = false;
@@ -65,7 +67,7 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
       _isLoading = true;
     });
 
-    ApiManager(context).makeGetRequest('/client/all_reviews', {}, (res) {
+    ApiManager(context).makeGetRequest('/client/reviews/' + widget.userId.toString(), {}, (res) {
       // print(res);
       setState(() {
         _isLoading = false;

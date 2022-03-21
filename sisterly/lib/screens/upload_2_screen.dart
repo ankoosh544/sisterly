@@ -306,7 +306,14 @@ class Upload2ScreenState extends State<Upload2Screen> {
           ApiManager.showFreeErrorMessage(context, res["errors"].toString());
         } else {
           debugPrint("product success " + jsonEncode(res["data"]));
-          askPayment(res["data"]["id"]);
+
+          if(_selectedLenderKit.id == 3) {
+            Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (BuildContext context) =>
+                    ProductSuccessScreen()), (_) => false);
+          } else {
+            askPayment(res["data"]["id"]);
+          }
         }
       }, (res) {
         setState(() {

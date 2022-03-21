@@ -349,7 +349,7 @@ class ApiManager {
     }
   }
 
-  makeUploadRequest(context, method, endpoint, filePath, params, success, failure) async {
+  makeUploadRequest(context, method, endpoint, filePath, params, success, failure, key) async {
     final postUri = Uri.parse(SessionData().serverUrl + endpoint);
     http.MultipartRequest request = http.MultipartRequest(method, postUri);
 
@@ -360,16 +360,56 @@ class ApiManager {
     });
 
     try {
-      // File imgFile = File(filePath);
-      // Img.Image? tmp = Img.decodeImage(imgFile.readAsBytesSync());
-      // Img.Image? resized = Img.copyResize(tmp!, width: 1000);
-      // http.MultipartFile multipartFile = http.MultipartFile.fromBytes('file', Img.encodeJpg(resized));
-
-      http.MultipartFile multipartFile = await http.MultipartFile.fromPath('image', filePath);
+      http.MultipartFile multipartFile = await http.MultipartFile.fromPath(key, filePath);
 
       debugPrint("multipartFile postUri: "+postUri.toString()+"  multipartFile.length: "+multipartFile.length.toString());
 
       request.files.add(multipartFile);
+      //request.fields["order"] = order.toString();
+
+      if(params != null) {
+        params.forEach((k,v) => request.fields[k] = v.toString());
+      }
+
+      http.StreamedResponse response = await request.send();
+      final json = await response.stream.bytesToString();
+      int statusCode = response.statusCode;
+
+      debugPrint("makeUploadRequest completed json: "+json+"   files: " + request.files.length.toString());
+
+      try {
+        success(jsonDecode(json.toString()));
+      } catch (ex) {
+        manageFailure(failure, context, statusCode, json);
+      }
+    } catch(ex) {
+      manageFailure(failure, context, 500, json);
+    }
+  }
+
+  makeUploadDocumentsRequest(context, method, endpoint, fileFront, fileBack, params, success, failure) async {
+    final postUri = Uri.parse(SessionData().serverUrl + endpoint);
+    http.MultipartRequest request = http.MultipartRequest(method, postUri);
+
+    request.headers.addAll({
+      "Authorization": "Bearer ${SessionData().token!}",
+      "Content-Type": "multipart/form-data",
+      "Accept-Language": await getLocale(context) ?? ''
+    });
+
+    try {
+      if(fileFront != null) {
+        http.MultipartFile multipartFileFront = await http.MultipartFile.fromPath("front", fileFront.path);
+        request.files.add(multipartFileFront);
+        debugPrint("multipartFile postUri: "+postUri.toString()+"  multipartFileFront.length: "+multipartFileFront.length.toString());
+      }
+
+      if(fileBack != null) {
+        http.MultipartFile multipartFileRetro = await http.MultipartFile.fromPath("back", fileBack.path);
+        request.files.add(multipartFileRetro);
+        debugPrint("multipartFile postUri: "+postUri.toString()+"  multipartFileRetro.length: "+multipartFileRetro.length.toString());
+      }
+
       //request.fields["order"] = order.toString();
 
       if(params != null) {
@@ -487,6 +527,23 @@ class ApiManager {
         //style: CustomAlertStyle.success,
         onPress: (bool isConfirm) {
           Navigator.of(context, rootNavigator: true).pop();
+
+          return false;
+        });
+  }
+
+  static showFreeSuccessMessageWithCallback(context, String text, Function callback) {
+    if(context == null) return;
+
+    CustomAlert.show(context,
+        //title: AppLocalizations.of(context).translate("generic_success"),
+        confirmButtonColor: Constants.SECONDARY_COLOR,
+        subtitle: text,
+        //style: CustomAlertStyle.success,
+        onPress: (bool isConfirm) {
+          Navigator.of(context, rootNavigator: true).pop();
+
+          if(isConfirm) callback();
 
           return false;
         });

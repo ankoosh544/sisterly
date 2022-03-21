@@ -86,13 +86,38 @@ class UploadScreenState extends State<UploadScreen>  {
       _getColors();
       _getMaterials();
       _getDeliveryModes();
-      populateEditProduct();
+      _populateEditProduct();
+      _getDocuments();
     });
   }
 
   @override
   void dispose() {
     super.dispose();
+  }
+
+  _getDocuments() {
+    setState(() {
+      _isLoadingDocuments = true;
+    });
+    ApiManager(context).makeGetRequest('/client/document', {}, (res) {
+      _documents = [];
+
+      var data = res["data"];
+      if (data != null) {
+        for (var doc in data) {
+          _documents.add(Document.fromJson(doc));
+        }
+      }
+
+      setState(() {
+        _isLoadingDocuments = false;
+      });
+    }, (res) {
+      setState(() {
+        _isLoadingDocuments = false;
+      });
+    });
   }
 
   _startOnboarding() async {
@@ -125,7 +150,7 @@ class UploadScreenState extends State<UploadScreen>  {
     });
   }
 
-  populateEditProduct() {
+  _populateEditProduct() {
     if(widget.editProduct != null) {
       if(_brands.isNotEmpty && _materials.isNotEmpty && _colors.isNotEmpty) {
         debugPrint("populateEditProduct edit product");
@@ -137,8 +162,8 @@ class UploadScreenState extends State<UploadScreen>  {
         if(widget.editProduct!.deliveryType != null) _selectedDelivery = deliveryTypes.firstWhere((element) => element.id == widget.editProduct!.deliveryType!.id);
         _selectedConditions = productConditions.firstWhere((element) => element.id == widget.editProduct!.conditionsId);
         _selectedBagYears = bagYears.firstWhere((element) => element.id == widget.editProduct!.yearId);
-        _dailyPrice.text = widget.editProduct!.priceOffer.toString();
-        _sellingPrice.text = widget.editProduct!.sellingPrice.toString();
+        _dailyPrice.text = widget.editProduct!.priceOffer.toString().replaceAll(".", ",");
+        _sellingPrice.text = widget.editProduct!.sellingPrice.toString().replaceAll(".", ",");
         _usePriceAlgo = widget.editProduct!.usePriceAlgorithm;
         _useDiscount = widget.editProduct!.useDiscount;
 
@@ -160,7 +185,7 @@ class UploadScreenState extends State<UploadScreen>  {
       ApiManager(context).makePutRequest('/client/media', {}, (res) {
         _mediaId = res["data"]["id"];
 
-        populateEditProduct();
+        _populateEditProduct();
 
         setState(() {
 
@@ -264,10 +289,47 @@ class UploadScreenState extends State<UploadScreen>  {
                           ),
                         ),
                       ),
+                      if(_documents.isEmpty) InkWell(
+                        onTap: () async {
+                          await Navigator.of(context, rootNavigator: true).push(
+                              MaterialPageRoute(builder: (BuildContext context) => DocumentsScreen()));
+
+                          _getDocuments();
+                        },
+                        child: Card(
+                          color: Color(0x88FF8A80),
+                          elevation: 0,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              children: const [
+                                Text('Per procedere con il caricamento della borsa è necessario caricare i documenti necessari',
+                                  style: TextStyle(
+                                    color: Constants.TEXT_COLOR,
+                                    fontSize: 16,
+                                    fontFamily: Constants.FONT,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                SizedBox(height: 8),
+                                Text('Clicca qui',
+                                    style: TextStyle(
+                                      color: Constants.TEXT_COLOR,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: Constants.FONT,
+                                    )
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      if(_documents.isEmpty) SizedBox(height: 15),
                       AbsorbPointer(
-                        absorbing: onboardingUrl != null,
+                        absorbing: onboardingUrl != null || _documents.isEmpty,
                         child: Opacity(
-                          opacity: onboardingUrl != null ? 0.4 : 1,
+                          opacity:  onboardingUrl != null || _documents.isEmpty ? 0.4 : 1,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
@@ -806,13 +868,27 @@ class UploadScreenState extends State<UploadScreen>  {
                                 ),
                               ),
                               SizedBox(height: 32),
-                              Text(
-                                "Prezzo al giorno",
-                                style: TextStyle(
-                                    color: Constants.TEXT_COLOR,
-                                    fontSize: 16,
-                                    fontFamily: Constants.FONT
-                                ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "Prezzo al giorno",
+                                    style: TextStyle(
+                                        color: Constants.TEXT_COLOR,
+                                        fontSize: 16,
+                                        fontFamily: Constants.FONT
+                                    ),
+                                  ),
+                                  InkWell(
+                                    onTap: () {
+                                      ApiManager.showFreeSuccessMessage(context, "Il prezzo che si andrà ad inserire è riferito per singolo giorno e la durata minima del noleggio di una borsa è di 3 giorni, di conseguenza il prezzo inserito verrà moltiplicato almeno per 3 giorni ad ogni noleggio");
+                                    },
+                                    child: Icon(
+                                      Icons.info_outline,
+                                      color: Constants.SECONDARY_COLOR,
+                                    ),
+                                  )
+                                ],
                               ),
                               SizedBox(height: 8,),
                               Container(
@@ -897,6 +973,15 @@ class UploadScreenState extends State<UploadScreen>  {
                                       ),
                                     )
                                   ),
+                                  InkWell(
+                                    onTap: () {
+                                      ApiManager.showFreeSuccessMessage(context, "Partecipando alle promozioni Sisterly, la tua borsa verrà inserita in tutte le campagne marketing che creiamo per promuovere il noleggio (per esempio tramite sconti e offerte).\n\nSarai sempre tu puoi ad accettare o meno la richiesta di noleggio!");
+                                    },
+                                    child: Icon(
+                                      Icons.info_outline,
+                                      color: Constants.SECONDARY_COLOR,
+                                    ),
+                                  )
                                 ],
                               ),
                               SizedBox(height: 32,),
@@ -936,6 +1021,15 @@ class UploadScreenState extends State<UploadScreen>  {
                                       ),
                                     ),
                                   ),
+                                  InkWell(
+                                    onTap: () {
+                                      ApiManager.showFreeSuccessMessage(context, "Quando le borrower selezionano periodi di noleggio superiori ai 3 giorni, il prezzo giornaliero che hai inserito viene scontato al crescere della durata. Questo permetterà di noleggiare la tua borsa più a lungo e che venga scelta rispetto ad altre borse con tariffe più alte.");
+                                    },
+                                    child: Icon(
+                                      Icons.info_outline,
+                                      color: Constants.SECONDARY_COLOR,
+                                    ),
+                                  )
                                 ],
                               ),
                               SizedBox(height: 32),
@@ -984,7 +1078,7 @@ class UploadScreenState extends State<UploadScreen>  {
         });
       }
 
-      populateEditProduct();
+      _populateEditProduct();
     }, (res) {});
   }
 
@@ -1002,7 +1096,7 @@ class UploadScreenState extends State<UploadScreen>  {
         });
       }
 
-      populateEditProduct();
+      _populateEditProduct();
     }, (res) {});
   }
 
@@ -1019,7 +1113,7 @@ class UploadScreenState extends State<UploadScreen>  {
         });
       }
 
-      populateEditProduct();
+      _populateEditProduct();
     }, (res) {});
   }
 
@@ -1036,7 +1130,7 @@ class UploadScreenState extends State<UploadScreen>  {
         });
       }
 
-      populateEditProduct();
+      _populateEditProduct();
     }, (res) {
 
     });
@@ -1085,7 +1179,7 @@ class UploadScreenState extends State<UploadScreen>  {
       return;
     }
 
-    if(double.parse(_sellingPrice.text) < 500) {
+    if(double.parse(_sellingPrice.text.replaceAll(",", ".")) < 500) {
       ApiManager.showFreeErrorMessage(context, "Si accettano solo borse di lusso con un valore di acquisto superiore a €500");
       return;
     }
@@ -1100,9 +1194,9 @@ class UploadScreenState extends State<UploadScreen>  {
         "conditions": _selectedConditions.id,
         "year": _selectedBagYears.id,
         "size": _selectedBagSize.id,
-        "price_retail": double.parse(_dailyPrice.text),
-        "price_offer": double.parse(_dailyPrice.text),
-        "selling_price": double.parse(_sellingPrice.text),
+        "price_retail": double.parse(_dailyPrice.text.replaceAll(",", ".")),
+        "price_offer": double.parse(_dailyPrice.text.replaceAll(",", ".")),
+        "selling_price": double.parse(_sellingPrice.text.replaceAll(",", ".")),
         "delivery_type": _selectedDelivery!.id,
         "description": _descriptionText.text,
         "max_days": 100,
@@ -1152,7 +1246,7 @@ class UploadScreenState extends State<UploadScreen>  {
             setState(() {
               _isUploading = false;
             });
-          });
+          }, "image");
         }
 
         setState(() {

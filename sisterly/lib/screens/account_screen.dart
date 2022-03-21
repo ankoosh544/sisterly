@@ -157,14 +157,33 @@ class AccountScreenState extends State<AccountScreen>  {
           ),
           SizedBox(width: 18,),
           Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                  color: Constants.TEXT_COLOR,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: Constants.FONT
-              ),
+            child: Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                      color: Constants.TEXT_COLOR,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: Constants.FONT
+                  ),
+                ),
+                SizedBox(width: 12,),
+                InkWell(
+                  onTap: () {
+                    ApiManager.showFreeSuccessMessage(context, "Devi partire e non riesci a consegnare le tue borse alle Borrower Sisters?\n\nVuoi indossare tu le tue borse e vuoi rendere momentaneamente non disponibili per il noleggio?\n\nSeleziona la modalità vacanza per nascondere le tue borse e toglila quando vuoi tornare a noleggiare.");
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 5),
+                    child: Icon(
+                      Icons.info_outline,
+                      color: Constants.SECONDARY_COLOR,
+                      size: 18,
+                    ),
+                  ),
+                )
+              ],
             ),
           ),
           if(_profile != null) CupertinoSwitch(
@@ -288,6 +307,15 @@ class AccountScreenState extends State<AccountScreen>  {
                             },
                             child: getItem("assets/images/edit.svg", "Modifica il tuo Profilo")
                         ),
+                        InkWell(
+                            onTap: () async {
+                              await Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (BuildContext context) => DocumentsScreen()));
+
+                              getUser();
+                            },
+                            child: getItem("assets/images/document.svg", "Documenti")
+                        ),
                         Opacity(
                           opacity: _stripeLoginUrl != null ? 1.0 : 0.4,
                           child: InkWell(
@@ -298,7 +326,7 @@ class AccountScreenState extends State<AccountScreen>  {
                                           builder: (BuildContext context) =>
                                               StripeWebviewScreen(
                                                   url: _stripeLoginUrl!,
-                                                  title: "Documenti")));
+                                                  title: "Wallet")));
 
                                   //_stripeLoginUrl
 
@@ -353,7 +381,7 @@ class AccountScreenState extends State<AccountScreen>  {
                         InkWell(
                           onTap: () {
                             Navigator.of(context).push(
-                                MaterialPageRoute(builder: (BuildContext context) => ReviewsScreen()));
+                                MaterialPageRoute(builder: (BuildContext context) => ReviewsScreen(userId: SessionData().userId!,)));
                           },
                             child: getItem("assets/images/review.svg", "Le tue recensioni")
                         ),

@@ -7,9 +7,11 @@ import 'package:sisterly/models/chat.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/screens/product_screen.dart';
 import 'package:sisterly/screens/reset_screen.dart';
+import 'package:sisterly/screens/reviews_screen.dart';
 import 'package:sisterly/screens/signup_screen.dart';
 import 'package:sisterly/screens/signup_success_screen.dart';
 import 'package:sisterly/screens/verify_screen.dart';
+import 'package:sisterly/screens/wishlist_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:sisterly/utils/localization/app_localizations.dart';
@@ -38,9 +40,11 @@ class ProfileScreenState extends State<ProfileScreen>  {
 
   bool _isLoading = false;
   List<Product> _products = [];
+  List<Product> _reviewProducts = [];
   List<Product> _productsFavorite = [];
   Account? _profile;
   bool _viewAll = false;
+  bool _viewReviewAll = false;
 
   @override
   void initState() {
@@ -49,6 +53,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
     Future.delayed(Duration.zero, () {
       getUser();
       getProducts();
+      getReviewProducts();
     });
   }
 
@@ -79,7 +84,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
       _isLoading = true;
     });
 
-    ApiManager(context).makeGetRequest(widget.id != null ? '/product/byUser/' + widget.id.toString() + '/' : '/product/my/', {}, (res) {
+    ApiManager(context).makeGetRequest(widget.id != null ? '/product/byUser/' + widget.id.toString() + '/' : '/product/my/', { "status": 4 }, (res) {
       // print(res);
       setState(() {
         _isLoading = false;
@@ -91,6 +96,32 @@ class ProfileScreenState extends State<ProfileScreen>  {
       if (data != null) {
         for (var prod in data) {
           _products.add(Product.fromJson(prod));
+        }
+      }
+    }, (res) {
+      setState(() {
+        _isLoading = false;
+      });
+    });
+  }
+
+  getReviewProducts() {
+    setState(() {
+      _isLoading = true;
+    });
+
+    ApiManager(context).makeGetRequest(widget.id != null ? '/product/byUser/' + widget.id.toString() + '/' : '/product/my/', { "status": 1 }, (res) {
+      // print(res);
+      setState(() {
+        _isLoading = false;
+      });
+
+      _reviewProducts = [];
+
+      var data = res["data"];
+      if (data != null) {
+        for (var prod in data) {
+          _reviewProducts.add(Product.fromJson(prod));
         }
       }
     }, (res) {
@@ -140,7 +171,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
     });
   }
 
-  Widget productCell(Product product) {
+  Widget productCell(Product product, bool inReview) {
     return InkWell(
       onTap: () {
          Navigator.of(context).push(
@@ -180,7 +211,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
                     errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder_product.svg"),
                   )
                 ),
-                Positioned(
+                if(!inReview) Positioned(
                   top: 16,
                   right: 16,
                     child: isFavorite(product) ? InkWell(
@@ -224,6 +255,40 @@ class ProfileScreenState extends State<ProfileScreen>  {
                   ),
                 ],
               ),
+            ),
+            if(inReview && product.videos.isEmpty) Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          primary: Constants.PRIMARY_COLOR,
+                          textStyle: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold
+                          ),
+                          side: const BorderSide(color: Constants.PRIMARY_COLOR, width: 1),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50),
+                          )
+                      ),
+                      child: Text('Carica video'),
+                      onPressed: () async {
+                        await Navigator.of(context).push(
+                            MaterialPageRoute(builder: (BuildContext context) => ProductScreen(product, inReview: true,)));
+
+                        getReviewProducts();
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if(inReview && product.videos.isNotEmpty) Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Center(child: Text("Video caricato!")),
             )
           ],
         ),
@@ -301,7 +366,22 @@ class ProfileScreenState extends State<ProfileScreen>  {
                                         ),
                                       ),
                                     ],
-                                  )
+                                  ),
+                                  SizedBox(height: 6,),
+                                  InkWell(
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                          MaterialPageRoute(builder: (BuildContext context) => ReviewsScreen(userId: widget.id!,)));
+                                    },
+                                    child: Text(
+                                      "Vedi recensioni",
+                                      style: TextStyle(
+                                          color: Constants.SECONDARY_COLOR,
+                                          fontSize: 15,
+                                          fontFamily: Constants.FONT
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -402,13 +482,46 @@ class ProfileScreenState extends State<ProfileScreen>  {
                               fontFamily: Constants.FONT
                           ),
                         ),
+                        if(widget.id == null) SizedBox(height: 40,),
+                        if(widget.id == null) InkWell(
+                          onTap: () {
+                            Navigator.of(context).push(
+                                MaterialPageRoute(builder: (BuildContext context) => WishlistScreen()));
+                          },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  "I tuoi preferiti",
+                                  style: TextStyle(
+                                      color: Constants.DARK_TEXT_COLOR,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: Constants.FONT
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                _productsFavorite.length.toString() + " prodotti",
+                                style: TextStyle(
+                                    color: Constants.SECONDARY_COLOR,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: Constants.FONT,
+                                    decoration: TextDecoration.underline
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                         SizedBox(height: 40,),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
                               child: Text(
-                                "Pubblicati da " + getUsername(),
+                                widget.id != null ? "Pubblicati da " + getUsername() : "Pubblicati",
                                 style: TextStyle(
                                     color: Constants.DARK_TEXT_COLOR,
                                     fontSize: 20,
@@ -450,8 +563,61 @@ class ProfileScreenState extends State<ProfileScreen>  {
                               ),
                               itemCount: _viewAll ? _products.length : (_products.length > 4 ? 4 : _products.length),
                               itemBuilder: (BuildContext context, int index) {
-                                return productCell(_products[index]);
+                                return productCell(_products[index], false);
                               }
+                            ),
+                          ) : Text("Non ci sono prodotti pubblicati da questo utente"),
+                        ),
+                        if(widget.id == null)  SizedBox(height: 40,),
+                        if(widget.id == null) Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                "In review",
+                                style: TextStyle(
+                                    color: Constants.DARK_TEXT_COLOR,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: Constants.FONT
+                                ),
+                              ),
+                            ),
+                            if(_reviewProducts.isNotEmpty) InkWell(
+                              child: Text(
+                                _viewReviewAll ? "Vedi meno" : "Vedi tutti",
+                                style: TextStyle(
+                                    color: Constants.SECONDARY_COLOR,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: Constants.FONT,
+                                    decoration: TextDecoration.underline
+                                ),
+                              ),
+                              onTap: () {
+                                setState(() {
+                                  _viewReviewAll = !_viewReviewAll;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                        if(widget.id == null)  Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: _isLoading ? Center(child: CircularProgressIndicator()) : _reviewProducts.isNotEmpty ? MediaQuery.removePadding(
+                            context: context,
+                            removeTop: true,
+                            child: GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                  childAspectRatio: 0.62 / 1,
+                                  crossAxisCount: 2,
+                                ),
+                                itemCount: _viewReviewAll ? _reviewProducts.length : (_reviewProducts.length > 4 ? 4 : _reviewProducts.length),
+                                itemBuilder: (BuildContext context, int index) {
+                                  return productCell(_reviewProducts[index], true);
+                                }
                             ),
                           ) : Text("Non ci sono prodotti pubblicati da questo utente"),
                         )

@@ -13,6 +13,7 @@ import 'package:sisterly/widgets/header_widget.dart';
 import '../utils/constants.dart';
 import "package:sisterly/utils/utils.dart";
 
+import '../widgets/alert/custom_alert.dart';
 import 'chat_screen.dart';
 
 enum InboxScreenMode {
@@ -137,83 +138,124 @@ class InboxScreenState extends State<InboxScreen>  {
         await Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChatScreen(chat: chat, code: chat.code)));
         getConversations();
       },
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              spreadRadius: 0,
-              blurRadius: 6,
-              offset: Offset(0, 0), // changes position of shadow
+      child: Stack(
+        children: [
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.2),
+                  spreadRadius: 0,
+                  blurRadius: 6,
+                  offset: Offset(0, 0), // changes position of shadow
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(52.0),
-                    child: CachedNetworkImage(
-                      width: 52, height: 52, fit: BoxFit.cover,
-                      imageUrl: (chat.user.image ?? ""),
-                      placeholder: (context, url) => CircularProgressIndicator(),
-                      errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder.svg"),
-                    ),
-                  ),
-                  SizedBox(width: 12,),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(52.0),
+                        child: CachedNetworkImage(
+                          width: 52, height: 52, fit: BoxFit.cover,
+                          imageUrl: (chat.user.image ?? ""),
+                          placeholder: (context, url) => CircularProgressIndicator(),
+                          errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder.svg"),
+                        ),
+                      ),
+                      SizedBox(width: 12,),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Text(
-                                getUsername(chat.user),
-                                style: TextStyle(
-                                    color: Constants.DARK_TEXT_COLOR,
-                                    fontSize: 16,
-                                    fontFamily: Constants.FONT,
-                                  fontWeight: FontWeight.bold
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    getUsername(chat.user),
+                                    style: TextStyle(
+                                        color: Constants.DARK_TEXT_COLOR,
+                                        fontSize: 16,
+                                        fontFamily: Constants.FONT,
+                                      fontWeight: FontWeight.bold
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                if(chat.lastMessage != null) Text(
+                                  getVerboseDateTimeRepresentation(chat.lastMessage!.sendAt!.toLocal()),
+                                  style: TextStyle(
+                                      color: Constants.LIGHT_GREY_COLOR,
+                                      fontSize: 14,
+                                      fontFamily: Constants.FONT
+                                  ),
+                                ),
+                              ],
                             ),
+                            if(chat.lastMessage != null) SizedBox(height: 6),
                             if(chat.lastMessage != null) Text(
-                              getVerboseDateTimeRepresentation(chat.lastMessage!.sendAt!.toLocal()),
+                              chat.lastMessage!.message.toString(),
                               style: TextStyle(
-                                  color: Constants.LIGHT_GREY_COLOR,
-                                  fontSize: 14,
+                                  color: Constants.DARK_TEXT_COLOR,
+                                  fontSize: 16,
                                   fontFamily: Constants.FONT
                               ),
                             ),
                           ],
                         ),
-                        if(chat.lastMessage != null) SizedBox(height: 6),
-                        if(chat.lastMessage != null) Text(
-                          chat.lastMessage!.message.toString(),
-                          style: TextStyle(
-                              color: Constants.DARK_TEXT_COLOR,
-                              fontSize: 16,
-                              fontFamily: Constants.FONT
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
+                      )
+                    ],
+                  ),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
+          Positioned(
+            right: 0,
+            top: 0,
+            child: InkWell(
+                onTap: () {
+                  CustomAlert.show(context,
+                      //title: AppLocalizations.of(context).translate("generic_success"),
+                      confirmButtonColor: Constants.SECONDARY_COLOR,
+                      subtitle: "Vuoi procedere con l'eliminazione?",
+                      showCancelButton: true,
+                      cancelButtonText: "Annulla",
+                      cancelButtonColor: Colors.white,
+                      //style: CustomAlertStyle.success,
+                      onPress: (bool isConfirm) {
+                        Navigator.of(context, rootNavigator: true).pop();
+
+                        if(isConfirm) {
+                          ApiManager(context).makeDeleteRequest('/chat/' + chat.code + "/", (res) {
+                            getConversations();
+                          }, (res) {
+                            getConversations();
+                          });
+                        }
+
+                        return false;
+                      });
+                  //ApiManager.showFreeSuccessMessage(context, "");
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                      color: Constants.SECONDARY_COLOR,
+                      borderRadius: BorderRadius.circular(15)
+                  ),
+                  child: Icon(Icons.clear, color: Colors.white, size: 22,)
+                )
+            ),
+          )
+        ],
       ),
     );
   }
