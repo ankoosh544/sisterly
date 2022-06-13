@@ -399,7 +399,8 @@ class ProfileScreenState extends State<ProfileScreen>  {
                                         ApiManager.showFreeErrorMessage(context, res["errors"].toString());
                                       } else {
                                         ApiManager(context).makeGetRequest('/chat/' + res["data"]["code"]  + '/', {}, (chatRes) {
-                                          Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChatScreen(chat: Chat.fromJson(chatRes["data"]), code: res["data"]["code"])));
+                                          String initialMessage = 'Come stai, ' + _profile!.firstName! + '?';
+                                          Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChatScreen(chat: Chat.fromJson(chatRes["data"]), code: res["data"]["code"], initialMessage: initialMessage)));
                                         }, (res) {
 
                                         });
