@@ -135,7 +135,8 @@ class InboxScreenState extends State<InboxScreen>  {
   Widget conversationCell(Chat chat) {
     return InkWell(
       onTap: () async {
-        await Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChatScreen(chat: chat, code: chat.code)));
+        String initialMessage = 'Come stai, ' + chat.user.firstName! + '?';
+        await Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChatScreen(chat: chat, code: chat.code, initialMessage: initialMessage)));
         getConversations();
       },
       child: Stack(

@@ -89,11 +89,9 @@ class SearchUserScreenState extends State<SearchUserScreen>  {
           if (res["errors"] != null) {
             ApiManager.showFreeErrorMessage(context, res["errors"].toString());
           } else {
-            ApiManager(context).makeGetRequest('/chat/' + res["data"]["code"]  + '/', {}, (chatRes) async {
-              await FirebaseAnalytics.instance.logEvent(name: "chat", parameters: {
-                "username": user.username
-              });
-              Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChatScreen(chat: Chat.fromJson(chatRes["data"]), code: res["data"]["code"])));
+            ApiManager(context).makeGetRequest('/chat/' + res["data"]["code"]  + '/', {}, (chatRes) {
+              String initialMessage = 'Come stai, ' + user.firstName! + '?';
+              Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChatScreen(chat: Chat.fromJson(chatRes["data"]), code: res["data"]["code"], initialMessage: initialMessage)));
             }, (res) {
 
             });

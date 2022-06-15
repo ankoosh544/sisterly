@@ -23,8 +23,9 @@ class ChatScreen extends StatefulWidget {
 
   final String code;
   final Chat chat;
+  final String? initialMessage;
 
-  const ChatScreen({Key? key, required this.code, required this.chat}) : super(key: key);
+  const ChatScreen({Key? key, required this.code, required this.chat, this.initialMessage}) : super(key: key);
 
   @override
   ChatScreenState createState() => ChatScreenState();
@@ -150,6 +151,19 @@ class ChatScreenState extends State<ChatScreen>  {
           _messages.add(Message.fromJson(chat));
         }
       }
+
+      String initialMessage = '';
+
+      if (_messages.isEmpty) {
+        initialMessage = widget.initialMessage!;
+      }
+
+      _messageController.value = TextEditingValue(
+        text: initialMessage,
+        selection: TextSelection.fromPosition(
+          TextPosition(offset: initialMessage.length),
+        )
+      );
 
       //_messages = _messages.reversed.toList();
 
