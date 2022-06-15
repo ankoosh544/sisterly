@@ -83,7 +83,7 @@ class ChatScreenState extends State<ChatScreen>  {
   }
 
   connectSocket() {
-    String socketUrl = "ws://" + SessionData().serverUrl.replaceAll("http://", "").replaceAll("https://", "") + "/ws/chat/" + socketCode.toString() + "/";
+    String socketUrl = "ws://" + Constants.SERVER_URL.replaceAll("http://", "").replaceAll("https://", "") + "/ws/chat/" + socketCode.toString() + "/";
 
     //socketUrl = "wss://demo.piesocket.com/v3/channel_1?api_key=oCdCMcMPQpbvNjUIzqtvF1d2X2okWpDQj4AwARJuAgtjhzKxVEjQU6IdCjwm&notify_self";
     debugPrint("connecting to "+socketUrl.toString());

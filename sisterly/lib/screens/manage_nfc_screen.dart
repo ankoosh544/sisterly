@@ -38,9 +38,9 @@ import 'order_confirm_success_screen.dart';
 
 class ManageNfcScreen extends StatefulWidget {
   final Product? product;
-  final Offer? offer;
+  final Offer offer;
 
-  const ManageNfcScreen({Key? key, this.product, this.offer}) : super(key: key);
+  const ManageNfcScreen({Key? key, this.product, required this.offer}) : super(key: key);
 
   @override
   ManageNfcScreenState createState() => ManageNfcScreenState();
@@ -78,76 +78,94 @@ class ManageNfcScreenState extends State<ManageNfcScreen> {
                       topLeft: Radius.circular(30),
                       topRight: Radius.circular(30))),
               child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                  primary: Constants.SECONDARY_COLOR,
-                                  textStyle: const TextStyle(fontSize: 16),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 80, vertical: 14),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(50))),
-                              child: Text('Conferma ricezione ordine', textAlign: TextAlign.center,),
-                              onPressed: () async {
-                                confirmOrder();
-                              },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Stack(
+                      children: [
+                        SvgPicture.asset("assets/images/bg-pink-ellipse.svg", width: MediaQuery.of(context).size.width,),
+                        Positioned(
+                          top: 60,
+                          left: MediaQuery.of(context).size.width * 0.15,
+                          child: Center(
+                            child: SvgPicture.asset("assets/images/bag_illustration.svg",
+                                width: MediaQuery.of(context).size.width * 0.7
                             ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 28,),
+                    Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        children: [
+                          if(widget.offer.product.owner.id != SessionData().userId) Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                      primary: Constants.SECONDARY_COLOR,
+                                      textStyle: const TextStyle(fontSize: 16),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 40, vertical: 14),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(50))),
+                                  child: Text('Conferma ricezione ordine', textAlign: TextAlign.center,),
+                                  onPressed: () async {
+                                    confirmOrder();
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          if(widget.offer.product.owner.id != SessionData().userId) SizedBox(height: 32),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                      primary: Constants.SECONDARY_COLOR,
+                                      textStyle: const TextStyle(fontSize: 16),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 80, vertical: 14),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(50))),
+                                  child: Text('Invia un reclamo',  textAlign: TextAlign.center),
+                                  onPressed: () async {
+                                    Navigator.of(context).push(
+                                        MaterialPageRoute(builder: (BuildContext context) => AddClaimScreen(product: widget.product, offer: widget.offer, isSeller: widget.offer.product.owner.id == SessionData().userId)));
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                      SizedBox(height: 32),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                  primary: Constants.SECONDARY_COLOR,
-                                  textStyle: const TextStyle(fontSize: 16),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 80, vertical: 14),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(50))),
-                              child: Text('Invia un reclamo',  textAlign: TextAlign.center),
-                              onPressed: () async {
-                                Navigator.of(context).push(
-                                    MaterialPageRoute(builder: (BuildContext context) => AddClaimScreen(product: widget.product, offer: widget.offer,)));
-                              },
-                            ),
+                    ),
+                    /*SizedBox(height: 32),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                                primary: Constants.SECONDARY_COLOR,
+                                textStyle: const TextStyle(fontSize: 16),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 80, vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(50))),
+                            child: Text('Lascia una recensione',  textAlign: TextAlign.center),
+                            onPressed: () async {
+                              Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (BuildContext context) => AddReviewScreen(product: widget.product, offer: widget.offer,)));
+                            },
                           ),
-                        ],
-                      ),
-                      SizedBox(height: 32),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                  primary: Constants.SECONDARY_COLOR,
-                                  textStyle: const TextStyle(fontSize: 16),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 80, vertical: 14),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(50))),
-                              child: Text('Lascia una recensione',  textAlign: TextAlign.center),
-                              onPressed: () async {
-                                Navigator.of(context).push(
-                                    MaterialPageRoute(builder: (BuildContext context) => AddReviewScreen(product: widget.product, offer: widget.offer,)));
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 32),
-                    ],
-                  ),
+                        ),
+                      ],
+                    ),*/
+                    SizedBox(height: 32),
+                  ],
                 ),
               ),
             ),
@@ -158,7 +176,7 @@ class ManageNfcScreenState extends State<ManageNfcScreen> {
   }
 
   confirmOrder() {
-    ApiManager(context).makeGetRequest('/product/order/' + widget.offer!.id.toString() + "/confirm/", {}, (res) {
+    ApiManager(context).makeGetRequest('/product/order/' + widget.offer.id.toString() + "/confirm/", {}, (res) {
       if (res["errors"] != null) {
         ApiManager.showFreeErrorMessage(context, res["errors"].toString());
       } else {

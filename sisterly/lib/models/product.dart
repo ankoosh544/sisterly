@@ -1,6 +1,8 @@
+import 'package:sisterly/models/category.dart';
 import 'package:sisterly/models/delivery_mode.dart';
-import 'package:sisterly/models/delivery_mode_offer.dart';
+import 'package:sisterly/models/product_color.dart';
 import 'package:sisterly/models/product_image.dart';
+import 'package:sisterly/models/product_location.dart';
 import 'package:sisterly/models/product_video.dart';
 import 'package:sisterly/models/var.dart';
 
@@ -18,6 +20,8 @@ class Product {
   final int colorId;
   final String colorName;
   final String colorHex;
+  List<ProductColor> colors = [];
+  List<Category> categories = [];
   final int materialId;
   final String? description;
   final String materialName;
@@ -35,6 +39,7 @@ class Product {
   bool usePriceAlgorithm;
   bool useDiscount;
   final LenderKit? lenderKitToSend;
+  final ProductLocation? location;
 
   Product(
       this.id,
@@ -43,6 +48,8 @@ class Product {
       this.description,
       this.brandId,
       this.brandName,
+      this.categories,
+      this.colors,
       this.colorId,
       this.colorName,
       this.colorHex,
@@ -61,7 +68,8 @@ class Product {
       this.usePriceAlgorithm,
       this.useDiscount,
       this.lenderKitToSend,
-      this.mediaId);
+      this.mediaId,
+      this.location);
 
   static getArrayDesc(item) {
     if (item.isNotEmpty && item.length > 1) {
@@ -79,6 +87,8 @@ class Product {
         json["description"],
         json["brand"]["id"],
         json["brand"]["name"],
+        [],
+        [],
         json["color"]["id"],
         json["color"]["color"],
         json["color"]["hexadecimal"],
@@ -97,7 +107,8 @@ class Product {
       json["use_price_algorithm"] ?? false,
       json["use_discount"] ?? false,
       LenderKit.fromJson(json["lender_kit_to_send"]),
-      json["media"]["id"]
+      json["media"]["id"],
+      ProductLocation.fromJson(json["location"]),
     );
 
     var media = json["media"];
@@ -112,6 +123,18 @@ class Product {
 
     for(var vid in media["videos"]) {
       prod.videos.add(ProductVideo.fromJson(vid));
+    }
+
+    if(json["colors"] != null) {
+      for (var col in json["colors"]) {
+        prod.colors.add(ProductColor.fromJson(col));
+      }
+    }
+
+    if(json["categories"] != null) {
+      for (var col in json["categories"]) {
+        prod.categories.add(Category.fromJson(col));
+      }
     }
 
     return prod;

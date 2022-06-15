@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/screens/product_screen.dart';
@@ -17,6 +18,7 @@ import 'package:sisterly/utils/utils.dart';
 import 'package:sisterly/widgets/custom_app_bar.dart';
 import 'package:sisterly/widgets/header_widget.dart';
 
+import '../main.dart';
 import '../utils/constants.dart';
 import 'checkout_screen.dart';
 import 'login_screen.dart';
@@ -72,13 +74,20 @@ class WishlistScreenState extends State<WishlistScreen>  {
     super.dispose();
   }
 
-  setProductFavorite(product, add) {
+  setProductFavorite(Product product, add) {
     var params = {
       "product_id": product.id,
       "remove": !add
     };
-    ApiManager(context).makePostRequest('/product/favorite/change/', params, (res) {
+    ApiManager(context).makePostRequest('/product/favorite/change/', params, (res) async {
       getProductsFavorite();
+
+      if(add) {
+        await FirebaseAnalytics.instance.logAddToWishlist(
+            items: [AnalyticsEventItem(itemId: product.id.toString(), itemName: product.model.toString() + " - " + product.brandName.toString())]
+        );
+        MyApp.facebookAppEvents.logAddToWishlist(id: product.id.toString(), type: "product", currency: "EUR", price: product.priceOffer);
+      }
     }, (res) {
 
     });

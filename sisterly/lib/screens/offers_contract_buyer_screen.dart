@@ -5,6 +5,8 @@ import 'package:sisterly/models/account.dart';
 import 'package:sisterly/models/offer.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/screens/choose_payment_screen.dart';
+import 'package:sisterly/screens/payment_method_screen.dart';
+import 'package:sisterly/screens/payment_status_screen.dart';
 import 'package:sisterly/screens/profile_screen.dart';
 import 'package:sisterly/screens/stripe_webview_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
@@ -66,7 +68,11 @@ class OffersContractBuyerScreenState extends State<OffersContractBuyerScreen>  {
       });
 
       if (res["errors"] != null) {
-        ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+        if(res["errors"].length > 0 && res["errors"][0].toString().contains("already signed")) {
+          payNow();
+        } else {
+          ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+        }
       } else {
         payNow();
       }
@@ -130,10 +136,26 @@ class OffersContractBuyerScreenState extends State<OffersContractBuyerScreen>  {
       "ip_address": "192.168.1.1"
     };
 
-    ApiManager(context).makePutRequest("/payment/make/" + widget.offer.id.toString(), params, (res) {
-      if(res["data"] != null && res["data"]["redirect_url"] != null) {
+    ApiManager(context).makePutRequest("/payment/make/" + widget.offer.id.toString() + "?version=v2", params, (res) {
+      if(res["data"] != null && res["data"]["client_secret"] != null) {
+        /*Navigator.of(context).push(
+            MaterialPageRoute(builder: (BuildContext context) => StripeWebviewScreen(title: "Pagamento", url: res["data"]["redirect_url"],)));*/
         Navigator.of(context).push(
-            MaterialPageRoute(builder: (BuildContext context) => StripeWebviewScreen(title: "Pagamento", url: res["data"]["redirect_url"],)));
+            MaterialPageRoute(builder: (BuildContext context) => PaymentMethodScreen(
+              successCallback: () {
+                Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                        builder: (BuildContext context) => PaymentStatusScreen(total: widget.offer.total!)),
+                        (_) => false);
+              },
+              failureCallback: () {
+                ApiManager.showFreeErrorMessage(context, "Pagamento fallito");
+                Navigator.of(context, rootNavigator: true).pop(false);
+              },
+              paymentIntentId: res["data"]["id"],
+              paymentIntentSecret: res["data"]["client_secret"],
+              offer: widget.offer
+            )));
       } else {
         ApiManager.showFreeErrorMessage(context, "Pagamento fallito");
       }
@@ -231,7 +253,7 @@ class OffersContractBuyerScreenState extends State<OffersContractBuyerScreen>  {
                                           style: TextStyle(color: Constants.PRIMARY_COLOR, fontSize: 16, fontWeight: FontWeight.bold, fontFamily: Constants.FONT),
                                           recognizer: TapGestureRecognizer()
                                             ..onTap = () {
-                                              String url = "https://sisterly-assets.s3.eu-central-1.amazonaws.com/T%26C+Sisterly+rev1.pdf";
+                                              String url = "https://sisterly-assets.s3.eu-central-1.amazonaws.com/Condizioni+di+noleggio.pdf";
                                               launch(url);
                                             },
                                         ),

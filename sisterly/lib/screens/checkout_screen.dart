@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:sisterly/models/address.dart';
 import 'package:sisterly/models/product.dart';
+import 'package:sisterly/models/var.dart';
 import 'package:sisterly/screens/choose_payment_screen.dart';
 import 'package:sisterly/screens/offer_success_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
@@ -19,15 +23,18 @@ class CheckoutScreen extends StatefulWidget {
   final Product product;
   final DateTime startDate;
   final DateTime endDate;
+  final String shipping;
 
-  const CheckoutScreen({Key? key, required this.product, required this.startDate, required this.endDate}) : super(key: key);
+  const CheckoutScreen({Key? key, required this.product, required this.startDate, required this.endDate, required this.shipping}) : super(key: key);
 
   @override
   _CheckoutScreenState createState() => _CheckoutScreenState();
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
+
   String _shipping = 'shipment';
+
   final TextEditingController _name = TextEditingController();
   final TextEditingController _address = TextEditingController();
   final TextEditingController _address2 = TextEditingController();
@@ -37,6 +44,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final TextEditingController _country = TextEditingController(text: "IT");
   final TextEditingController _email = TextEditingController();
   final TextEditingController _phone = TextEditingController();
+  final TextEditingController _discountText = TextEditingController();
 
   final TextEditingController _fromDayText = TextEditingController();
   final TextEditingController _fromMonthText = TextEditingController();
@@ -45,8 +53,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final TextEditingController _toMonthText = TextEditingController();
   final TextEditingController _toYearText = TextEditingController();
 
+  Timer? _discountDebounce;
   bool _insurance = true;
   bool _hasAddress = false;
+  bool _enableBuy = false;
   bool _saveAddress = true;
   bool _isLoadingTotal = false;
   List<Address> _addresses = [];
@@ -57,10 +67,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   DateTime _availableFrom = DateTime.now();
   DateTime _availableTo = DateTime.now().add(Duration(days: 7));
   String _rentPrice = "0";
+  String _deliveryPrice = "0";
+  String _insurancePrice = "0";
+  String _discountAmount = "0";
+  String _discountPercent = "0";
+  String _totalPrice = "0";
 
   @override
   void initState() {
     super.initState();
+
+    if(widget.product.deliveryType!.id == 3) {
+      _shipping = "shipment";
+    }
+
+    if(widget.product.deliveryType!.id == 1) {
+      _shipping = "withdraw";
+    }
+
+    _shipping = widget.shipping;
 
     Future.delayed(Duration.zero, () {
       _availableFrom = widget.startDate;
@@ -68,8 +93,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       setFromDate(_availableFrom);
       setToDate(_availableTo);
-      getAddresses(null);
-      getTotalPrice();
+      getAddresses(() {
+        getTotalPrice();
+      });
+
     });
   }
 
@@ -88,6 +115,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   getTotalPrice() {
+    if(_shipping == "shipment" && _activeAddress == null) {
+      return;
+    }
+
     setState(() {
       _isLoadingTotal = true;
     });
@@ -96,25 +127,54 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       "rent_price": widget.product.priceOffer,
       "date_start": DateFormat("yyyy-MM-dd").format(_availableFrom),
       "date_end": DateFormat("yyyy-MM-dd").format(_availableTo),
+      "delivery_mode": _shipping == 'shipment' ? 3 : 1,
     };
-    ApiManager(context).makeGetRequest('/product/calculate_rent_price', params, (response) {
+
+    if(_activeAddress != null && _shipping == 'shipment') {
+      params["address_id"] = _activeAddress!.id.toString();
+    }
+
+    if(_discountText.text.isNotEmpty) {
+      params["discount_code"] = _discountText.text;
+    }
+
+    ApiManager(context).makePostRequest('/product/' + widget.product.id.toString() + '/offer/calculate_rent', params, (response) {
       setState(() {
         _isLoadingTotal = false;
       });
       if (response["data"] != null) {
         setState(() {
-          _rentPrice = response["data"].toString();
+          _rentPrice = response["data"]["total_rent"].toString();
+          _deliveryPrice = response["data"]["delivery_price"].toString();
+          _insurancePrice = response["data"]["insurance_amount"].toString();
+          _discountAmount = response["data"]["discount_amount"].toString();
+          _discountPercent = response["data"]["discount_percent"].toString();
+          _totalPrice = response["data"]["order_total"].toString();
+          _enableBuy = true;
         });
+      }
+
+      if(response["errors"] != null) {
+        _enableBuy = false;
+        debugPrint("response ok "+response.toString());
+        ApiManager.showFreeErrorToast(context, response["errors"][0]);
       }
     }, (response) {
       setState(() {
         _isLoadingTotal = false;
       });
+
+      debugPrint("response error "+response.toString());
+      /*if(response["errors"] != null) {
+        ApiManager.showErrorToast(context, response["errors"][0]);
+      }*/
     });
   }
 
-  getTotal() {
-    return double.parse(_rentPrice) + 10.0 + (_shipping == 'shipment' ? 15.0 : 0.0);
+  @override
+  void dispose() {
+    _discountDebounce?.cancel();
+    super.dispose();
   }
 
   @override
@@ -148,7 +208,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       const Padding(
                         padding: EdgeInsets.only(top: 24),
                         child: Text(
-                          "Offerta",
+                          "Richiesta di noleggio",
                           style: TextStyle(
                               color: Colors.white,
                               fontSize: 28,
@@ -195,58 +255,60 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             fontWeight: FontWeight.bold
                         ),
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: ListTile(
-                              horizontalTitleGap: 0,
-                              contentPadding: EdgeInsets.all(0),
-                              title: Text(
-                                'Spedizione',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .subtitle1!
-                                    .copyWith(color: _shipping == 'shipment' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
-                              ),
-                              leading: Radio(
-                                value: 'shipment',
-                                groupValue: _shipping,
-                                activeColor: Constants.SECONDARY_COLOR,
-                                  fillColor: MaterialStateColor.resolveWith((states) => _shipping == 'shipment' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
-                                onChanged: _handleShipmentRadioChange
-                              ),
-                            ),
-                          ),
-                          Flexible(
-                            child: ListTile(
-                              contentPadding: EdgeInsets.all(0),
-                              horizontalTitleGap: 0,
-                              title: Text(
-                                'Ritiro',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .subtitle1!
-                                    .copyWith(color: _shipping == 'withdraw' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
-                              ),
-                              leading: Radio(
-                                value: 'withdraw',
-                                groupValue: _shipping,
-                                fillColor: MaterialStateColor.resolveWith((states) => _shipping == 'withdraw' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
-                                onChanged: _handleShipmentRadioChange
+                      IgnorePointer(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            if(widget.product.deliveryType!.id == 3 || widget.product.deliveryType!.id == 13) Expanded(
+                              child: ListTile(
+                                horizontalTitleGap: 0,
+                                contentPadding: EdgeInsets.all(0),
+                                title: Text(
+                                  'Spedizione',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .subtitle1!
+                                      .copyWith(color: _shipping == 'shipment' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
+                                ),
+                                leading: Radio(
+                                  value: 'shipment',
+                                  groupValue: _shipping,
+                                  activeColor: Constants.SECONDARY_COLOR,
+                                    fillColor: MaterialStateColor.resolveWith((states) => _shipping == 'shipment' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
+                                  onChanged: _handleShipmentRadioChange
+                                ),
                               ),
                             ),
-                          ),
-                        ]
+                            if(widget.product.deliveryType!.id == 1 || widget.product.deliveryType!.id == 13) Expanded(
+                              child: ListTile(
+                                contentPadding: EdgeInsets.all(0),
+                                horizontalTitleGap: 0,
+                                title: Text(
+                                  'Di persona',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .subtitle1!
+                                      .copyWith(color: _shipping == 'withdraw' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
+                                ),
+                                leading: Radio(
+                                  value: 'withdraw',
+                                  groupValue: _shipping,
+                                  fillColor: MaterialStateColor.resolveWith((states) => _shipping == 'withdraw' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
+                                  onChanged: _handleShipmentRadioChange
+                                ),
+                              ),
+                            ),
+                          ]
+                        ),
                       ),
                       if(_shipping == "shipment") Card(
                         color: Color(0x55e8e23e),
                         elevation: 0,
                         child: Padding(
-                          padding: const EdgeInsets.all(16.0),
+                          padding: EdgeInsets.all(16.0),
                           child: Column(
-                            children: const [
-                              Text('Costo spedizione: 15€',
+                            children: [
+                              Text('Costo spedizione: ' + Utils.formatCurrency(double.parse(_deliveryPrice)),
                                   style: TextStyle(
                                     color: Constants.TEXT_COLOR,
                                     fontSize: 16,
@@ -273,7 +335,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           SizedBox(height: 15),
                           if (!_hasAddress || _addNewAddress || _editAddress) Column(
                               children: [
-                                inputField("Nome", _name, false),
+                                inputField("Nome e cognome", _name, false),
                                 inputField("Indirizzo", _address, false),
                                 inputField("Indirizzo 2", _address2, false),
                                 inputField("Città", _city, false),
@@ -285,7 +347,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 const SizedBox(height: 25),
                                 if (!_editAddress) Row(
                                     children: [
-                                      Text('Salva per acquisti futuri',
+                                      ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                            primary: Constants.GREEN_SAVE,
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
+                                        ),
+                                        child: Text('Salva',
+                                            style: TextStyle(
+                                              color: Constants.TEXT_COLOR,
+                                              fontSize: 16,
+                                              fontFamily: Constants.FONT,
+                                            )
+                                        ),
+                                        onPressed: () async {
+                                          setState(() { _saveAddress = true; });
+                                          await saveAddress();
+                                        },
+                                      ),
+                                      /*Text('Salva per acquisti futuri',
                                           style: TextStyle(
                                             color: Constants.TEXT_COLOR,
                                             fontSize: 16,
@@ -296,7 +375,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                         value: _saveAddress,
                                         onChanged: (value) => setState(() { _saveAddress = value; }),
                                         activeColor: Constants.SECONDARY_COLOR,
-                                      )
+                                      )*/
                                     ]
                                 ),
                               ]
@@ -379,7 +458,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 borderRadius: BorderRadius.circular(20),
                                 color: _insurance ? Constants.SECONDARY_COLOR_LIGHT : Constants.LIGHT_GREY_COLOR2
                               ),
-                              child: Text('+ € 10.00',
+                              child: Text(Utils.formatCurrency(double.parse(_insurancePrice)),
                                   style: TextStyle(
                                     color: _insurance ? Colors.black : Constants.TEXT_COLOR,
                                     fontSize: 16,
@@ -738,6 +817,60 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ),
                       ),
                       SizedBox(height: 35),
+                      Text(
+                        "Hai un codice sconto?",
+                        style: TextStyle(
+                            color: Constants.TEXT_COLOR,
+                            fontSize: 16,
+                            fontFamily: Constants.FONT
+                        ),
+                      ),
+                      SizedBox(height: 8,),
+                      Container(
+                        decoration: const BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(0x4ca3c4d4),
+                              spreadRadius: 8,
+                              blurRadius: 12,
+                              offset:
+                              Offset(0, 0), // changes position of shadow
+                            ),
+                          ],
+                        ),
+                        child: TextField(
+                          keyboardType: TextInputType.text,
+                          cursorColor: Constants.PRIMARY_COLOR,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Constants.FORM_TEXT,
+                          ),
+                          onChanged: (discount) {
+                            if (_discountDebounce?.isActive ?? false) _discountDebounce!.cancel();
+                            _discountDebounce = Timer(const Duration(milliseconds: 500), () {
+                              getTotalPrice();
+                            });
+
+                          },
+                          decoration: InputDecoration(
+                            hintText: "Inserisci codice sconto...",
+                            hintStyle: const TextStyle(
+                                color: Constants.PLACEHOLDER_COLOR),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                width: 0,
+                                style: BorderStyle.none,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.all(16),
+                            filled: true,
+                            fillColor: Constants.WHITE,
+                          ),
+                          controller: _discountText,
+                        ),
+                      ),
+                      SizedBox(height: 32,),
                       _isLoadingTotal ? Center(child: CircularProgressIndicator()) : Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -778,7 +911,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             textAlign: TextAlign.center,
                           ),
                           Text(
-                            Utils.formatCurrency(10),
+                            Utils.formatCurrency(double.parse(_insurancePrice)),
                             style: TextStyle(
                                 color: Constants.DARK_TEXT_COLOR,
                                 fontSize: 18,
@@ -804,7 +937,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             textAlign: TextAlign.center,
                           ),
                           Text(
-                            Utils.formatCurrency(15),
+                            Utils.formatCurrency(double.parse(_deliveryPrice)),
                             style: TextStyle(
                                 color: Constants.DARK_TEXT_COLOR,
                                 fontSize: 18,
@@ -816,6 +949,58 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ],
                       ),
                       SizedBox(height: 16),
+                      if(double.parse(_discountAmount) > 0) Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Sconto",
+                            style: TextStyle(
+                                color: Constants.DARK_TEXT_COLOR,
+                                fontSize: 18,
+                                fontFamily: Constants.FONT,
+                                fontWeight: FontWeight.normal
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          Text(
+                            Utils.formatCurrency(double.parse(_discountAmount)),
+                            style: TextStyle(
+                                color: Constants.DARK_TEXT_COLOR,
+                                fontSize: 18,
+                                fontFamily: Constants.FONT,
+                                fontWeight: FontWeight.normal
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                      if(double.parse(_discountAmount) > 0) SizedBox(height: 16),
+                      if(double.parse(_discountPercent) > 0) Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Sconto",
+                            style: TextStyle(
+                                color: Constants.DARK_TEXT_COLOR,
+                                fontSize: 18,
+                                fontFamily: Constants.FONT,
+                                fontWeight: FontWeight.normal
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          Text(
+                            ((double.parse(_discountPercent) * 100).round()).toString() + "%",
+                            style: TextStyle(
+                                color: Constants.DARK_TEXT_COLOR,
+                                fontSize: 18,
+                                fontFamily: Constants.FONT,
+                                fontWeight: FontWeight.normal
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                      if(double.parse(_discountPercent) > 0) SizedBox(height: 16),
                       _isLoadingTotal ? Center(child: CircularProgressIndicator()) : Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -830,7 +1015,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             textAlign: TextAlign.center,
                           ),
                           Text(
-                            Utils.formatCurrency(getTotal()),
+                            Utils.formatCurrency(double.parse(_totalPrice)),
                             style: TextStyle(
                                 color: Constants.DARK_TEXT_COLOR,
                                 fontSize: 18,
@@ -843,31 +1028,43 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                       SizedBox(height: 35),
                       Center(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                              primary: Constants.SECONDARY_COLOR,
-                              textStyle: const TextStyle(
-                                  fontSize: 16
-                              ),
-                              padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
-                          ),
-                          child: Text('Invia offerta'),
-                          onPressed: () async {
-                            if(_availableTo.difference(_availableFrom).inDays < 2) {
-                              ApiManager.showFreeErrorMessage(context, "Seleziona un periodo minimo di 3 giorni.");
-                              return;
-                            }
+                        child: Opacity(
+                          opacity: _enableBuy ? 1 : 0.4,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                                primary: Constants.SECONDARY_COLOR,
+                                textStyle: const TextStyle(
+                                    fontSize: 16
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
+                            ),
+                            child: Text('Invia richiesta'),
+                            onPressed: () async {
+                              if(!_enableBuy) {
+                                ApiManager.showFreeErrorMessage(context, "Verifica i dati inseriti e riprova");
+                                return;
+                              }
 
-                            if (!_hasAddress || (_saveAddress && _addNewAddress && !_editAddress)) {
-                              await saveAddress();
-                              getAddresses(() {
+                              if(_discountDebounce != null && _discountDebounce!.isActive) {
+                                return;
+                              }
+
+                              if(_availableTo.difference(_availableFrom).inDays < 2) {
+                                ApiManager.showFreeErrorMessage(context, "Seleziona un periodo minimo di 3 giorni.");
+                                return;
+                              }
+
+                              if (!_hasAddress || (_saveAddress && _addNewAddress && !_editAddress)) {
+                                await saveAddress();
+                                getAddresses(() {
+                                  next();
+                                });
+                              } else {
                                 next();
-                              });
-                            } else {
-                              next();
-                            }
-                          },
+                              }
+                            },
+                          ),
                         ),
                       ),
                       SizedBox(height: 35)
@@ -898,9 +1095,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       params["address_id"] = _activeAddress!.id.toString();
     }
 
-    ApiManager(context).makePutRequest("/product/" + widget.product.id.toString() + "/offer/make/", params, (res) {
+    if(_discountText.text.isNotEmpty) {
+      params["discount_code"] = _discountText.text;
+    }
+
+    ApiManager(context).makePutRequest("/product/" + widget.product.id.toString() + "/offer/make/", params, (res) async {
+
       Navigator.of(context).push(
-          MaterialPageRoute(builder: (BuildContext context) => OfferSuccessScreen()));
+          MaterialPageRoute(builder: (BuildContext context) => OfferSuccessScreen(totalPrice: double.parse(_totalPrice))));
     }, (res) {
       ApiManager.showFreeErrorMessage(context, res["errors"].toString());
       /*setState(() {
@@ -1018,6 +1220,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               filled: true,
               fillColor: Constants.WHITE,
             ),
+            onChanged: (str) {
+              if(!_enableBuy) {
+                getTotalPrice();
+              }
+            },
             controller: controller,
             readOnly: readOnly,
           ),
@@ -1180,7 +1387,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
         if(callback != null) callback();
       }
-    }, (response) {});
+
+      getTotalPrice();
+    }, (response) {
+      getTotalPrice();
+    });
   }
 
   saveAddress() {
@@ -1198,7 +1409,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         "note": "",
         "default": false,
         "active": _activeAddress == null
-      }, (res) {}, (res) {});
+      }, (res) {
+        getAddresses(null);
+      }, (res) {
+        getAddresses(null);
+      });
     }
   }
 
@@ -1235,6 +1450,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       }
       _activeAddress = address;
       _removeAddress(address);
+
+      getTotalPrice();
     } catch(e) {
       //
     }

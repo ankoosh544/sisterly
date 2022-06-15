@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:sisterly/screens/home_screen.dart';
 import 'package:sisterly/screens/signup_screen.dart';
 import 'package:sisterly/screens/tab_screen.dart';
@@ -9,11 +10,16 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sisterly/widgets/custom_app_bar.dart';
 
+import '../main.dart';
 import '../utils/constants.dart';
 import 'forgot_screen.dart';
 import 'login_screen.dart';
 
 class OfferSuccessScreen extends StatefulWidget {
+
+  final double totalPrice;
+
+  const OfferSuccessScreen({Key? key, required this.totalPrice}) : super(key: key);
 
   @override
   OfferSuccessScreenState createState() => OfferSuccessScreenState();
@@ -25,6 +31,11 @@ class OfferSuccessScreenState extends State<OfferSuccessScreen> {
   void initState() {
     super.initState();
 
+    Future.delayed(Duration.zero, () async {
+      await FirebaseAnalytics.instance.logBeginCheckout(value: widget.totalPrice);
+
+      MyApp.facebookAppEvents.logInitiatedCheckout(totalPrice: widget.totalPrice, currency: "EUR");
+    });
   }
 
   next() async {
@@ -53,7 +64,7 @@ class OfferSuccessScreenState extends State<OfferSuccessScreen> {
                 child: SizedBox(),
               ),
               Text(
-                "Offerta inviata!",
+                "Richiesta inviata!",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Constants.PRIMARY_COLOR,

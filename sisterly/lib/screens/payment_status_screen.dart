@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:sisterly/models/offer.dart';
 import 'package:sisterly/screens/home_screen.dart';
 import 'package:sisterly/screens/signup_screen.dart';
@@ -8,11 +9,14 @@ import 'package:sisterly/utils/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../main.dart';
 import '../utils/constants.dart';
 
 class PaymentStatusScreen extends StatefulWidget {
 
-  const PaymentStatusScreen({Key? key}) : super(key: key);
+  final double total;
+
+  const PaymentStatusScreen({Key? key, required this.total}) : super(key: key);
 
   @override
   PaymentStatusScreenState createState() => PaymentStatusScreenState();
@@ -26,6 +30,11 @@ class PaymentStatusScreenState extends State<PaymentStatusScreen> {
   @override
   void initState() {
     super.initState();
+
+    Future.delayed(Duration.zero, () async {
+      await FirebaseAnalytics.instance.logPurchase(value: widget.total);
+      MyApp.facebookAppEvents.logPurchase(amount: widget.total, currency: "EUR");
+    });
   }
 
   next() async {

@@ -1,17 +1,25 @@
+import 'package:facebook_app_events/facebook_app_events.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_analytics/observer.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:sisterly/utils/localization/app_localizations.dart';
 
+import 'firebase_options.dart';
 import 'screens/splash_screen.dart';
 import 'utils/localization/fallback_cupertino_localizations_delegate.dart';
 
 
-
-void main() {
+Future<void> main() async {
+  Stripe.publishableKey = Constants.STRIPE_PUBLISHABLE_KEY;
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(MyApp());
 }
 
@@ -59,8 +67,10 @@ class MyApp extends StatelessWidget {
     visualDensity: VisualDensity.adaptivePlatformDensity,
   );
 
-  static FirebaseAnalytics analytics = FirebaseAnalytics();
-  static FirebaseAnalyticsObserver observer = FirebaseAnalyticsObserver(analytics: analytics);
+  static final facebookAppEvents = FacebookAppEvents();
+  static FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+  static FirebaseAnalyticsObserver observer =
+  FirebaseAnalyticsObserver(analytics: analytics);
 
   @override
   Widget build(BuildContext context) {

@@ -482,7 +482,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                           child: Slider(
                             value: _filters.maxPrice,
                             min: 0,
-                            max: 1000,
+                            max: 100,
                             label: _filters.maxPrice.round().toString(),
                             onChanged: (double value) {
                               setState(() {
@@ -508,7 +508,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
                                       fontFamily: Constants.FONT),
                                 ),
                                 Text(
-                                  "€1000",
+                                  "€100",
                                   style: TextStyle(
                                       color: Constants.LIGHT_GREY_COLOR,
                                       fontSize: 16,

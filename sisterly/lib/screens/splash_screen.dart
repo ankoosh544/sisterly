@@ -6,6 +6,7 @@ import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:sisterly/models/account.dart';
 import 'package:sisterly/screens/home_screen.dart';
 import 'package:sisterly/screens/login_screen.dart';
+import 'package:sisterly/screens/social_profile_screen.dart';
 import 'package:sisterly/screens/tab_screen.dart';
 import 'package:sisterly/screens/welcome_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
@@ -114,9 +115,16 @@ class SplashScreenState extends State<SplashScreen> {
       preferences.setInt(Constants.PREFS_USERID, account.id!);
       SessionData().userId = account.id;
 
-      setState(() async {
-        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => TabScreen()), (_) => false);
-      });
+      if(account.username!.isEmpty || account.firstName!.isEmpty || account.lastName!.isEmpty || account.phone!.isEmpty) {
+
+        setState(() async {
+          Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => SocialProfileScreen()), (_) => false);
+        });
+      } else {
+        setState(() async {
+          Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => TabScreen()), (_) => false);
+        });
+      }
     }, (res) {
       debugPrint("access account failed");
       SessionData().logout(context);

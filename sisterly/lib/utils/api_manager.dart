@@ -69,7 +69,7 @@ class ApiManager {
   }
 
   internalMakePostRequest(endpoint, params, token, success, failure, retry) async {
-    String url = SessionData().serverUrl + endpoint;
+    String url = Constants.SERVER_URL + endpoint;
 
     Map<String, String> headers = {
       "Content-type": "application/json",
@@ -139,7 +139,7 @@ class ApiManager {
   }
 
   internalMakeGetRequest(endpoint, params, token, success, failure, retry) async {
-    debugPrint("makeGetRequest "+SessionData().serverUrl + endpoint +" with params: "+jsonEncode(params));
+    debugPrint("makeGetRequest "+Constants.SERVER_URL + endpoint +" with params: "+jsonEncode(params));
 
     var paramsString = "";
 
@@ -147,11 +147,11 @@ class ApiManager {
       paramsString = "?" + encodeMap(params);
     }
 
-    debugPrint("makeGetRequest final url "+SessionData().serverUrl + endpoint + paramsString);
+    debugPrint("makeGetRequest final url "+Constants.SERVER_URL + endpoint + paramsString);
     debugPrint("makeGetRequest token "+token.toString());
 
     try {
-      var response = await http.get(Uri.parse(SessionData().serverUrl + endpoint + paramsString), headers: {
+      var response = await http.get(Uri.parse(Constants.SERVER_URL + endpoint + paramsString), headers: {
         "Accept": "application/json",
         "Authorization": "Bearer $token",
         "Accept-Language": await getLocale(context) ?? ''
@@ -202,7 +202,7 @@ class ApiManager {
   }
 
   internalFutureMakeGetRequest(endpoint, params, token) async {
-    debugPrint("internalFutureMakeGetRequest "+SessionData().serverUrl + endpoint +" with params: "+jsonEncode(params));
+    debugPrint("internalFutureMakeGetRequest "+Constants.SERVER_URL + endpoint +" with params: "+jsonEncode(params));
 
     var paramsString = "";
 
@@ -210,10 +210,10 @@ class ApiManager {
       paramsString = "?" + encodeMap(params);
     }
 
-    debugPrint("internalFutureMakeGetRequest final url "+SessionData().serverUrl + endpoint + paramsString);
+    debugPrint("internalFutureMakeGetRequest final url "+Constants.SERVER_URL + endpoint + paramsString);
 
     try {
-      var response = await http.get(Uri.parse(SessionData().serverUrl + endpoint + paramsString), headers: {
+      var response = await http.get(Uri.parse(Constants.SERVER_URL + endpoint + paramsString), headers: {
         "Accept": "application/json",
         "Authorization": token,
         "Accept-Language": await getLocale(context) ?? ''
@@ -265,7 +265,7 @@ class ApiManager {
   }
 
   internalMakePutRequest(endpoint, params, token, success, failure, retry) async {
-    String url = SessionData().serverUrl + endpoint;
+    String url = Constants.SERVER_URL + endpoint;
 
     Map<String, String> headers = {
       "Content-type": "application/json",
@@ -317,7 +317,7 @@ class ApiManager {
   }
 
   internalMakeDeleteRequest(endpoint, success, failure) async {
-    String url = SessionData().serverUrl + endpoint;
+    String url = Constants.SERVER_URL + endpoint;
 
     Map<String, String> headers = {
       "Content-type": "application/json",
@@ -350,7 +350,7 @@ class ApiManager {
   }
 
   makeUploadRequest(context, method, endpoint, filePath, params, success, failure, key) async {
-    final postUri = Uri.parse(SessionData().serverUrl + endpoint);
+    final postUri = Uri.parse(Constants.SERVER_URL + endpoint);
     http.MultipartRequest request = http.MultipartRequest(method, postUri);
 
     request.headers.addAll({
@@ -388,7 +388,7 @@ class ApiManager {
   }
 
   makeUploadDocumentsRequest(context, method, endpoint, fileFront, fileBack, params, success, failure) async {
-    final postUri = Uri.parse(SessionData().serverUrl + endpoint);
+    final postUri = Uri.parse(Constants.SERVER_URL + endpoint);
     http.MultipartRequest request = http.MultipartRequest(method, postUri);
 
     request.headers.addAll({

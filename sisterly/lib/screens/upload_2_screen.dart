@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sisterly/models/address.dart';
@@ -13,6 +14,7 @@ import 'package:sisterly/models/material.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/models/product_color.dart';
 import 'package:sisterly/models/var.dart';
+import 'package:sisterly/screens/payment_method_screen.dart';
 import 'package:sisterly/screens/product_edit_success_screen.dart';
 import 'package:sisterly/screens/product_success_screen.dart';
 import 'package:sisterly/screens/sister_advice_screen.dart';
@@ -26,6 +28,7 @@ import 'package:sisterly/utils/utils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sisterly/widgets/header_widget.dart';
 
+import '../main.dart';
 import '../utils/constants.dart';
 import 'documents_screen.dart';
 
@@ -282,7 +285,7 @@ class Upload2ScreenState extends State<Upload2Screen> {
     params["lender_kit_to_send"] = _selectedLenderKit.id;
 
     if(widget.editProduct != null) {
-      ApiManager(context).makePostRequest('/product/' + widget.editProduct!.id.toString() + "/", params, (res) {
+      ApiManager(context).makePostRequest('/product/' + widget.editProduct!.id.toString() + "/?version=v2", params, (res) {
         setState(() {
           _isLoading = false;
         });
@@ -298,7 +301,7 @@ class Upload2ScreenState extends State<Upload2Screen> {
         });
       });
     } else {
-      ApiManager(context).makePutRequest('/product/', params, (res) {
+      ApiManager(context).makePutRequest('/product/?version=v2', params, (res) async {
         if(res["errors"] != null) {
           setState(() {
             _isLoading = false;
@@ -306,6 +309,9 @@ class Upload2ScreenState extends State<Upload2Screen> {
           ApiManager.showFreeErrorMessage(context, res["errors"].toString());
         } else {
           debugPrint("product success " + jsonEncode(res["data"]));
+
+          await FirebaseAnalytics.instance.logEvent(name: "create_product");
+          MyApp.facebookAppEvents.logEvent(name: "create_product");
 
           if(_selectedLenderKit.id == 3) {
             Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
@@ -324,20 +330,30 @@ class Upload2ScreenState extends State<Upload2Screen> {
   }
 
   askPayment(productId) {
-    ApiManager(context).makePutRequest('/payment/make/lender-kit/' + productId.toString(), {}, (res) async {
+    ApiManager(context).makePutRequest('/payment/make/lender-kit/' + productId.toString() + "?version=v2", {}, (res) async {
       setState(() {
         _isLoading = false;
       });
       if(res["errors"] != null) {
         ApiManager.showFreeErrorMessage(context, res["errors"].toString());
       } else {
-        if(res["data"] != null && res["data"]["checkout_url"] != null) {
-          var result = await Navigator.of(context).push(
-              MaterialPageRoute(builder: (BuildContext context) => StripeWebviewScreen(title: "Pagamento", url: res["data"]["checkout_url"],)));
-
-          if(result == false) {
-            ApiManager.showFreeErrorMessage(context, "Pagamento fallito. Riprova.");
-          }
+        if(res["data"] != null && res["data"]["client_secret"] != null) {
+          /*Navigator.of(context).push(
+            MaterialPageRoute(builder: (BuildContext context) => StripeWebviewScreen(title: "Pagamento", url: res["data"]["redirect_url"],)));*/
+          Navigator.of(context).push(
+              MaterialPageRoute(builder: (BuildContext context) => PaymentMethodScreen(
+                successCallback: () {
+                  Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (BuildContext context) =>
+                          ProductSuccessScreen()), (_) => false);
+                },
+                failureCallback: () {
+                  ApiManager.showFreeErrorMessage(context, "Pagamento fallito");
+                  Navigator.of(context, rootNavigator: true).pop(false);
+                },
+                paymentIntentId: null,
+                paymentIntentSecret: res["data"]["client_secret"],
+              )));
         } else {
           ApiManager.showFreeErrorMessage(context, "Pagamento fallito");
         }

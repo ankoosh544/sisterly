@@ -1,4 +1,10 @@
+import 'dart:io';
+import 'dart:ui';
+
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:sisterly/models/account.dart';
+import 'package:sisterly/screens/social_profile_screen.dart';
 import 'package:sisterly/screens/tab_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
@@ -6,9 +12,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sisterly/utils/session_data.dart';
-
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import '../main.dart';
 import '../utils/constants.dart';
+import '../utils/utils.dart';
 import 'forgot_screen.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -68,22 +79,7 @@ class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin 
     _emailFilter.text = _emailFilter.text.toLowerCase().trim();
 
     ApiManager(context).login(_emailFilter.text.trim(), _passwordFilter.text, (response) async {
-      if (response["access"] != null) {
-        debugPrint("login success");
-
-        var preferences = await SharedPreferences.getInstance();
-        preferences.setString(Constants.PREFS_EMAIL, _emailFilter.text);
-        preferences.setString(Constants.PREFS_TOKEN, response["access"]);
-        preferences.setString(Constants.PREFS_REFRESH_TOKEN, response["refresh"]);
-        SessionData().token = response["access"];
-
-        loginSuccess();
-      } else {
-        setState(() {
-          _isLoading = false;
-        });
-        ApiManager.showFreeErrorToast(context, response["errors"]);
-      }
+      manageLoginResponse(response);
     }, (statusCode) {
       setState(() {
         _isLoading = false;
@@ -91,6 +87,25 @@ class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin 
       ApiManager.showErrorMessage(context, "generic_error");
       debugPrint("login failure");
     });
+  }
+
+  manageLoginResponse(response) async {
+    if (response["access"] != null) {
+      debugPrint("login success");
+
+      var preferences = await SharedPreferences.getInstance();
+      preferences.setString(Constants.PREFS_EMAIL, _emailFilter.text);
+      preferences.setString(Constants.PREFS_TOKEN, response["access"]);
+      preferences.setString(Constants.PREFS_REFRESH_TOKEN, response["refresh"]);
+      SessionData().token = response["access"];
+
+      loginSuccess();
+    } else {
+      setState(() {
+        _isLoading = false;
+      });
+      ApiManager.showFreeErrorToast(context, response["errors"]);
+    }
   }
 
   loginSuccess() async {
@@ -108,7 +123,18 @@ class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin 
         preferences.setInt(Constants.PREFS_USERID, account.id!);
         SessionData().userId = account.id;
 
-        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => TabScreen()), (_) => false);
+        await FirebaseAnalytics.instance.logLogin();
+        MyApp.facebookAppEvents.logEvent(name: "login");
+
+        if(account.username!.isEmpty || account.firstName!.isEmpty || account.lastName!.isEmpty || account.phone!.isEmpty) {
+          Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (BuildContext context) => SocialProfileScreen(),
+              )
+          );
+        } else {
+          Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => TabScreen()), (_) => false);
+        }
       });
     }, (res) {
       setState(() {
@@ -128,6 +154,90 @@ class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin 
     _emailFilter.dispose();
     _passwordFilter.dispose();
     super.dispose();
+  }
+
+  loginWithGoogle() async {
+    GoogleSignIn _googleSignIn;
+
+    _googleSignIn = GoogleSignIn(
+        scopes: [
+          'email'
+        ]
+    );
+
+    try {
+      var signin = await _googleSignIn.signIn();
+      var auth = await signin!.authentication;
+
+      debugPrint("signin ok "+auth.accessToken.toString());
+
+      var params = {
+        "access_token": auth.accessToken
+      };
+
+      ApiManager(context).makePostRequest("/client/oauth/google", params, (response) {
+        manageLoginResponse(response["data"]);
+      }, (res) {
+        ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+      });
+    } catch (error) {
+      print(error);
+    }
+  }
+
+  loginWithFacebook() async {
+    //await FacebookAuth.instance.logOut();
+
+    final LoginResult result = await FacebookAuth.instance.login();
+
+    if (result.status == LoginStatus.success) {
+      final AccessToken accessToken = result.accessToken!;
+
+      print(accessToken);
+
+      var params = {
+        "access_token": accessToken.token
+      };
+
+      ApiManager(context).makePostRequest("/client/oauth/facebook", params, (response) {
+        manageLoginResponse(response["data"]);
+      }, (res) {
+        ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+      });
+    } else {
+      print(result.status);
+      print(result.message);
+    }
+  }
+
+  loginWithApple() async {
+    final credential = await SignInWithApple.getAppleIDCredential(
+      scopes: [
+        AppleIDAuthorizationScopes.email,
+        AppleIDAuthorizationScopes.fullName,
+      ],
+      webAuthenticationOptions: WebAuthenticationOptions(
+        clientId: 'com.sisterly.sisterly.login',
+        redirectUri:
+        Uri.parse(
+          Constants.APPLE_REDIRECT_URL,
+        ),
+      ),
+    );
+
+    // ignore: avoid_print
+    debugPrint("data apple "+credential.authorizationCode);
+    print(credential);
+
+    var params = {
+      "access_token": credential.authorizationCode
+    };
+
+    ApiManager(context).makePostRequest("/client/oauth/apple", params, (response) {
+      manageLoginResponse(response["data"]);
+    }, (res) {
+      ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+    });
   }
 
   @override
@@ -188,10 +298,9 @@ class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin 
                 key: _formKey,
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: ListView(
                     children: <Widget>[
-                      const SizedBox(height: 25),
+                      const SizedBox(height: 0),
                       const Text("Email / Username",
                           style: TextStyle(
                             color: Constants.TEXT_COLOR,
@@ -328,9 +437,7 @@ class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin 
                           ),
                         ],
                       ),
-                      const Expanded(
-                        child: SizedBox(),
-                      ),
+                      const SizedBox(height: 20),
                       SafeArea(
                         child: Center(
                           child: _isLoading ? CircularProgressIndicator() : ElevatedButton(
@@ -350,43 +457,76 @@ class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin 
                           ),
                         ),
                       ),
-                      /*Center(
-                        child: CustomProgressButton(
-                          borderRadius: 10,
-                          height: MediaQuery.of(context).size.height * 0.055,
-                          backgroundColor: Constants.SECONDARY_COLOR,
-                          initialWidth: MediaQuery.of(context).size.width,
-                          label: AppLocalizations.of(context).translate("login_login").toUpperCase(),
-                          buttonController: _buttonController,
-                          textColor: Constants.WHITE,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: Constants.FONT,
-                          fontSize: 18,
-                          onTap: (){
-                            login();
-                          },
+                      const SizedBox(height: 60),
+                      Text(
+                        "Oppure accedi con",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Constants.PRIMARY_COLOR,
+                          fontSize: 16,
                         ),
                       ),
-                      SizedBox(height: 16),
-                      CustomDefaultButton(
-                        fontFamily: Constants.FONT,
-                        borderRadius: 10,
-                        height: MediaQuery.of(context).size.height * 0.055,
-                        backgroundColor: Constants.WHITE,
-                        boxShadowOpacity: 0,
-                        width: MediaQuery.of(context).size.width,
-                        label: AppLocalizations.of(context).translate("login_register_button").toUpperCase(),
-                        textColor: Constants.PRIMARY_COLOR_DARK,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        onTap: (){
-                          Navigator.of(context).push(
-                              MaterialPageRoute(
-                                  builder: (BuildContext context) => SignupScreen()
-                              )
-                          );
-                        },
-                      ),*/
+                      const SizedBox(height: 20),
+                      Center(
+                        child: Wrap(
+                          children: [
+                            SizedBox(
+                              width: 70,
+                              height: 70,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    primary: Colors.black,
+                                    textStyle: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.normal),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(60))),
+                                child: SvgPicture.asset("assets/images/apple.svg", height: 25, color: Colors.white,),
+                                onPressed: () {
+                                  loginWithApple();
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 12,),
+                            SizedBox(
+                              width: 70,
+                              height: 70,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    primary: Color(0xff4867AA),
+                                    textStyle: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.normal),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(60))),
+                                child: SvgPicture.asset("assets/images/facebook.svg", height: 25, color: Colors.white,),
+                                onPressed: () {
+                                  loginWithFacebook();
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 12,),
+                            SizedBox(
+                              width: 70,
+                              height: 70,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    primary: Color(0xffC4402E),
+                                    textStyle: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.normal),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(60))),
+                                child: SvgPicture.asset("assets/images/google.svg", height: 25, color: Colors.white,),
+                                onPressed: () {
+                                  loginWithGoogle();
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 40),
                     ],
                   ),
                 ),

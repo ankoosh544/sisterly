@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:intl/intl.dart';
 import 'package:sisterly/models/filters.dart';
 import 'package:sisterly/models/product.dart';
@@ -13,6 +14,7 @@ import 'package:sisterly/utils/session_data.dart';
 import 'package:sisterly/utils/utils.dart';
 import 'package:sisterly/widgets/header_widget.dart';
 
+import '../main.dart';
 import '../utils/constants.dart';
 import 'filters_screen.dart';
 
@@ -111,6 +113,16 @@ class SearchScreenState extends State<SearchScreen>  {
                           setProductFavorite(product, true);
                         },
                       )
+                  ),
+                  if(product.useDiscount) Positioned(
+                    top: 12,
+                    left: 12,
+                    child: InkWell(
+                        onTap: () {
+                          ApiManager.showFreeSuccessMessage(context, "Questa borsa partecipa alle promozioni Sisterly");
+                        },
+                        child: SizedBox(width: 18, height: 18, child: Icon(Icons.percent_sharp, color: Constants.SECONDARY_COLOR,))
+                    ),
                   )
                 ],
               ),
@@ -248,8 +260,15 @@ class SearchScreenState extends State<SearchScreen>  {
       "product_id": product.id,
       "remove": !add
     };
-    ApiManager(context).makePostRequest('/product/favorite/change/', params, (res) {
+    ApiManager(context).makePostRequest('/product/favorite/change/', params, (res) async {
       getProductsFavorite();
+
+      if(add) {
+        await FirebaseAnalytics.instance.logAddToWishlist(
+            items: [AnalyticsEventItem(itemId: product.id.toString(), itemName: product.model.toString() + " - " + product.brandName.toString())]
+        );
+        MyApp.facebookAppEvents.logAddToWishlist(id: product.id.toString(), type: "product", currency: "EUR", price: product.priceOffer);
+      }
     }, (res) {
 
     });

@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:sisterly/screens/order_confirm_success_screen.dart';
@@ -14,6 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sisterly/utils/session_data.dart';
 import 'package:sisterly/widgets/custom_app_bar.dart';
 
+import '../main.dart';
 import '../utils/constants.dart';
 import 'documents_success_screen.dart';
 import 'login_screen.dart';
@@ -127,19 +129,19 @@ class StripeWebviewScreenState extends State<StripeWebviewScreen>  {
                     onWebViewCreated: (controller) {
                       webViewController = controller;
                     },
-                    onLoadStart: (controller, url) {
+                    onLoadStart: (controller, url) async {
                       debugPrint("onLoadStart "+url.toString());
 
                       setState(() {
                         isLoading = true;
                       });
 
-                      var strippedServer = SessionData().serverUrl.replaceAll("https://", "").replaceAll("http://", "");
+                      var strippedServer = Constants.SERVER_URL.replaceAll("https://", "").replaceAll("http://", "");
 
                       if(url != null && (url.toString().contains(strippedServer) || url.toString().contains("/payment/result"))) {
                         Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
                             MaterialPageRoute(
-                                builder: (BuildContext context) => PaymentStatusScreen()),
+                                builder: (BuildContext context) => PaymentStatusScreen(total: 0,)),
                                 (_) => false);
                       }
 
@@ -159,6 +161,8 @@ class StripeWebviewScreenState extends State<StripeWebviewScreen>  {
                       }
 
                       if(url != null && url.toString().contains("/payment/lender-kit/success")) {
+                        await FirebaseAnalytics.instance.logEvent(name: "payment_lender_kit");
+                        MyApp.facebookAppEvents.logEvent(name: "payment_lender_kit");
                         Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
                             MaterialPageRoute(builder: (BuildContext context) =>
                                 ProductSuccessScreen()), (_) => false);

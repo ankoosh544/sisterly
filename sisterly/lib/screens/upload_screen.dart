@@ -6,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sisterly/models/address.dart';
 import 'package:sisterly/models/brand.dart';
+import 'package:sisterly/models/category.dart';
 import 'package:sisterly/models/delivery_mode.dart';
 import 'package:sisterly/models/document.dart';
 import 'package:sisterly/models/generic.dart';
@@ -17,6 +18,7 @@ import 'package:sisterly/models/var.dart';
 import 'package:sisterly/screens/documents_success_screen.dart';
 import 'package:sisterly/screens/product_edit_success_screen.dart';
 import 'package:sisterly/screens/product_success_screen.dart';
+import 'package:sisterly/screens/select_categories_screen.dart';
 import 'package:sisterly/screens/sister_advice_screen.dart';
 import 'package:sisterly/screens/stripe_webview_screen.dart';
 import 'package:sisterly/screens/tab_screen.dart';
@@ -46,17 +48,20 @@ class UploadScreen extends StatefulWidget {
 class UploadScreenState extends State<UploadScreen>  {
 
   final TextEditingController _modelText = TextEditingController();
+  final TextEditingController _categoriesText = TextEditingController();
   final TextEditingController _descriptionText = TextEditingController();
   final TextEditingController _sellingPrice = TextEditingController();
   final TextEditingController _dailyPrice = TextEditingController();
   final ImagePicker picker = ImagePicker();
   List<XFile> _images = [];
   final List<Brand> _brands = [];
+  final List<Category> _categories = [];
   final List<ProductColor> _colors = [];
   final List<MyMaterial> _materials = [];
   final List<DeliveryMode> _deliveryModes = [];
   late Brand _selectedBrand;
-  late ProductColor _selectedColor;
+  List<Category> _selectedCategories = [];
+  List<ProductColor> _selectedColors = [];
   late MyMaterial _selectedMaterial;
   DeliveryMode? _selectedDelivery = deliveryTypes[0];
   Generic _selectedConditions = productConditions[0];
@@ -83,6 +88,7 @@ class UploadScreenState extends State<UploadScreen>  {
       _getOnboarding();
       _getMediaId();
       _getBrands();
+      _getCategories();
       _getColors();
       _getMaterials();
       _getDeliveryModes();
@@ -136,13 +142,13 @@ class UploadScreenState extends State<UploadScreen>  {
       _isLoadingDocuments = true;
     });
     ApiManager(context).makePostRequest('/client/stripe-connect', {}, (res) async {
-      setState(() {
-        _isLoadingDocuments = false;
-      });
-
       if(res["data"] != null) {
         onboardingUrl = res["data"]["url"];
       }
+
+      setState(() {
+        _isLoadingDocuments = false;
+      });
     }, (res) {
       setState(() {
         _isLoadingDocuments = false;
@@ -152,13 +158,19 @@ class UploadScreenState extends State<UploadScreen>  {
 
   _populateEditProduct() {
     if(widget.editProduct != null) {
-      if(_brands.isNotEmpty && _materials.isNotEmpty && _colors.isNotEmpty) {
+      if(_categories.isNotEmpty && _brands.isNotEmpty && _materials.isNotEmpty && _colors.isNotEmpty) {
         debugPrint("populateEditProduct edit product");
         _modelText.text = widget.editProduct!.model;
         _selectedBrand = _brands.firstWhere((element) => element.id == widget.editProduct!.brandId);
         _selectedMaterial = _materials.firstWhere((element) => element.id == widget.editProduct!.materialId);
         _descriptionText.text = widget.editProduct!.description ?? "";
-        _selectedColor = _colors.firstWhere((element) => element.id == widget.editProduct!.colorId);
+        _selectedColors = widget.editProduct!.colors;
+        _selectedCategories = widget.editProduct!.categories;
+
+        _categoriesText.text = _selectedCategories.map((category) {
+          return category.category;
+        }).join(", ");
+
         if(widget.editProduct!.deliveryType != null) _selectedDelivery = deliveryTypes.firstWhere((element) => element.id == widget.editProduct!.deliveryType!.id);
         _selectedConditions = productConditions.firstWhere((element) => element.id == widget.editProduct!.conditionsId);
         _selectedBagYears = bagYears.firstWhere((element) => element.id == widget.editProduct!.yearId);
@@ -196,9 +208,21 @@ class UploadScreenState extends State<UploadScreen>  {
 
   Widget getColorBullet(ProductColor c) {
     Color color = HexColor(c.hexadecimal);
-    bool selected = c.id != _selectedColor.id;
+    bool selected = _selectedColors.where((element) => element.id == c.id).isNotEmpty;
+    debugPrint("selected "+c.color+"  "+selected.toString());
     return InkWell(
-      onTap: () => setState(() => _selectedColor = c),
+      onTap: () {
+        debugPrint("tap color. selected: "+selected.toString());
+        if(selected) {
+          _selectedColors = _selectedColors.where((element) => element.id != c.id).toList();
+        } else {
+          _selectedColors.add(c);
+        }
+
+        setState(() {
+
+        });
+      },
       child: Container(
           width: 24,
           height: 24,
@@ -207,7 +231,7 @@ class UploadScreenState extends State<UploadScreen>  {
               color: color,
               borderRadius: BorderRadius.circular(30)
           ),
-          child: selected ? SizedBox() : SvgPicture.asset("assets/images/check_color.svg", width: 13, height: 10, fit: BoxFit.scaleDown)
+          child: !selected ? SizedBox() : SvgPicture.asset("assets/images/check_color.svg", width: 13, height: 10, fit: BoxFit.scaleDown)
       ),
     );
   }
@@ -554,6 +578,66 @@ class UploadScreenState extends State<UploadScreen>  {
                                     value: _selectedBrand
                                   ),
                                 )
+                              ),
+                              SizedBox(height: 32,),
+                              Text(
+                                "Categorie",
+                                style: TextStyle(
+                                    color: Constants.TEXT_COLOR,
+                                    fontSize: 16,
+                                    fontFamily: Constants.FONT
+                                ),
+                              ),
+                              SizedBox(height: 8,),
+                              if (_categories.isNotEmpty) Container(
+                                decoration: const BoxDecoration(
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Color(0x4ca3c4d4),
+                                      spreadRadius: 8,
+                                      blurRadius: 12,
+                                      offset:
+                                      Offset(0, 0), // changes position of shadow
+                                    ),
+                                  ],
+                                ),
+                                child: TextField(
+                                  readOnly: true,
+                                  keyboardType: TextInputType.text,
+                                  cursorColor: Constants.PRIMARY_COLOR,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Constants.FORM_TEXT,
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText: "Seleziona...",
+                                    hintStyle: const TextStyle(
+                                        color: Constants.PLACEHOLDER_COLOR),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                        width: 0,
+                                        style: BorderStyle.none,
+                                      ),
+                                    ),
+                                    contentPadding: const EdgeInsets.all(16),
+                                    filled: true,
+                                    fillColor: Constants.WHITE,
+                                  ),
+                                  onTap: () async {
+                                    _selectedCategories = await Navigator.of(context).push(
+                                        new MaterialPageRoute(
+                                            builder: (BuildContext context) => new SelectCategoriesScreen(multiple: true, selectedCategory: _selectedCategories),
+                                            fullscreenDialog: true
+                                        )
+                                    );
+
+                                    _categoriesText.text = _selectedCategories.map((category) {
+                                      return category.category;
+                                    }).join(", ");
+                                  },
+                                  controller: _categoriesText,
+                                ),
                               ),
                               SizedBox(height: 32),
                               Text(
@@ -975,7 +1059,7 @@ class UploadScreenState extends State<UploadScreen>  {
                                   ),
                                   InkWell(
                                     onTap: () {
-                                      ApiManager.showFreeSuccessMessage(context, "Partecipando alle promozioni Sisterly, la tua borsa verrà inserita in tutte le campagne marketing che creiamo per promuovere il noleggio (per esempio tramite sconti e offerte).\n\nSarai sempre tu puoi ad accettare o meno la richiesta di noleggio!");
+                                      ApiManager.showFreeSuccessMessage(context, "Partecipando alle promozioni Sisterly, la tua borsa verrà inserita in tutte le campagne marketing che creiamo per promuovere il noleggio (per esempio tramite sconti e offerte).\n\nSarai sempre tu poi ad accettare o meno la richiesta di noleggio!");
                                     },
                                     child: Icon(
                                       Icons.info_outline,
@@ -1023,7 +1107,7 @@ class UploadScreenState extends State<UploadScreen>  {
                                   ),
                                   InkWell(
                                     onTap: () {
-                                      ApiManager.showFreeSuccessMessage(context, "Quando le borrower selezionano periodi di noleggio superiori ai 3 giorni, il prezzo giornaliero che hai inserito viene scontato al crescere della durata. Questo permetterà di noleggiare la tua borsa più a lungo e che venga scelta rispetto ad altre borse con tariffe più alte.");
+                                      ApiManager.showFreeSuccessMessage(context, "Quando le borrower selezionano periodi di noleggio superiori ai 3 giorni, il prezzo giornaliero che hai inserito viene scontato al crescere della durata.\nQuesto permetterà alla tua borsa di essere scelta rispetto alle altre ed essere noleggiata più a lungo");
                                     },
                                     child: Icon(
                                       Icons.info_outline,
@@ -1082,6 +1166,23 @@ class UploadScreenState extends State<UploadScreen>  {
     }, (res) {});
   }
 
+  _getCategories() {
+    ApiManager(context).makeGetRequest('/client/categories', {}, (res) {
+      var data = res["data"];
+      _categories.clear();
+      if (data != null) {
+        setState(() {
+          for (var b in data) {
+            _categories.add(Category.fromJson(b));
+          }
+          //_selectedCategory = _categories[0];
+        });
+      }
+
+      _populateEditProduct();
+    }, (res) {});
+  }
+
   _getColors() {
     ApiManager(context).makeGetRequest('/admin/color', {}, (res) {
       var data = res["data"];
@@ -1092,7 +1193,7 @@ class UploadScreenState extends State<UploadScreen>  {
             _colors.add(ProductColor.fromJson(b));
           }
           debugPrint("_colors: "+_colors.length.toString());
-          _selectedColor = _colors[0];
+          _selectedColors = [_colors[0]];
         });
       }
 
@@ -1189,7 +1290,8 @@ class UploadScreenState extends State<UploadScreen>  {
         "model": _modelText.text,
         "media_pk": _mediaId,
         "brand_pk": _selectedBrand.id,
-        "color_pk": _selectedColor.id,
+        "colors_pk": _selectedColors.map((color) => color.id).toList(),
+        "categories_pk": _selectedCategories.map((color) => color.id).toList(),
         "material_pk": _selectedMaterial.id,
         "conditions": _selectedConditions.id,
         "year": _selectedBagYears.id,
@@ -1207,7 +1309,7 @@ class UploadScreenState extends State<UploadScreen>  {
       if(widget.editProduct != null) {
         //params["delivery_kit_pk"] = widget.editProduct.
         params["lender_kit_to_send"] = widget.editProduct!.lenderKitToSend!.id;
-        ApiManager(context).makePostRequest('/product/' + widget.editProduct!.id.toString() + "/", params, (res) {
+        ApiManager(context).makePostRequest('/product/' + widget.editProduct!.id.toString() + "/?version=v2", params, (res) {
           if(res["errors"] != null) {
             ApiManager.showFreeErrorMessage(context, res["errors"].toString());
           } else {

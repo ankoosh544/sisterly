@@ -1,5 +1,5 @@
 name: sisterly
-description: A new Flutter project.
+description: sisterly
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -15,7 +15,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 1.0.43+43
+version: 1.0.66+66
 
 environment:
   sdk: ">=2.12.0 <3.0.0"
@@ -39,19 +39,19 @@ dependencies:
   intl: ^0.17.0
   flutter_sequence_animation: ^4.0.0-nullsafety
   fluttertoast: ^8.0.8
-  url_launcher: ^6.0.2
+  url_launcher: ^6.0.20
   double_back_to_close_app: ^2.0.1
-  device_info: ^0.4.2+2
-  firebase_core: ^1.0.4
-  firebase_analytics: ^8.0.1
-  firebase_crashlytics: ^2.0.1
+  device_info: ^2.0.3
+  firebase_core: ^1.14.1
+  firebase_analytics: ^9.1.4
+  firebase_crashlytics: ^2.6.2
   onesignal_flutter: ^3.0.0
   shared_preferences: ^2.0.8
   web_socket_channel: ^2.1.0
   flutter_staggered_animations: ^1.0.0
   flutter_svg: ^0.21.0-nullsafety.0
   flutter_linkify: ^5.0.2
-  pin_code_fields: ^7.3.0
+  pin_code_fields: ^7.4.0
   intl_phone_number_input: ^0.7.0+2
   share: ^2.0.4
   cached_network_image: ^3.1.0+1
@@ -59,13 +59,22 @@ dependencies:
   image: ^3.0.8
   package_info: ^2.0.2
   nfc_manager: ^3.1.0
-  app_tracking_transparency: ^2.0.2+1
+  app_tracking_transparency: ^2.0.2+2
   carousel_slider: ^4.0.0
   permission_handler: ^8.3.0
   flutter_rating_bar: ^4.0.0
   photo_view: ^0.13.0
-  table_calendar: ^3.0.3
+  table_calendar: ^3.0.5
   flutter_inappwebview: ^5.3.2
+  flutter_stripe: ^3.0.2
+  sign_in_with_apple: ^3.3.0
+  flutter_facebook_auth: ^4.1.0
+  google_sign_in: ^5.3.0
+  uni_links: ^0.5.1
+  facebook_app_events:
+    git:
+      url: git://github.com/Hotdeskapp/flutter_facebook_app_events.git
+      ref: develop
 
 dev_dependencies:
   flutter_test:

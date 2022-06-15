@@ -1,4 +1,3 @@
-import 'account.dart';
 
 class Message {
 

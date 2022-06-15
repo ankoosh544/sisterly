@@ -1,29 +1,14 @@
-import 'dart:convert';
-import 'dart:io';
-
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:sisterly/models/address.dart';
-import 'package:sisterly/models/brand.dart';
-import 'package:sisterly/models/delivery_mode.dart';
 import 'package:sisterly/models/document.dart';
-import 'package:sisterly/models/generic.dart';
-import 'package:sisterly/models/material.dart';
 import 'package:sisterly/models/product.dart';
-import 'package:sisterly/models/product_color.dart';
 import 'package:sisterly/models/var.dart';
 import 'package:sisterly/screens/add_document_screen.dart';
-import 'package:sisterly/screens/product_success_screen.dart';
-import 'package:sisterly/screens/sister_advice_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:sisterly/utils/session_data.dart';
 import 'package:sisterly/utils/utils.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:sisterly/widgets/header_widget.dart';
 
 import '../utils/constants.dart';
@@ -136,7 +121,7 @@ class DocumentsScreenState extends State<DocumentsScreen>  {
                               borderRadius: BorderRadius.circular(50),
                             )
                         ),
-                        child: Text('Vedi fronte'),
+                        child: Text('Visualizza'),
                         onPressed: () async {
                           Utils.launchURL(document.front);
                         },

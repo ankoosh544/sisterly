@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -140,11 +141,13 @@ class AddDocumentScreenState extends State<AddDocumentScreen>  {
       "document_number": _documentNumberText.text,
       "expiration_date": DateFormat("yyyy-MM-dd").format(_documentExpirationDate!)
     };
-    ApiManager(context).makeUploadDocumentsRequest(context, "POST", '/client/document', _frontDocumentImage, _backDocumentImage, params, (res) {
+    ApiManager(context).makeUploadDocumentsRequest(context, "POST", '/client/document', _frontDocumentImage, _backDocumentImage, params, (res) async {
       debugPrint('Document uploaded');
       setState(() {
         _isUploading = false;
       });
+
+      await FirebaseAnalytics.instance.logEvent(name: "upload_document");
 
       saveProfile();
     }, (res) {
@@ -322,7 +325,7 @@ class AddDocumentScreenState extends State<AddDocumentScreen>  {
                             context: context,
                             initialDate: _documentExpirationDate ?? DateTime.now(),
                             firstDate: DateTime.now().subtract(Duration(days: 1)),
-                            lastDate: DateTime.now().add(Duration(days: 700)),
+                            lastDate: DateTime.now().add(Duration(days: 70000)),
                           );
 
                           setState(() {

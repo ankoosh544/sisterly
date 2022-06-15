@@ -335,7 +335,7 @@ class AccountScreenState extends State<AccountScreen>  {
 
                                 }
                               },
-                              child: getItem("assets/images/document.svg", "Wallet")
+                              child: getItem("assets/images/wallet.svg", "Wallet")
                           ),
                         ),
                         InkWell(
@@ -357,7 +357,7 @@ class AccountScreenState extends State<AccountScreen>  {
                               Navigator.of(context).push(
                                   MaterialPageRoute(builder: (BuildContext context) => OffersScreen()));
                             },
-                            child: getItem("assets/images/offers.svg", "Offerte")
+                            child: getItem("assets/images/offers.svg", "Richieste")
                         ),
                         /*InkWell(
                             onTap: () {

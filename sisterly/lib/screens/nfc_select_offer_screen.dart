@@ -94,7 +94,7 @@ class NfcSelectOfferScreenState extends State<NfcSelectOfferScreen>  {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Offerta #" + offer.id.toString(),
+              "Richiesta #" + offer.id.toString(),
               style: TextStyle(
                 color: Constants.PRIMARY_COLOR,
                 fontSize: 18,
@@ -247,32 +247,6 @@ class NfcSelectOfferScreenState extends State<NfcSelectOfferScreen>  {
     );
   }
 
-  /*accept(Offer offer) {
-    setState(() {
-      _isLoading = true;
-    });
-
-    var params = {
-      "order_id": offer.id,
-      "result": true
-    };
-
-    ApiManager(context).makePostRequest("/product/" + offer.product.id.toString() + "/offer/", params, (res) {
-      // print(res);
-      setState(() {
-        _isLoading = false;
-      });
-
-      ApiManager.showFreeSuccessMessage(context, "Offerta accettata!\nAttendi che la borrower sister effettui il pagamento");
-
-      getOffers();
-    }, (res) {
-      setState(() {
-        _isLoading = false;
-      });
-    });
-  }*/
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -309,7 +283,7 @@ class NfcSelectOfferScreenState extends State<NfcSelectOfferScreen>  {
                                 return offerCell(_offers[index]);
                               }
                             ),
-                          ) : Center(child: Text("Non ci sono offerte qui")),
+                          ) : Center(child: Text("Non ci sono richieste qui")),
                         ),
                       ),
                     ],

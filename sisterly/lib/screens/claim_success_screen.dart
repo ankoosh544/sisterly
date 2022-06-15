@@ -1,17 +1,9 @@
-import 'package:sisterly/screens/home_screen.dart';
-import 'package:sisterly/screens/signup_screen.dart';
 import 'package:sisterly/screens/tab_screen.dart';
-import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
-import 'package:sisterly/utils/localization/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sisterly/widgets/custom_app_bar.dart';
 
 import '../utils/constants.dart';
-import 'forgot_screen.dart';
-import 'login_screen.dart';
 
 class ClaimSuccessScreen extends StatefulWidget {
 

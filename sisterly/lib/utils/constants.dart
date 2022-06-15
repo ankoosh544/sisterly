@@ -21,6 +21,15 @@ class Constants {
   static const Color FORM_TEXT = Color(0xff1f1f1f);
   static const Color WHITE = Color(0xffffffff);
 
+  //test
+  //static const String STRIPE_PUBLISHABLE_KEY = "pk_test_51KGMl1Btvb0IDiEHfApQ4hFiuGVJSV7VKgiYBiBDjglYzYBqxqgwRtDP3JgfpH41913kAThQGk7aC5dZaf2fmHU200uWSCnAoO";
+  //static const String SERVER_URL = "http://sisterly-dev-env.eu-central-1.elasticbeanstalk.com";
+  //static const String APPLE_REDIRECT_URL = "https://sisterly-dev-env.eu-central-1.elasticbeanstalk.com/client/oauth/apple/callback";
+
+  //prod
+  static const String STRIPE_PUBLISHABLE_KEY = "pk_live_51KGMl1Btvb0IDiEHCQuNQDgFdybFKxcygBTDrXpdkZmFeDWGLnzfclcAlNi16PtFCo84kEdozaXAkPnng3rQrLxv00fzQj4CRf";
+  static const String SERVER_URL = "https://api.sisterly.it";
+  static const String APPLE_REDIRECT_URL = "https://api.sisterly.it/client/oauth/apple/callback";
 
   static const String FONT = "Manjari";
 

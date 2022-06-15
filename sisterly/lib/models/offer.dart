@@ -14,6 +14,7 @@ class Offer {
   final double? shipmentFee;
   final double? insurance;
   final double? total;
+  final double? totalNet;
   final DateTime dateStart;
   final DateTime dateEnd;
   final DeliveryModeOffer deliveryMode;
@@ -26,6 +27,7 @@ class Offer {
       this.state,
       this.price,
       this.total,
+      this.totalNet,
       this.dateStart,
       this.dateEnd,
       this.deliveryMode,
@@ -49,6 +51,7 @@ class Offer {
         State.fromJson(json["state"]),
         json["price"] != null ? double.parse(json["price"].toString()) : 0,
         json["total"] != null ? double.parse(json["total"].toString()) : 0,
+        json["total_net"] != null ? double.parse(json["total_net"].toString()) : 0,
         DateTime.parse(json["date_start"]),
         DateTime.parse(json["date_end"]),
         DeliveryModeOffer.fromJson(json["delivery_mode"]),

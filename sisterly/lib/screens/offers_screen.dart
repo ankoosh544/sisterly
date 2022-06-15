@@ -107,7 +107,7 @@ class OffersScreenState extends State<OffersScreen>  {
               children: [
                 Expanded(
                   child: Text(
-                    "Offerta #" + offer.id.toString(),
+                    "Richiesta #" + offer.id.toString(),
                     style: TextStyle(
                       color: Constants.PRIMARY_COLOR,
                       fontSize: 18,
@@ -380,7 +380,7 @@ class OffersScreenState extends State<OffersScreen>  {
         _isLoading = false;
       });
 
-      ApiManager.showFreeSuccessMessage(context, "Offerta eliminata!");
+      ApiManager.showFreeSuccessMessage(context, "Richiesta di noleggio eliminata!");
 
       getOffers();
     }, (res) {
@@ -406,7 +406,7 @@ class OffersScreenState extends State<OffersScreen>  {
         _isLoading = false;
       });
 
-      ApiManager.showFreeSuccessMessage(context, "Offerta rifiutata!");
+      ApiManager.showFreeSuccessMessage(context, "Richiesta di noleggio rifiutata!");
 
       getOffers();
     }, (res) {
@@ -436,7 +436,7 @@ class OffersScreenState extends State<OffersScreen>  {
       backgroundColor: Constants.PRIMARY_COLOR,
       body: Column(
         children: [
-          HeaderWidget(title: "Offerte"),
+          HeaderWidget(title: "Richieste"),
           SizedBox(height: 16,),
           Expanded(
             child: Container(
@@ -533,7 +533,7 @@ class OffersScreenState extends State<OffersScreen>  {
                                 );
                               }
                             ),
-                          ) : Center(child: Text("Non ci sono offerte qui")),
+                          ) : Center(child: Text("Non ci sono richieste qui")),
                         ),
                       ),
                     ],

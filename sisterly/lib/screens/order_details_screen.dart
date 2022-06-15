@@ -180,7 +180,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                                       contentPadding: EdgeInsets.all(0),
                                       horizontalTitleGap: 0,
                                       title: Text(
-                                        'Ritiro',
+                                        'Di persona',
                                         style: Theme.of(context)
                                             .textTheme
                                             .subtitle1!
@@ -270,7 +270,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                               ],
                             ),
                             SizedBox(height: 35),
-                            Row(
+                            if(widget.offer.totalNet == null) Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
@@ -295,8 +295,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                                 ),
                               ],
                             ),
-                            SizedBox(height: 16),
-                            Row(
+                            if(widget.offer.totalNet == null) SizedBox(height: 16),
+                            if(widget.offer.totalNet == null) Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
@@ -310,7 +310,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                                   textAlign: TextAlign.center,
                                 ),
                                 Text(
-                                  Utils.formatCurrency(10),
+                                  Utils.formatCurrency(widget.offer.insurance),
                                   style: TextStyle(
                                       color: Constants.DARK_TEXT_COLOR,
                                       fontSize: 18,
@@ -321,8 +321,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                                 ),
                               ],
                             ),
-                            if(_shipping == "shipment") SizedBox(height: 16),
-                            if(_shipping == "shipment") Row(
+                            if(widget.offer.totalNet == null && _shipping == "shipment") SizedBox(height: 16),
+                            if(widget.offer.totalNet == null && _shipping == "shipment") Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
@@ -347,8 +347,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                                 ),
                               ],
                             ),
-                            if(widget.offer.total != null && widget.offer.total! > 0) SizedBox(height: 16),
-                            if(widget.offer.total != null && widget.offer.total! > 0) Row(
+                            if(widget.offer.totalNet == null && widget.offer.total != null && widget.offer.total! > 0) SizedBox(height: 16),
+                            if(widget.offer.totalNet == null && widget.offer.total != null && widget.offer.total! > 0) Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
@@ -363,6 +363,32 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                                 ),
                                 Text(
                                   Utils.formatCurrency(widget.offer.total),
+                                  style: TextStyle(
+                                      color: Constants.DARK_TEXT_COLOR,
+                                      fontSize: 18,
+                                      fontFamily: Constants.FONT,
+                                      fontWeight: FontWeight.bold
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                            if(widget.offer.totalNet != null && widget.offer.totalNet! > 0) SizedBox(height: 16),
+                            if(widget.offer.totalNet != null && widget.offer.totalNet! > 0) Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "Il tuo guadagno",
+                                  style: TextStyle(
+                                      color: Constants.DARK_TEXT_COLOR,
+                                      fontSize: 18,
+                                      fontFamily: Constants.FONT,
+                                      fontWeight: FontWeight.bold
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                Text(
+                                  Utils.formatCurrency(widget.offer.totalNet),
                                   style: TextStyle(
                                       color: Constants.DARK_TEXT_COLOR,
                                       fontSize: 18,

@@ -42,6 +42,8 @@ class NfcScreenState extends State<NfcScreen> {
 
       //test purpose
       //goToProduct(42);
+      /*Navigator.of(context).push(
+          MaterialPageRoute(builder: (BuildContext context) => NfcSelectOfferScreen(productId: 42)));*/
     });
   }
 
@@ -130,6 +132,8 @@ class NfcScreenState extends State<NfcScreen> {
 
         Navigator.of(context).push(
             MaterialPageRoute(builder: (BuildContext context) => NfcSelectOfferScreen(productId: prd.id,)));
+
+
 
         /*Navigator.of(context).push(
             MaterialPageRoute(builder: (BuildContext context) => ManageNfcScreen(product: prd,)));*/

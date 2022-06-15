@@ -36,8 +36,9 @@ import 'documents_screen.dart';
 class AddClaimScreen extends StatefulWidget {
   final Product? product;
   final Offer? offer;
+  final bool isSeller;
 
-  const AddClaimScreen({Key? key, this.product, this.offer}) : super(key: key);
+  const AddClaimScreen({Key? key, this.product, this.offer, required this.isSeller}) : super(key: key);
 
   @override
   AddClaimScreenState createState() => AddClaimScreenState();
@@ -174,7 +175,7 @@ class AddClaimScreenState extends State<AddClaimScreen> {
                           maxLines: 4,
                           decoration: InputDecoration(
                             hintText:
-                                "Se ci sono dei difetti in più rispetto a quello delle foto/descrizione della lender. segnalali subito in modo da non assumetti le responsabilità per eventuali danni già presenti.",
+                                widget.isSeller ? "Se ci sono danni causati da incuria da parte della borrower, segnalali subito." : "Se ci sono dei difetti in più rispetto a quello delle foto/descrizione della lender. Segnalali subito in modo da non assumerti le responsabilità per eventuali danni già presenti.",
                             hintStyle: const TextStyle(
                                 color: Constants.PLACEHOLDER_COLOR),
                             border: OutlineInputBorder(

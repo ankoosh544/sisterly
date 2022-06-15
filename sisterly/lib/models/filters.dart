@@ -4,7 +4,7 @@ class Filters {
   List<int> conditions = [];
   List<int> colors = [];
   List<int> deliveryModes = [];
-  double maxPrice = 1000;
+  double maxPrice = 100;
   DateTime? availableFrom;
   DateTime? availableTo;
   bool onlySameCity = false;
@@ -15,7 +15,7 @@ class Filters {
         || conditions.isNotEmpty
         || colors.isNotEmpty
         || deliveryModes.isNotEmpty
-        || maxPrice != 1000
+        || maxPrice != 100
         || onlySameCity
         || brand != null
     ;

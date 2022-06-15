@@ -98,7 +98,7 @@ class OffersContractSellerScreenState extends State<OffersContractSellerScreen> 
         _isLoading = false;
       });
 
-      ApiManager.showFreeSuccessMessageWithCallback(context, "Offerta accettata!\nAttendi che la borrower sister effettui il pagamento", () {
+      ApiManager.showFreeSuccessMessageWithCallback(context, "Richiesta di noleggio accettata!\nAttendi che la borrower sister effettui il pagamento", () {
         Navigator.pop(context);
       });
     }, (res) {
@@ -184,7 +184,7 @@ class OffersContractSellerScreenState extends State<OffersContractSellerScreen> 
                                           style: TextStyle(color: Constants.PRIMARY_COLOR, fontSize: 16, fontWeight: FontWeight.bold, fontFamily: Constants.FONT),
                                           recognizer: TapGestureRecognizer()
                                             ..onTap = () {
-                                              String url = "https://sisterly-assets.s3.eu-central-1.amazonaws.com/T%26C+Sisterly+rev1.pdf";
+                                              String url = "https://sisterly-assets.s3.eu-central-1.amazonaws.com/Condizioni+di+noleggio.pdf";
                                               launch(url);
                                             },
                                         ),

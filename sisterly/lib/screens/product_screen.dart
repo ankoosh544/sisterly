@@ -1,10 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:share/share.dart';
 import 'package:sisterly/models/chat.dart';
 import 'package:sisterly/models/document.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/models/product_availability.dart';
+import 'package:sisterly/models/var.dart';
 import 'package:sisterly/screens/checkout_screen.dart';
 import 'package:sisterly/screens/fullscreen_gallery_screen.dart';
 import 'package:sisterly/screens/profile_screen.dart';
@@ -17,6 +20,8 @@ import 'package:sisterly/utils/session_data.dart';
 import "package:sisterly/utils/utils.dart";
 import 'package:sisterly/widgets/stars_widget.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../main.dart';
 import '../utils/constants.dart';
 import 'chat_screen.dart';
 import 'package:image_picker/image_picker.dart';
@@ -48,15 +53,29 @@ class ProductScreenState extends State<ProductScreen>  {
   bool _isUploadingVideo = false;
   bool _isLoadingAvailability = false;
   List<Document> _documents = [];
+  String _shipping = 'shipment';
 
   @override
   void initState() {
     super.initState();
 
-    Future.delayed(Duration.zero, () {
+    Future.delayed(Duration.zero, () async {
       getProductsFavorite();
       getProductAvailabilty();
       _getDocuments();
+
+      if(widget.product.deliveryType!.id == 3) {
+        _shipping = "shipment";
+      }
+
+      if(widget.product.deliveryType!.id == 1) {
+        _shipping = "withdraw";
+      }
+
+      await FirebaseAnalytics.instance.logViewItem(
+          items: [AnalyticsEventItem(itemId: widget.product.id.toString(), itemName: widget.product.model.toString() + " - " + widget.product.brandName.toString())]
+      );
+      MyApp.facebookAppEvents.logViewContent(id: widget.product.id.toString());
     });
   }
 
@@ -87,6 +106,7 @@ class ProductScreenState extends State<ProductScreen>  {
   Widget getInfoRow(String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label + "  :",
@@ -96,13 +116,16 @@ class ProductScreenState extends State<ProductScreen>  {
               fontFamily: Constants.FONT
           ),
         ),
-        Text(
-          value,
-          style: TextStyle(
-              color: Constants.DARK_TEXT_COLOR,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              fontFamily: Constants.FONT
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: TextStyle(
+                color: Constants.DARK_TEXT_COLOR,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                fontFamily: Constants.FONT
+            ),
           ),
         ),
       ],
@@ -140,6 +163,7 @@ class ProductScreenState extends State<ProductScreen>  {
     var params = {
       "year": _focusedDay.year.toString(),
       "month": _focusedDay.month.toString(),
+      "delivery_mode": _shipping == 'shipment' ? 3 : 1
     };
 
     ApiManager(context).makeGetRequest('/product/' + widget.product.id.toString() + '/valid_dates/', params, (res) {
@@ -164,7 +188,10 @@ class ProductScreenState extends State<ProductScreen>  {
       if (res["errors"] != null) {
         ApiManager.showFreeErrorMessage(context, res["errors"].toString());
       } else {
-        ApiManager(context).makeGetRequest('/chat/' + res["data"]["code"]  + '/', {}, (chatRes) {
+        ApiManager(context).makeGetRequest('/chat/' + res["data"]["code"]  + '/', {}, (chatRes) async {
+          await FirebaseAnalytics.instance.logEvent(name: "chat", parameters: {
+            "username": widget.product.owner.username
+          });
           Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChatScreen(chat: Chat.fromJson(chatRes["data"]), code: res["data"]["code"])));
         }, (res) {
 
@@ -182,8 +209,15 @@ class ProductScreenState extends State<ProductScreen>  {
       "product_id": product.id,
       "remove": !add
     };
-    ApiManager(context).makePostRequest('/product/favorite/change/', params, (res) {
+    ApiManager(context).makePostRequest('/product/favorite/change/', params, (res) async {
       getProductsFavorite();
+
+      if(add) {
+        await FirebaseAnalytics.instance.logAddToWishlist(
+            items: [AnalyticsEventItem(itemId: product.id.toString(), itemName: product.model.toString() + " - " + product.brandName.toString())]
+        );
+        MyApp.facebookAppEvents.logAddToWishlist(id: product.id.toString(), type: "product", currency: "EUR", price: product.priceOffer);
+      }
     }, (res) {
 
     });
@@ -252,6 +286,25 @@ class ProductScreenState extends State<ProductScreen>  {
     }
   }
 
+  DateTime nextWeekday(int day) {
+    DateTime now = DateTime.now();
+    return now.add(
+      Duration(
+        days: (day - now.weekday) % DateTime.daysPerWeek,
+      ),
+    );
+  }
+
+  void _handleShipmentRadioChange(String? value) {
+    setState(() {
+      _shipping = value!;
+      _rangeStart = null;
+      _rangeEnd = null;
+    });
+
+    getProductAvailabilty();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -266,15 +319,21 @@ class ProductScreenState extends State<ProductScreen>  {
                   children: [
                     InkWell(
                       onTap: () {
-                        showDialog(
-                            context: context,
-                            barrierColor: Colors.black12.withOpacity(0.6), // Background color
-                            barrierDismissible: true,
-                            builder: (_) => Dialog(
-                              backgroundColor: Colors.transparent,
-                                insetPadding: EdgeInsets.zero,
-                              child: FullscreenGalleryScreen(images: widget.product.images.map((e) => e.image).toList(),)
-                            ));
+                        if(widget.product.images.length > 0) {
+                          showDialog(
+                              context: context,
+                              barrierColor: Colors.black12.withOpacity(0.6),
+                              // Background color
+                              barrierDismissible: true,
+                              builder: (_) =>
+                                  Dialog(
+                                      backgroundColor: Colors.transparent,
+                                      insetPadding: EdgeInsets.zero,
+                                      child: FullscreenGalleryScreen(
+                                        images: widget.product.images.map((
+                                            e) => e.image).toList(),)
+                                  ));
+                        }
                         /*Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (BuildContext context) => FullscreenGalleryScreen(images: widget.product.images,),
@@ -361,42 +420,60 @@ class ProductScreenState extends State<ProductScreen>  {
                                   ),
                                 ),
                                 SizedBox(height: 8),
-                                Text(
-                                  widget.product.model,
-                                  style: TextStyle(
-                                      color: Constants.DARK_TEXT_COLOR,
-                                      fontSize: 20,
-                                      fontFamily: Constants.FONT,
-                                      fontWeight: FontWeight.bold
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 6.0),
+                                  child: Text(
+                                    widget.product.model,
+                                    style: TextStyle(
+                                        color: Constants.DARK_TEXT_COLOR,
+                                        fontSize: 20,
+                                        fontFamily: Constants.FONT,
+                                        fontWeight: FontWeight.bold
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          Wrap(
-                            crossAxisAlignment: WrapCrossAlignment.center,
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Text(
-                                "${Utils.formatCurrency(widget.product.priceOffer)}",
-                                style: TextStyle(
-                                    color: Constants.PRIMARY_COLOR,
-                                    fontSize: 25,
-                                    fontFamily: Constants.FONT,
-                                    fontWeight: FontWeight.bold
-                                ),
+                              Wrap(
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  Text(
+                                    "${Utils.formatCurrency(widget.product.priceOffer)}",
+                                    style: TextStyle(
+                                        color: Constants.PRIMARY_COLOR,
+                                        fontSize: 25,
+                                        fontFamily: Constants.FONT,
+                                        fontWeight: FontWeight.bold
+                                    ),
+                                  ),
+                                  SizedBox(width: 8,),
+                                  Text(
+                                    "${Utils.formatCurrency(widget.product.sellingPrice)}",
+                                    textAlign: TextAlign.left,
+                                    style: TextStyle(
+                                      color: Constants.PRIMARY_COLOR,
+                                      fontSize: 18,
+                                      fontFamily: Constants.FONT,
+                                      fontWeight: FontWeight.bold,
+                                      decoration: TextDecoration.lineThrough,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              SizedBox(width: 8,),
-                              Text(
-                                "${Utils.formatCurrency(widget.product.sellingPrice)}",
-                                textAlign: TextAlign.left,
-                                style: TextStyle(
-                                  color: Constants.PRIMARY_COLOR,
-                                  fontSize: 18,
-                                  fontFamily: Constants.FONT,
-                                  fontWeight: FontWeight.bold,
-                                  decoration: TextDecoration.lineThrough,
-                                ),
-                              ),
+                              InkWell(
+                                onTap: () {
+                                  String normalizedBrand = widget.product.brandName.replaceAll(RegExp(r'[^\w\s]+'), "").replaceAll(" ", "_").toLowerCase();
+                                  String normalizedModel = widget.product.model.replaceAll(RegExp(r'[^\w\s]+'), "").replaceAll(" ", "_").toLowerCase();
+                                  String shareText = "Guarda questo prodotto su Sisterly! https://sisterly.it/noleggio-borse/sisterly/" + normalizedBrand + "/" + normalizedModel + "/" + widget.product.id.toString();
+                                  debugPrint("shareText "+shareText);
+                                  Share.share(shareText);
+                                },
+                                child: Icon(Icons.share, color: Constants.SECONDARY_COLOR),
+                              )
                             ],
                           )
                         ],
@@ -431,13 +508,25 @@ class ProductScreenState extends State<ProductScreen>  {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  "Pubblicata da " + widget.product.owner.username!.capitalize(),
-                                  style: TextStyle(
-                                      color: Constants.DARK_TEXT_COLOR,
-                                      fontSize: 16,
-                                      fontFamily: Constants.FONT
-                                  ),
+                                Wrap(
+                                  spacing: 8,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  children: [
+                                    Text(
+                                      "Pubblicata da " + widget.product.owner.username!.capitalize(),
+                                      style: TextStyle(
+                                          color: Constants.DARK_TEXT_COLOR,
+                                          fontSize: 16,
+                                          fontFamily: Constants.FONT
+                                      ),
+                                    ),
+                                    InkWell(
+                                      onTap: () {
+                                        launch("https://www.sisterly.it/faq.html");
+                                      },
+                                      child: Icon(Icons.info_outline, size: 18, color: Constants.PRIMARY_COLOR,),
+                                    )
+                                  ],
                                 ),
                                 SizedBox(height: 4,),
                                 /*Text(
@@ -540,13 +629,71 @@ class ProductScreenState extends State<ProductScreen>  {
                       //SizedBox(height: 8,),
                       getInfoRow("Materiale", widget.product.materialName),
                       SizedBox(height: 8,),
-                      getInfoRow("Colore", widget.product.colorName.capitalize()),
+                      getInfoRow("Colore", widget.product.colors.map((e) => e.color.capitalize()).join(", ")),
+                      SizedBox(height: 8,),
+                      getInfoRow("Categorie", widget.product.categories.map((e) => e.category.capitalize()).join(", ") ),
+                      if(widget.product.deliveryType != null) SizedBox(height: 8,),
+                      if(widget.product.deliveryType != null) getInfoRow("Consegna", getDeliveryTypeName(widget.product.deliveryType!.id)),
                       /*SizedBox(height: 8,),
                       getInfoRow("Metal Accessories", "Gold Finish"),
                       SizedBox(height: 8,),
                       getInfoRow("Height", "18cm"),
                       SizedBox(height: 8,),
                       getInfoRow("Width", "26cm"),*/
+                      SizedBox(height: 40,),
+                      Text(
+                        "Come vuoi ricevere il prodotto?",
+                        style: TextStyle(
+                            color: Constants.DARK_TEXT_COLOR,
+                            fontSize: 18,
+                            fontFamily: Constants.FONT,
+                            fontWeight: FontWeight.bold
+                        ),
+                      ),
+                      Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            if(widget.product.deliveryType!.id == 3 || widget.product.deliveryType!.id == 13) Expanded(
+                              child: ListTile(
+                                horizontalTitleGap: 0,
+                                contentPadding: EdgeInsets.all(0),
+                                title: Text(
+                                  'Spedizione',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .subtitle1!
+                                      .copyWith(color: _shipping == 'shipment' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
+                                ),
+                                leading: Radio(
+                                    value: 'shipment',
+                                    groupValue: _shipping,
+                                    activeColor: Constants.SECONDARY_COLOR,
+                                    fillColor: MaterialStateColor.resolveWith((states) => _shipping == 'shipment' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
+                                    onChanged: _handleShipmentRadioChange
+                                ),
+                              ),
+                            ),
+                            if(widget.product.deliveryType!.id == 1 || widget.product.deliveryType!.id == 13) Expanded(
+                              child: ListTile(
+                                contentPadding: EdgeInsets.all(0),
+                                horizontalTitleGap: 0,
+                                title: Text(
+                                  'Di persona',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .subtitle1!
+                                      .copyWith(color: _shipping == 'withdraw' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
+                                ),
+                                leading: Radio(
+                                    value: 'withdraw',
+                                    groupValue: _shipping,
+                                    fillColor: MaterialStateColor.resolveWith((states) => _shipping == 'withdraw' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
+                                    onChanged: _handleShipmentRadioChange
+                                ),
+                              ),
+                            ),
+                          ]
+                      ),
                       SizedBox(height: 40,),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -601,7 +748,7 @@ class ProductScreenState extends State<ProductScreen>  {
                         child: AbsorbPointer(
                           absorbing: _isLoadingAvailability,
                           child: TableCalendar(
-                            firstDay: DateTime.now().add(Duration(days: 1)),
+                            firstDay: DateTime.now(),
                             lastDay: DateTime.utc(2040, 3, 14),
                             focusedDay: _focusedDay,
                             rowHeight: 28,
@@ -733,7 +880,10 @@ class ProductScreenState extends State<ProductScreen>  {
                                   child: FittedBox(
                                       child: Container(
                                           padding: const EdgeInsets.all(5),
-                                          child: Text(day.day.toString(), style: TextStyle(color: Color(0xffcccccc), fontSize: 12),)
+                                          child: Text(day.day.toString(), style: TextStyle(
+                                              color: Color(0xffcccccc), fontSize: 12,
+                                              decoration: TextDecoration.lineThrough
+                                          ),)
                                       )
                                   ),
                                 );
@@ -824,7 +974,7 @@ class ProductScreenState extends State<ProductScreen>  {
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
                               ),
                               child: Text('Prenota'),
-                              onPressed: () {
+                              onPressed: () async {
                                 if(_documents.isEmpty) {
                                   ApiManager.showFreeErrorMessage(context, "Per procedere con la prenotazione della borsa è necessario caricare i documenti necessari");
                                   return;
@@ -845,9 +995,38 @@ class ProductScreenState extends State<ProductScreen>  {
                                   return;
                                 }
 
+                                if(_shipping == "shipment") {
+                                  if(_rangeStart!.weekday == 6 || _rangeStart!.weekday == 7 || _rangeEnd!.weekday == 6 || _rangeEnd!.weekday == 7) { //sabato o domenica
+                                    ApiManager.showFreeErrorMessage(context, "Il noleggio CON SPEDIZIONE non può iniziare o terminare il Sabato e/o la Domenica");
+                                    return;
+                                  }
+
+                                  /*DateTime now = DateTime.now();
+                                  if(DateTime(_rangeStart!.year, _rangeStart!.month, _rangeStart!.day).difference(DateTime(now.year, now.month, now.day)).inDays == 1) {
+                                    ApiManager.showFreeErrorMessage(context, "Il noleggio non può partire il giorno seguente rispetto a quello di prenotazione");
+                                    return;
+                                  }
+
+                                  if(now.weekday == 5 || now.weekday == 6 || now.weekday == 7 ) { //venerdi, sabato o domenica
+                                    var nextMonday = nextWeekday(1);
+                                    debugPrint("now: "+now.toIso8601String());
+                                    debugPrint("nextMonday: "+nextMonday.toIso8601String());
+
+                                    if(DateTime(_rangeStart!.year, _rangeStart!.month, _rangeStart!.day).difference(DateTime(nextMonday.year, nextMonday.month, nextMonday.day)).inDays == 0) {
+                                      ApiManager.showFreeErrorMessage(context, "Se oggi è Venerdì, Sabato o Domenica, il noleggio NON può partire dal Lunedì successivo");
+                                      return;
+                                    }
+                                  }*/
+                                }
+
+                                await FirebaseAnalytics.instance.logAddToCart(
+                                  items: [AnalyticsEventItem(itemId: widget.product.id.toString(), itemName: widget.product.model.toString() + " - " + widget.product.brandName.toString())]
+                                );
+
+                                MyApp.facebookAppEvents.logAddToCart(id: widget.product.id.toString(), type: "product", currency: "EUR", price: widget.product.priceOffer);
 
                                 Navigator.of(context).push(
-                                    MaterialPageRoute(builder: (BuildContext context) => CheckoutScreen(product: widget.product, startDate: _rangeStart!, endDate: _rangeEnd!)));
+                                    MaterialPageRoute(builder: (BuildContext context) => CheckoutScreen(product: widget.product, startDate: _rangeStart!, endDate: _rangeEnd!, shipping: _shipping,)));
                               },
                             ),
                           ),

@@ -1,6 +1,8 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/gestures.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sisterly/main.dart';
 import 'package:sisterly/screens/signup_success_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
@@ -9,6 +11,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../utils/constants.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 
 class SignupScreen extends StatefulWidget {
 
@@ -104,6 +107,9 @@ class SignupScreenState extends State<SignupScreen>  {
   }
 
   signupSuccess() async {
+    await FirebaseAnalytics.instance.logSignUp(signUpMethod: "email");
+    MyApp.facebookAppEvents.logCompletedRegistration(registrationMethod: "email");
+
     Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => SignupSuccessScreen()), (_) => false);
   }
 
@@ -560,6 +566,7 @@ class SignupScreenState extends State<SignupScreen>  {
                             ),
                           ),
                         ),
+                        const SizedBox(height: 40),
                       ],
                     ),
                   ),

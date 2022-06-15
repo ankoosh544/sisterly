@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:sisterly/models/account.dart';
 import 'package:sisterly/models/chat.dart';
@@ -21,6 +22,7 @@ import 'package:sisterly/utils/session_data.dart';
 import 'package:sisterly/widgets/header_widget.dart';
 import 'package:sisterly/widgets/stars_widget.dart';
 
+import '../main.dart';
 import '../utils/constants.dart';
 import 'chat_screen.dart';
 import 'filters_screen.dart';
@@ -54,6 +56,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
       getUser();
       getProducts();
       getReviewProducts();
+      getProductsFavorite();
     });
   }
 
@@ -84,7 +87,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
       _isLoading = true;
     });
 
-    ApiManager(context).makeGetRequest(widget.id != null ? '/product/byUser/' + widget.id.toString() + '/' : '/product/my/', { "status": 4 }, (res) {
+    ApiManager(context).makeGetRequest(widget.id != null ? '/product/by_user/' + widget.id.toString() + '/' : '/product/my/', { "status": 4 }, (res) {
       // print(res);
       setState(() {
         _isLoading = false;
@@ -110,7 +113,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
       _isLoading = true;
     });
 
-    ApiManager(context).makeGetRequest(widget.id != null ? '/product/byUser/' + widget.id.toString() + '/' : '/product/my/', { "status": 1 }, (res) {
+    ApiManager(context).makeGetRequest(widget.id != null ? '/product/by_user/' + widget.id.toString() + '/' : '/product/my/', { "status": 1 }, (res) {
       // print(res);
       setState(() {
         _isLoading = false;
@@ -159,13 +162,20 @@ class ProfileScreenState extends State<ProfileScreen>  {
     });
   }
 
-  setProductFavorite(product, add) {
+  setProductFavorite(Product product, add) {
     var params = {
       "product_id": product.id,
       "remove": !add
     };
-    ApiManager(context).makePostRequest('/product/favorite/change/', params, (res) {
+    ApiManager(context).makePostRequest('/product/favorite/change/', params, (res) async {
       getProductsFavorite();
+
+      if(add) {
+        await FirebaseAnalytics.instance.logAddToWishlist(
+          items: [AnalyticsEventItem(itemId: product.id.toString(), itemName: product.model.toString() + " - " + product.brandName.toString())]
+        );
+        MyApp.facebookAppEvents.logAddToWishlist(id: product.id.toString(), type: "product", currency: "EUR", price: product.priceOffer);
+      }
     }, (res) {
 
     });
@@ -371,7 +381,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
                                   InkWell(
                                     onTap: () {
                                       Navigator.of(context).push(
-                                          MaterialPageRoute(builder: (BuildContext context) => ReviewsScreen(userId: widget.id!,)));
+                                          MaterialPageRoute(builder: (BuildContext context) => ReviewsScreen(userId: widget.id ?? SessionData().userId!,)));
                                     },
                                     child: Text(
                                       "Vedi recensioni",
@@ -398,7 +408,11 @@ class ProfileScreenState extends State<ProfileScreen>  {
                                       if (res["errors"] != null) {
                                         ApiManager.showFreeErrorMessage(context, res["errors"].toString());
                                       } else {
-                                        ApiManager(context).makeGetRequest('/chat/' + res["data"]["code"]  + '/', {}, (chatRes) {
+                                        ApiManager(context).makeGetRequest('/chat/' + res["data"]["code"]  + '/', {}, (chatRes) async {
+                                          await FirebaseAnalytics.instance.logEvent(name: "chat", parameters: {
+                                            "username": _profile!.username
+                                          });
+
                                           Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChatScreen(chat: Chat.fromJson(chatRes["data"]), code: res["data"]["code"])));
                                         }, (res) {
 

@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:intl/intl.dart';
 import 'package:sisterly/models/account.dart';
 import 'package:sisterly/models/chat.dart';
@@ -88,7 +89,10 @@ class SearchUserScreenState extends State<SearchUserScreen>  {
           if (res["errors"] != null) {
             ApiManager.showFreeErrorMessage(context, res["errors"].toString());
           } else {
-            ApiManager(context).makeGetRequest('/chat/' + res["data"]["code"]  + '/', {}, (chatRes) {
+            ApiManager(context).makeGetRequest('/chat/' + res["data"]["code"]  + '/', {}, (chatRes) async {
+              await FirebaseAnalytics.instance.logEvent(name: "chat", parameters: {
+                "username": user.username
+              });
               Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChatScreen(chat: Chat.fromJson(chatRes["data"]), code: res["data"]["code"])));
             }, (res) {
 

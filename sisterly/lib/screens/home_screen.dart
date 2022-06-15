@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:flutter/services.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/screens/nfc_screen.dart';
@@ -11,7 +15,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sisterly/utils/session_data.dart';
 import 'package:sisterly/utils/utils.dart';
 import 'package:sisterly/widgets/header_widget.dart';
+import 'package:uni_links/uni_links.dart';
 
+import '../main.dart';
 import '../utils/constants.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -27,16 +33,64 @@ class HomeScreenState extends State<HomeScreen>  {
   List<Product> _products = [];
   List<Product> _productsFavorite = [];
   bool _isLoading = false;
+  final int _pageSize = 100;
+  StreamSubscription? _sub;
 
   @override
   void initState() {
     super.initState();
 
     Future.delayed(Duration.zero, () {
+      initUniLinks();
       initPush();
-      getProducts();
+      getProducts(false);
       getProductsFavorite();
     });
+  }
+
+  Future<void> initUniLinks() async {
+    _sub = uriLinkStream.listen((Uri? uri) {
+      debugPrint("linkstream new link "+uri.toString());
+      manageDeepLink(uri.toString());
+    }, onError: (err) {
+      debugPrint("linkstream error");
+      // Handle exception by warning the user their action did not succeed
+    });
+
+    if(!SessionData().initialLinkManaged) {
+      try {
+        final initialLink = await getInitialLink();
+        manageDeepLink(initialLink);
+        SessionData().initialLinkManaged = true;
+      } on PlatformException {
+        // Handle exception by warning the user their action did not succeed
+        // return?
+      }
+    }
+  }
+
+  manageDeepLink(link) {
+    if(SessionData().deepLink != link) {
+      debugPrint("manage link "+link.toString());
+
+      List<String> paths = link.toString().split("/");
+
+      ApiManager(context).makeGetRequest('/product/' + paths.last + '/', {}, (res) {
+        if (res["errors"] != null) {
+          ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+        } else {
+          SessionData().deepLink = null;
+          Product prod = Product.fromJson(res["data"]);
+          Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ProductScreen(prod)));
+        }
+      }, (res) {
+        if (res["errors"] != null) {
+          ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+        }
+      });
+    }
+
+    SessionData().deepLink = link;
   }
 
   initPush() async {
@@ -114,18 +168,42 @@ class HomeScreenState extends State<HomeScreen>  {
                           setProductFavorite(product, true);
                         },
                       )
+                  ),
+                  if(product.useDiscount) Positioned(
+                      top: 12,
+                      left: 12,
+                      child: InkWell(
+                        onTap: () {
+                          ApiManager.showFreeSuccessMessage(context, "Questa borsa partecipa alle promozioni Sisterly");
+                        },
+                          child: SizedBox(width: 18, height: 18, child: Icon(Icons.percent_sharp, color: Constants.SECONDARY_COLOR,))
+                      ),
                   )
                 ],
               ),
               SizedBox(height: 16,),
-              Text(
-                product.model.toString() + " - " + product.brandName.toString(),
-                textAlign: TextAlign.left,
-                style: TextStyle(
-                  color: Constants.TEXT_COLOR,
-                  fontFamily: Constants.FONT,
-                  fontSize: 16,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    product.model.toString() + " - " + product.brandName.toString(),
+                    textAlign: TextAlign.left,
+                    style: TextStyle(
+                      color: Constants.TEXT_COLOR,
+                      fontFamily: Constants.FONT,
+                      fontSize: 16,
+                    ),
+                  ),
+                  if(product.location != null) Text(
+                    product.location!.city.capitalize(),
+                    textAlign: TextAlign.left,
+                    style: TextStyle(
+                      color: Constants.TEXT_COLOR,
+                      fontFamily: Constants.FONT,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
               ),
               SizedBox(height: 8,),
               Row(
@@ -162,17 +240,23 @@ class HomeScreenState extends State<HomeScreen>  {
     );
   }
 
-  getProducts() {
+  getProducts(nextPage) {
     setState(() {
       _isLoading = true;
     });
-    ApiManager(context).makeGetRequest('/product/', {}, (res) {
+    var params = {
+      "start": nextPage ? _products.length : 0,
+      "count": _pageSize
+    };
+    ApiManager(context).makeGetRequest('/product/', params, (res) {
       // print(res);
       setState(() {
         _isLoading = false;
       });
 
-      _products = [];
+      if(!nextPage) {
+        _products = [];
+      }
 
       var data = res["data"];
       if (data != null) {
@@ -215,8 +299,15 @@ class HomeScreenState extends State<HomeScreen>  {
       "product_id": product.id,
       "remove": !add
     };
-    ApiManager(context).makePostRequest('/product/favorite/change/', params, (res) {
+    ApiManager(context).makePostRequest('/product/favorite/change/', params, (res) async {
       getProductsFavorite();
+
+      if(add) {
+        await FirebaseAnalytics.instance.logAddToWishlist(
+            items: [AnalyticsEventItem(itemId: product.id.toString(), itemName: product.model.toString() + " - " + product.brandName.toString())]
+        );
+        MyApp.facebookAppEvents.logAddToWishlist(id: product.id.toString(), type: "product", currency: "EUR", price: product.priceOffer);
+      }
     }, (res) {
 
     });
@@ -273,14 +364,33 @@ class HomeScreenState extends State<HomeScreen>  {
                 padding: const EdgeInsets.all(20.0),
                 child: _isLoading ? Center(child: CircularProgressIndicator()) : RefreshIndicator(
                   onRefresh: () async {
-                    getProducts();
+                    getProducts(false);
                     getProductsFavorite();
                   },
                   child: ListView.builder(
                     padding: const EdgeInsets.all(0),
-                    itemCount: _products.length,
+                    itemCount: _products.length + 1,
                     itemBuilder: (BuildContext context, int index) {
-                      return productCell(_products[index]);
+                      if(index < _products.length) return productCell(_products[index]);
+
+                      return Padding(
+                        padding: const EdgeInsets.all(32.0),
+                        child: Center(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                                primary: Constants.SECONDARY_COLOR,
+                                textStyle: const TextStyle(fontSize: 16),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 46, vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(50))),
+                            child: Text('Carica altri...'),
+                            onPressed: () async {
+                              getProducts(true);
+                            },
+                          ),
+                        ),
+                      );
                     }
                   ),
                 ),

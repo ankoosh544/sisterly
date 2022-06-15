@@ -12,6 +12,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 
 class Welcome2Screen extends StatefulWidget {
@@ -123,6 +124,23 @@ class Welcome2ScreenState extends State<Welcome2Screen> {
                     SizedBox(height: 40,),
                     getIconTextWidget("rent", "Metti in affitto le borse che non usi e inizia a guadagnare, in modo comodo e sicuro."),
                     SizedBox(height: 40,),
+                    if(!widget.showLogin) Center(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            primary: Constants.SECONDARY_COLOR,
+                            textStyle: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 80, vertical: 14),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(50))),
+                        child: Text('FAQ'),
+                        onPressed: () {
+                          launch("https://www.sisterly.it/faq.html");
+                        },
+                      ),
+                    ),
                     if(widget.showLogin) Row(
                       children: [
                         Expanded(
