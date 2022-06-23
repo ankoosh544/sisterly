@@ -186,6 +186,10 @@ class SearchScreenState extends State<SearchScreen>  {
       params["id_brands"] = [_filters.brand];
     }
 
+    if(_filters.category != null) {
+      params["id_categories"] = [_filters.category];
+    }
+
     if(_filters.conditions.isNotEmpty) {
       params["conditions"] = _filters.conditions;
     }

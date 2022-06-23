@@ -9,6 +9,7 @@ class Filters {
   DateTime? availableTo;
   bool onlySameCity = false;
   int? brand;
+  int? category;
 
   areSet() {
     return model != null
@@ -18,6 +19,7 @@ class Filters {
         || maxPrice != 100
         || onlySameCity
         || brand != null
+        || category != null
     ;
   }
 
