@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sisterly/models/brand.dart';
+import 'package:sisterly/models/category.dart';
 import 'package:sisterly/models/delivery_mode.dart';
 import 'package:sisterly/models/filters.dart';
 import 'package:sisterly/models/product_color.dart';
@@ -36,6 +37,7 @@ class _FiltersScreenState extends State<FiltersScreen> {
 
   List<ProductColor> _colorsList = [];
   List<DeliveryMode> _deliveryModesList = [];
+  List<Category> _categories = [];
   List<Brand> _brands = [];
 
   Filters _filters = Filters();
@@ -49,11 +51,26 @@ class _FiltersScreenState extends State<FiltersScreen> {
     Future.delayed(Duration.zero, () {
       getColors();
       getDeliveryModes();
+      getCategories();
       getBrands();
 
       setFromDate(_filters.availableFrom);
       setToDate(_filters.availableTo);
     });
+  }
+
+  getCategories() {
+    ApiManager(context).makeGetRequest('/client/categories', {}, (res) {
+      var data = res["data"];
+      _categories.clear();
+      if (data != null) {
+        setState(() {
+          for (var b in data) {
+            _categories.add(Category.fromJson(b));
+          }
+        });
+      }
+    }, (res) {});
   }
 
   getBrands() {
@@ -360,6 +377,67 @@ class _FiltersScreenState extends State<FiltersScreen> {
                                       ).toList(),
                                       onChanged: (val) => setState(() => _filters.brand = val!.id),
                                       value: _filters.brand != null ? _brands.firstWhere((element) => element.id == _filters.brand) : null
+                                  ),
+                                )
+                            ),
+                            SizedBox(height: 40,),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "Categoria",
+                                  style: TextStyle(
+                                      color: Constants.DARK_TEXT_COLOR,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: Constants.FONT),
+                                  textAlign: TextAlign.center,
+                                ),
+                                SizedBox(width: 16,),
+                                if(_filters.category != null && _filters.category! > 0) InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _filters.category = null;
+                                    });
+                                  },
+                                  child: Text(
+                                    "Cancella",
+                                    style: TextStyle(
+                                        color: Constants.SECONDARY_COLOR,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: Constants.FONT),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                )
+                              ],
+                            ),
+                            SizedBox(height: 8,),
+                            if (_categories.isNotEmpty)  Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.only(left: 15),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Color(0x4ca3c4d4),
+                                      spreadRadius: 8,
+                                      blurRadius: 12,
+                                      offset:
+                                      Offset(0, 0), // changes position of shadow
+                                    ),
+                                  ],
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<Category>(
+                                      items: _categories.map((Category b) => DropdownMenuItem<Category>(
+                                          child: Text(b.category, style: TextStyle(fontSize: 16)),
+                                          value: b
+                                      )
+                                      ).toList(),
+                                      onChanged: (val) => setState(() => _filters.category = val!.id),
+                                      value: _filters.category != null ? _categories.firstWhere((element) => element.id == _filters.category) : null
                                   ),
                                 )
                             ),
