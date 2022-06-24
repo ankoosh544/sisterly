@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sisterly/models/address.dart';
 import 'package:sisterly/models/brand.dart';
@@ -72,6 +73,7 @@ class UploadScreenState extends State<UploadScreen>  {
   bool _isUploading = false;
   bool _usePriceAlgo = false;
   bool _useDiscount = false;
+  bool _pushEnabled = false;
   String? _suggestedPrice;
   List<Document> _documents = [];
   bool _isLoadingDocuments = true;
@@ -85,6 +87,7 @@ class UploadScreenState extends State<UploadScreen>  {
       debugPrint("deliveryTypes: "+jsonEncode(deliveryTypes));
 
       //_getDocuments();
+      _checkPush();
       _getOnboarding();
       _getMediaId();
       _getBrands();
@@ -100,6 +103,25 @@ class UploadScreenState extends State<UploadScreen>  {
   @override
   void dispose() {
     super.dispose();
+  }
+
+  _checkPush() async {
+    final status = await OneSignal.shared.getDeviceState();
+    bool isSimulator = await Utils.isSimulator();
+
+    debugPrint("Push status hasNotificationPermission: "+status!.hasNotificationPermission.toString());
+    debugPrint("Push status subscribed: "+status.subscribed.toString());
+    debugPrint("Push status Utils.isSimulator(): "+isSimulator.toString());
+
+    if((status.hasNotificationPermission && status.subscribed) || isSimulator) {
+      _pushEnabled = true;
+    } else {
+      _pushEnabled = false;
+    }
+
+    setState(() {
+
+    });
   }
 
   _getDocuments() {
@@ -279,6 +301,41 @@ class UploadScreenState extends State<UploadScreen>  {
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
                     children: [
+                      if(!_pushEnabled) SizedBox(height: 15),
+                      if(!_pushEnabled) InkWell(
+                        onTap: () async {
+                          await Utils.enablePush(context, true);
+                          _checkPush();
+                        },
+                        child: Card(
+                          color: Color(0x88FF8A80),
+                          elevation: 0,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              children: const [
+                                Text('Per procedere con il caricamento della borsa è necessario attivare le notifiche push',
+                                  style: TextStyle(
+                                    color: Constants.TEXT_COLOR,
+                                    fontSize: 16,
+                                    fontFamily: Constants.FONT,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                SizedBox(height: 8),
+                                Text('Clicca qui',
+                                    style: TextStyle(
+                                      color: Constants.TEXT_COLOR,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: Constants.FONT,
+                                    )
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                       if(onboardingUrl != null) SizedBox(height: 15),
                       if(onboardingUrl != null) InkWell(
                         onTap: () async {
@@ -351,9 +408,9 @@ class UploadScreenState extends State<UploadScreen>  {
                       ),
                       if(_documents.isEmpty) SizedBox(height: 15),
                       AbsorbPointer(
-                        absorbing: onboardingUrl != null || _documents.isEmpty,
+                        absorbing: onboardingUrl != null || _documents.isEmpty || !_pushEnabled,
                         child: Opacity(
-                          opacity:  onboardingUrl != null || _documents.isEmpty ? 0.4 : 1,
+                          opacity: onboardingUrl != null || _documents.isEmpty || !_pushEnabled ? 0.4 : 1,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[

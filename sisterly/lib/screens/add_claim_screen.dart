@@ -1,37 +1,16 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_rating_bar/flutter_rating_bar.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:sisterly/models/address.dart';
-import 'package:sisterly/models/brand.dart';
-import 'package:sisterly/models/delivery_mode.dart';
-import 'package:sisterly/models/document.dart';
-import 'package:sisterly/models/generic.dart';
-import 'package:sisterly/models/material.dart';
 import 'package:sisterly/models/offer.dart';
 import 'package:sisterly/models/product.dart';
-import 'package:sisterly/models/product_color.dart';
-import 'package:sisterly/models/var.dart';
 import 'package:sisterly/screens/claim_success_screen.dart';
-import 'package:sisterly/screens/product_edit_success_screen.dart';
-import 'package:sisterly/screens/product_success_screen.dart';
-import 'package:sisterly/screens/review_success_screen.dart';
-import 'package:sisterly/screens/sister_advice_screen.dart';
-import 'package:sisterly/screens/upload_2_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:sisterly/utils/session_data.dart';
-import 'package:sisterly/utils/utils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sisterly/widgets/header_widget.dart';
 
 import '../utils/constants.dart';
-import 'documents_screen.dart';
 
 class AddClaimScreen extends StatefulWidget {
   final Product? product;

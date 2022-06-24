@@ -1,5 +1,8 @@
 import 'dart:io';
 
+import 'package:device_info/device_info.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
+import 'package:safe_device/safe_device.dart';
 import 'package:sisterly/utils/session_data.dart';
 import 'package:sisterly/widgets/empty_layout.dart';
 import 'package:sisterly/widgets/error_layout.dart';
@@ -9,9 +12,48 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'api_manager.dart';
+
 class Utils {
 
   Utils();
+
+  static isSimulator() async {
+    return !(await SafeDevice.isRealDevice);
+  }
+
+  static enablePush(BuildContext context, bool showDisabledAlert) async {
+    OneSignal.shared.setLogLevel(OSLogLevel.verbose, OSLogLevel.none);
+
+    OneSignal.shared.setAppId("525f16c7-1961-47ca-841d-bf2f96c2b002");
+
+    OneSignal.shared.setExternalUserId(SessionData().userId.toString());
+
+// The promptForPushNotificationsWithUserResponse function will show the iOS push notification prompt. We recommend removing the following code and instead using an In-App Message to prompt for notification permission
+    OneSignal.shared.promptUserForPushNotificationPermission().then((accepted) {
+      print("Accepted permission: $accepted");
+      
+      if(!accepted && showDisabledAlert) {
+        ApiManager.showFreeErrorMessage(context, "Hai disabilitato le notifiche push. Accedi alle impostazioni del tuo smartphone e attivale per procedere.");
+      }
+    });
+
+    OneSignal.shared.disablePush(false);
+
+    final status = await OneSignal.shared.getDeviceState();
+    final String? osUserID = status?.userId;
+
+    debugPrint("onesignal id "+osUserID.toString());
+
+    var params = {
+      "player_id": osUserID.toString()
+    };
+    ApiManager(context).makePostRequest('/client/player_id', params, (res) {
+
+    }, (res) {
+
+    });
+  }
 
   static formatCurrency(value) {
     var val = SessionData().currencyFormat.format(value);

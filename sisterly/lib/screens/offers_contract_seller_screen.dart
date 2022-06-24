@@ -98,7 +98,7 @@ class OffersContractSellerScreenState extends State<OffersContractSellerScreen> 
         _isLoading = false;
       });
 
-      ApiManager.showFreeSuccessMessageWithCallback(context, "Richiesta di noleggio accettata!\nAttendi che la borrower sister effettui il pagamento", () {
+      ApiManager.showFreeSuccessMessageWithCallback(context, "Richiesta di noleggio accettata!", () {
         Navigator.pop(context);
       });
     }, (res) {

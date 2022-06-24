@@ -297,7 +297,7 @@ class ApiManager {
             preferences.setString(
                 Constants.PREFS_REFRESH_TOKEN, response["refresh"]);
             SessionData().token = response["access"];
-            internalMakeGetRequest(
+            internalMakePutRequest(
                 endpoint, params, SessionData().token, success, failure, false);
           } else {
             SessionData().logout(context);

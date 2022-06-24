@@ -409,21 +409,36 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
       isLoading = true;
     });
 
-    //final paymentMethod = await Stripe.instance.createPaymentMethod(PaymentMethodParams.card());
-    await Stripe.instance.dangerouslyUpdateCardDetails(_card);
+    try {
+      //final paymentMethod = await Stripe.instance.createPaymentMethod(PaymentMethodParams.card());
+      await Stripe.instance.dangerouslyUpdateCardDetails(_card);
 
-    final paymentMethod = await Stripe.instance.createPaymentMethod(PaymentMethodParams.card(paymentMethodData: PaymentMethodData()));
-    debugPrint("paymentMethod "+paymentMethod.id.toString());
+      final paymentMethod = await Stripe.instance.createPaymentMethod(
+          PaymentMethodParams.card(paymentMethodData: PaymentMethodData()));
+      debugPrint("paymentMethod " + paymentMethod.id.toString());
 
-    PaymentMethodParams params = PaymentMethodParams.cardFromMethodId(paymentMethodData: PaymentMethodDataCardFromMethod(paymentMethodId: paymentMethod.id));
-    final confirmIntent = await Stripe.instance.confirmPayment(widget.paymentIntentSecret, params);
+      PaymentMethodParams params = PaymentMethodParams.cardFromMethodId(
+          paymentMethodData: PaymentMethodDataCardFromMethod(
+              paymentMethodId: paymentMethod.id));
+      final confirmIntent = await Stripe.instance.confirmPayment(
+          widget.paymentIntentSecret, params);
 
-    debugPrint("confirmIntent " + confirmIntent.id.toString());
+      debugPrint("confirmIntent " + confirmIntent.id.toString());
 
-    widget.successCallback();
+      setState(() {
+        isLoading = false;
+      });
 
-    setState(() {
-      isLoading = false;
-    });
+      widget.successCallback();
+    } catch(e) {
+      setState(() {
+        isLoading = false;
+      });
+      ApiManager.showFreeErrorMessage(context, "Pagamento fallito. Riprova");
+
+      ApiManager.showFreeErrorToast(context, e.toString());
+    }
+
+
   }
 }

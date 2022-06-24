@@ -94,30 +94,7 @@ class HomeScreenState extends State<HomeScreen>  {
   }
 
   initPush() async {
-    OneSignal.shared.setLogLevel(OSLogLevel.verbose, OSLogLevel.none);
-
-    OneSignal.shared.setAppId("525f16c7-1961-47ca-841d-bf2f96c2b002");
-
-    OneSignal.shared.setExternalUserId(SessionData().userId.toString());
-
-// The promptForPushNotificationsWithUserResponse function will show the iOS push notification prompt. We recommend removing the following code and instead using an In-App Message to prompt for notification permission
-    OneSignal.shared.promptUserForPushNotificationPermission().then((accepted) {
-      print("Accepted permission: $accepted");
-    });
-
-    final status = await OneSignal.shared.getDeviceState();
-    final String? osUserID = status?.userId;
-
-    debugPrint("onesignal id "+osUserID.toString());
-
-    var params = {
-      "player_id": osUserID.toString()
-    };
-    ApiManager(context).makePostRequest('/client/player_id', params, (res) {
-
-    }, (res) {
-
-    });
+    Utils.enablePush(context, false);
   }
 
   @override

@@ -6,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:sisterly/models/address.dart';
 import 'package:sisterly/models/product.dart';
 import 'package:sisterly/models/var.dart';
@@ -17,6 +18,9 @@ import 'package:sisterly/utils/session_data.dart';
 import 'package:sisterly/utils/utils.dart';
 import 'package:sisterly/widgets/checkout/checkout_product_card.dart';
 import 'package:sisterly/widgets/stars_widget.dart';
+
+import '../models/offer.dart';
+import 'offers_contract_buyer_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
 
@@ -63,6 +67,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Address? _activeAddress;
   bool _addNewAddress = false;
   bool _editAddress = false;
+  bool _pushEnabled = false;
   Address? _addressToEdit;
   DateTime _availableFrom = DateTime.now();
   DateTime _availableTo = DateTime.now().add(Duration(days: 7));
@@ -76,6 +81,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   void initState() {
     super.initState();
+
+    checkPush();
 
     if(widget.product.deliveryType!.id == 3) {
       _shipping = "shipment";
@@ -96,6 +103,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       getAddresses(() {
         getTotalPrice();
       });
+
+    });
+  }
+
+  checkPush() async {
+    final status = await OneSignal.shared.getDeviceState();
+    bool isSimulator = await Utils.isSimulator();
+
+    debugPrint("Push status hasNotificationPermission: "+status!.hasNotificationPermission.toString());
+    debugPrint("Push status subscribed: "+status.subscribed.toString());
+    debugPrint("Push status Utils.isSimulator(): "+isSimulator.toString());
+
+    if((status.hasNotificationPermission && status.subscribed) || isSimulator) {
+      _pushEnabled = true;
+    } else {
+      _pushEnabled = false;
+    }
+
+    setState(() {
 
     });
   }
@@ -240,834 +266,879 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CheckoutProductCard(product: widget.product),
-
-                      SizedBox(height: 25),
-                      profileBanner(),
-
-                      SizedBox(height: 25),
-                      Text(
-                        "Come vuoi ricevere il prodotto?",
-                        style: TextStyle(
-                            color: Constants.DARK_TEXT_COLOR,
-                            fontSize: 18,
-                            fontFamily: Constants.FONT,
-                            fontWeight: FontWeight.bold
-                        ),
-                      ),
-                      IgnorePointer(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            if(widget.product.deliveryType!.id == 3 || widget.product.deliveryType!.id == 13) Expanded(
-                              child: ListTile(
-                                horizontalTitleGap: 0,
-                                contentPadding: EdgeInsets.all(0),
-                                title: Text(
-                                  'Spedizione',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .subtitle1!
-                                      .copyWith(color: _shipping == 'shipment' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
-                                ),
-                                leading: Radio(
-                                  value: 'shipment',
-                                  groupValue: _shipping,
-                                  activeColor: Constants.SECONDARY_COLOR,
-                                    fillColor: MaterialStateColor.resolveWith((states) => _shipping == 'shipment' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
-                                  onChanged: _handleShipmentRadioChange
-                                ),
-                              ),
-                            ),
-                            if(widget.product.deliveryType!.id == 1 || widget.product.deliveryType!.id == 13) Expanded(
-                              child: ListTile(
-                                contentPadding: EdgeInsets.all(0),
-                                horizontalTitleGap: 0,
-                                title: Text(
-                                  'Di persona',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .subtitle1!
-                                      .copyWith(color: _shipping == 'withdraw' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
-                                ),
-                                leading: Radio(
-                                  value: 'withdraw',
-                                  groupValue: _shipping,
-                                  fillColor: MaterialStateColor.resolveWith((states) => _shipping == 'withdraw' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
-                                  onChanged: _handleShipmentRadioChange
-                                ),
-                              ),
-                            ),
-                          ]
-                        ),
-                      ),
-                      if(_shipping == "shipment") Card(
-                        color: Color(0x55e8e23e),
-                        elevation: 0,
-                        child: Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: Column(
-                            children: [
-                              Text('Costo spedizione: ' + Utils.formatCurrency(double.parse(_deliveryPrice)),
+                      if(!_pushEnabled) SizedBox(height: 15),
+                      if(!_pushEnabled) InkWell(
+                        onTap: () async {
+                          await Utils.enablePush(context, true);
+                          checkPush();
+                        },
+                        child: Card(
+                          color: Color(0x88FF8A80),
+                          elevation: 0,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              children: const [
+                                Text('Per procedere con l\'invio dell\'offerta, è necessario attivare le notifiche push',
                                   style: TextStyle(
                                     color: Constants.TEXT_COLOR,
                                     fontSize: 16,
                                     fontFamily: Constants.FONT,
-                                  )
-                              ),
-                            ],
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                SizedBox(height: 8),
+                                Text('Clicca qui',
+                                    style: TextStyle(
+                                      color: Constants.TEXT_COLOR,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: Constants.FONT,
+                                    )
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                      if(_shipping != 'withdraw') Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(height: 15),
-                          Text(
-                            "A quale indirizzo vuoi riceverlo?",
-                            style: TextStyle(
-                                color: Constants.DARK_TEXT_COLOR,
-                                fontSize: 18,
-                                fontFamily: Constants.FONT,
-                                fontWeight: FontWeight.bold
-                            ),
-                          ),
-                          SizedBox(height: 15),
-                          if (!_hasAddress || _addNewAddress || _editAddress) Column(
-                              children: [
-                                inputField("Nome e cognome", _name, false),
-                                inputField("Indirizzo", _address, false),
-                                inputField("Indirizzo 2", _address2, false),
-                                inputField("Città", _city, false),
-                                inputField("Codice postale", _zip, false),
-                                inputField("Provincia", _state, false),
-                                inputField("Nazione", _country, true),
-                                inputField("Email", _email, false),
-                                inputField("Cellulare", _phone, false),
-                                const SizedBox(height: 25),
-                                if (!_editAddress) Row(
+
+                      AbsorbPointer(
+                        absorbing: !_pushEnabled,
+                        child: Opacity(
+                          opacity: !_pushEnabled ? 0.4 : 1,
+                          child: Column(
+                            children: [
+                              CheckoutProductCard(product: widget.product),
+                              SizedBox(height: 25),
+                              profileBanner(),
+
+                              SizedBox(height: 25),
+                              Text(
+                                "Come vuoi ricevere il prodotto?",
+                                style: TextStyle(
+                                    color: Constants.DARK_TEXT_COLOR,
+                                    fontSize: 18,
+                                    fontFamily: Constants.FONT,
+                                    fontWeight: FontWeight.bold
+                                ),
+                              ),
+                              IgnorePointer(
+                                child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                            primary: Constants.GREEN_SAVE,
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
+                                      if(widget.product.deliveryType!.id == 3 || widget.product.deliveryType!.id == 13) Expanded(
+                                        child: ListTile(
+                                          horizontalTitleGap: 0,
+                                          contentPadding: EdgeInsets.all(0),
+                                          title: Text(
+                                            'Spedizione',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle1!
+                                                .copyWith(color: _shipping == 'shipment' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
+                                          ),
+                                          leading: Radio(
+                                              value: 'shipment',
+                                              groupValue: _shipping,
+                                              activeColor: Constants.SECONDARY_COLOR,
+                                              fillColor: MaterialStateColor.resolveWith((states) => _shipping == 'shipment' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
+                                              onChanged: _handleShipmentRadioChange
+                                          ),
                                         ),
-                                        child: Text('Salva',
-                                            style: TextStyle(
-                                              color: Constants.TEXT_COLOR,
-                                              fontSize: 16,
-                                              fontFamily: Constants.FONT,
-                                            )
-                                        ),
-                                        onPressed: () async {
-                                          setState(() { _saveAddress = true; });
-                                          await saveAddress();
-                                        },
                                       ),
-                                      /*Text('Salva per acquisti futuri',
+                                      if(widget.product.deliveryType!.id == 1 || widget.product.deliveryType!.id == 13) Expanded(
+                                        child: ListTile(
+                                          contentPadding: EdgeInsets.all(0),
+                                          horizontalTitleGap: 0,
+                                          title: Text(
+                                            'Di persona',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle1!
+                                                .copyWith(color: _shipping == 'withdraw' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
+                                          ),
+                                          leading: Radio(
+                                              value: 'withdraw',
+                                              groupValue: _shipping,
+                                              fillColor: MaterialStateColor.resolveWith((states) => _shipping == 'withdraw' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
+                                              onChanged: _handleShipmentRadioChange
+                                          ),
+                                        ),
+                                      ),
+                                    ]
+                                ),
+                              ),
+                              if(_shipping == "shipment") Card(
+                                color: Color(0x55e8e23e),
+                                elevation: 0,
+                                child: Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Column(
+                                    children: [
+                                      Text('Costo spedizione: ' + Utils.formatCurrency(double.parse(_deliveryPrice)),
                                           style: TextStyle(
                                             color: Constants.TEXT_COLOR,
                                             fontSize: 16,
                                             fontFamily: Constants.FONT,
                                           )
                                       ),
-                                      Switch(
-                                        value: _saveAddress,
-                                        onChanged: (value) => setState(() { _saveAddress = value; }),
-                                        activeColor: Constants.SECONDARY_COLOR,
-                                      )*/
-                                    ]
+                                    ],
+                                  ),
                                 ),
-                              ]
-                          ),
-                          if (_editAddress) ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                                primary: Constants.GREEN_SAVE,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
-                            ),
-                            child: Text('Salva',
-                                style: TextStyle(
-                                  color: Constants.TEXT_COLOR,
-                                  fontSize: 16,
-                                  fontFamily: Constants.FONT,
-                                )
-                            ),
-                            onPressed: () {
-                              _updateAddress();
-                              setState(() {
-                                _editAddress = false;
-                                _addressToEdit = null;
-                              });
-                            },
-                          ),
-                          if (_hasAddress && !_addNewAddress && !_editAddress) Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: Row(
+                              ),
+                              if(_shipping != 'withdraw') Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(height: 15),
+                                  Text(
+                                    "A quale indirizzo vuoi riceverlo?",
+                                    style: TextStyle(
+                                        color: Constants.DARK_TEXT_COLOR,
+                                        fontSize: 18,
+                                        fontFamily: Constants.FONT,
+                                        fontWeight: FontWeight.bold
+                                    ),
+                                  ),
+                                  SizedBox(height: 15),
+                                  if (!_hasAddress || _addNewAddress || _editAddress) Column(
                                       children: [
-                                        if (_activeAddress != null) _renderAddress(_activeAddress!),
-                                        for (var a in _addresses) _renderAddress(a)
+                                        inputField("Nome e cognome", _name, false),
+                                        inputField("Indirizzo", _address, false),
+                                        inputField("Indirizzo 2", _address2, false),
+                                        inputField("Città", _city, false),
+                                        inputField("Codice postale", _zip, false),
+                                        inputField("Provincia", _state, false),
+                                        inputField("Nazione", _country, true),
+                                        inputField("Email", _email, false),
+                                        inputField("Cellulare", _phone, false),
+                                        const SizedBox(height: 25),
+                                        if (!_editAddress) Row(
+                                            children: [
+                                              ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                    primary: Constants.GREEN_SAVE,
+                                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
+                                                ),
+                                                child: Text('Salva',
+                                                    style: TextStyle(
+                                                      color: Constants.TEXT_COLOR,
+                                                      fontSize: 16,
+                                                      fontFamily: Constants.FONT,
+                                                    )
+                                                ),
+                                                onPressed: () async {
+                                                  setState(() { _saveAddress = true; });
+                                                  await saveAddress();
+                                                },
+                                              ),
+                                              /*Text('Salva per acquisti futuri',
+                                              style: TextStyle(
+                                                color: Constants.TEXT_COLOR,
+                                                fontSize: 16,
+                                                fontFamily: Constants.FONT,
+                                              )
+                                          ),
+                                          Switch(
+                                            value: _saveAddress,
+                                            onChanged: (value) => setState(() { _saveAddress = value; }),
+                                            activeColor: Constants.SECONDARY_COLOR,
+                                          )*/
+                                            ]
+                                        ),
                                       ]
                                   ),
-                                ),
-                                SizedBox(height: 10),
-                                ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                      primary: Constants.LIGHT_GREY_COLOR2,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
+                                  if (_editAddress) ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                        primary: Constants.GREEN_SAVE,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
+                                    ),
+                                    child: Text('Salva',
+                                        style: TextStyle(
+                                          color: Constants.TEXT_COLOR,
+                                          fontSize: 16,
+                                          fontFamily: Constants.FONT,
+                                        )
+                                    ),
+                                    onPressed: () {
+                                      _updateAddress();
+                                      setState(() {
+                                        _editAddress = false;
+                                        _addressToEdit = null;
+                                      });
+                                    },
                                   ),
-                                  child: Text('+ Nuovo',
+                                  if (_hasAddress && !_addNewAddress && !_editAddress) Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        SingleChildScrollView(
+                                          scrollDirection: Axis.horizontal,
+                                          child: Row(
+                                              children: [
+                                                if (_activeAddress != null) _renderAddress(_activeAddress!),
+                                                for (var a in _addresses) _renderAddress(a)
+                                              ]
+                                          ),
+                                        ),
+                                        SizedBox(height: 10),
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                              primary: Constants.LIGHT_GREY_COLOR2,
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
+                                          ),
+                                          child: Text('+ Nuovo',
+                                              style: TextStyle(
+                                                color: Constants.TEXT_COLOR,
+                                                fontSize: 16,
+                                                fontFamily: Constants.FONT,
+                                              )
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              _addNewAddress = true;
+                                            });
+                                          },
+                                        ),
+                                      ]
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 25),
+                              Text(
+                                "Protezione acquisti obbligatoria",
+                                style: TextStyle(
+                                    color: Constants.DARK_TEXT_COLOR,
+                                    fontSize: 18,
+                                    fontFamily: Constants.FONT,
+                                    fontWeight: FontWeight.bold
+                                ),
+                              ),
+                              SizedBox(height: 15),
+                              Row(
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () => setState(() {
+                                        _insurance = true;
+                                      }),
+                                      child: Container(
+                                        padding: EdgeInsets.fromLTRB(20, 10, 20, 10),
+                                        decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(20),
+                                            color: _insurance ? Constants.SECONDARY_COLOR_LIGHT : Constants.LIGHT_GREY_COLOR2
+                                        ),
+                                        child: Text(Utils.formatCurrency(double.parse(_insurancePrice)),
+                                            style: TextStyle(
+                                              color: _insurance ? Colors.black : Constants.TEXT_COLOR,
+                                              fontSize: 16,
+                                              fontFamily: Constants.FONT,
+                                            )
+                                        ),
+                                      ),
+                                    ),
+                                    /*GestureDetector(
+                                onTap: () => setState(() {
+                                  _insurance = false;
+                                }),
+                                child: Container(
+                                  padding: EdgeInsets.fromLTRB(20, 10, 20, 10),
+                                  margin: EdgeInsets.only(left: 15),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(20),
+                                    color: !_insurance ? Constants.SECONDARY_COLOR_LIGHT : Constants.LIGHT_GREY_COLOR2
+                                  ),
+                                  child: Text('No',
                                       style: TextStyle(
-                                        color: Constants.TEXT_COLOR,
+                                        color: !_insurance ? Colors.black : Constants.TEXT_COLOR,
                                         fontSize: 16,
                                         fontFamily: Constants.FONT,
                                       )
                                   ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _addNewAddress = true;
+                                ),
+                              )*/
+                                  ]
+                              ),
+                              SizedBox(height: 35),
+                              Text(
+                                "Da",
+                                style: TextStyle(
+                                    color: Constants.DARK_TEXT_COLOR,
+                                    fontSize: 18,
+                                    fontFamily: Constants.FONT,
+                                    fontWeight: FontWeight.bold
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              SizedBox(height: 4,),
+                              InkWell(
+                                onTap: () async {
+                                  debugPrint("show date picker");
+                                  final DateTime? picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: _availableFrom,
+                                    firstDate: DateTime.now().subtract(Duration(days: 1)),
+                                    lastDate: DateTime.now().add(Duration(days: 700)),
+                                  );
+
+                                  setState(() {
+                                    if(picked != null) {
+                                      _availableFrom = picked;
+
+                                      setFromDate(_availableFrom);
+
+                                      if(_availableTo.isBefore(_availableFrom)) {
+                                        _availableTo = _availableFrom;
+                                        setToDate(_availableTo);
+                                      }
+                                    }
+                                  });
+                                },
+                                child: AbsorbPointer(
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Container(
+                                          decoration: const BoxDecoration(
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Color(0x4ca3c4d4),
+                                                spreadRadius: 2,
+                                                blurRadius: 15,
+                                                offset:
+                                                Offset(0, 0), // changes position of shadow
+                                              ),
+                                            ],
+                                          ),
+                                          child: TextField(
+                                            cursorColor: Constants.PRIMARY_COLOR,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              color: Constants.FORM_TEXT,
+                                            ),
+                                            readOnly: true,
+                                            decoration: InputDecoration(
+                                              hintText: "gg",
+                                              hintStyle: const TextStyle(color: Constants.PLACEHOLDER_COLOR),
+                                              border: OutlineInputBorder(
+                                                borderRadius: BorderRadius.circular(12),
+                                                borderSide: const BorderSide(
+                                                  width: 0,
+                                                  style: BorderStyle.none,
+                                                ),
+                                              ),
+                                              suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                              contentPadding: const EdgeInsets.all(12),
+                                              filled: true,
+                                              fillColor: Constants.WHITE,
+                                            ),
+                                            controller: _fromDayText,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 8,),
+                                      Expanded(
+                                        child: Container(
+                                          decoration: const BoxDecoration(
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Color(0x4ca3c4d4),
+                                                spreadRadius: 2,
+                                                blurRadius: 15,
+                                                offset:
+                                                Offset(0, 0), // changes position of shadow
+                                              ),
+                                            ],
+                                          ),
+                                          child: TextField(
+                                            cursorColor: Constants.PRIMARY_COLOR,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              color: Constants.FORM_TEXT,
+                                            ),
+                                            decoration: InputDecoration(
+                                              hintText: "mm",
+                                              hintStyle: const TextStyle(
+                                                  color: Constants.PLACEHOLDER_COLOR),
+                                              border: OutlineInputBorder(
+                                                borderRadius: BorderRadius.circular(12),
+                                                borderSide: const BorderSide(
+                                                  width: 0,
+                                                  style: BorderStyle.none,
+                                                ),
+                                              ),
+                                              suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                              contentPadding: const EdgeInsets.all(12),
+                                              filled: true,
+                                              fillColor: Constants.WHITE,
+                                            ),
+                                            controller: _fromMonthText,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 8,),
+                                      Expanded(
+                                        child: Container(
+                                          decoration: const BoxDecoration(
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Color(0x4ca3c4d4),
+                                                spreadRadius: 2,
+                                                blurRadius: 15,
+                                                offset:
+                                                Offset(0, 0), // changes position of shadow
+                                              ),
+                                            ],
+                                          ),
+                                          child: TextField(
+                                            cursorColor: Constants.PRIMARY_COLOR,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              color: Constants.FORM_TEXT,
+                                            ),
+                                            decoration: InputDecoration(
+                                              hintText: "aaaa",
+                                              hintStyle: const TextStyle(
+                                                  color: Constants.PLACEHOLDER_COLOR),
+                                              border: OutlineInputBorder(
+                                                borderRadius: BorderRadius.circular(12),
+                                                borderSide: const BorderSide(
+                                                  width: 0,
+                                                  style: BorderStyle.none,
+                                                ),
+                                              ),
+                                              suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                              contentPadding: const EdgeInsets.all(12),
+                                              filled: true,
+                                              fillColor: Constants.WHITE,
+                                            ),
+                                            controller: _fromYearText,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 24,),
+                              Text(
+                                "A",
+                                style: TextStyle(
+                                    color: Constants.DARK_TEXT_COLOR,
+                                    fontSize: 18,
+                                    fontFamily: Constants.FONT,
+                                    fontWeight: FontWeight.bold
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              SizedBox(height: 4,),
+                              InkWell(
+                                onTap: () async {
+                                  debugPrint("show date picker TO");
+                                  final DateTime? picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: _availableTo,
+                                    firstDate: DateTime.now(),
+                                    lastDate: DateTime.now().add(Duration(days: 700)),
+                                  );
+
+                                  setState(() {
+                                    if(picked != null) {
+                                      _availableTo = picked;
+
+                                      setToDate(_availableTo);
+
+                                      if (_availableFrom.isAfter(
+                                          _availableTo)) {
+                                        debugPrint("Correct date");
+                                        _availableFrom =
+                                            _availableTo;
+                                        setFromDate(_availableFrom);
+                                      }
+                                    }
+                                  });
+                                },
+                                child: AbsorbPointer(
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Container(
+                                          decoration: const BoxDecoration(
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Color(0x4ca3c4d4),
+                                                spreadRadius: 2,
+                                                blurRadius: 15,
+                                                offset:
+                                                Offset(0, 0), // changes position of shadow
+                                              ),
+                                            ],
+                                          ),
+                                          child: TextField(
+                                            cursorColor: Constants.PRIMARY_COLOR,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              color: Constants.FORM_TEXT,
+                                            ),
+                                            decoration: InputDecoration(
+                                              hintText: "gg",
+                                              hintStyle: const TextStyle(
+                                                  color: Constants.PLACEHOLDER_COLOR),
+                                              border: OutlineInputBorder(
+                                                borderRadius: BorderRadius.circular(12),
+                                                borderSide: const BorderSide(
+                                                  width: 0,
+                                                  style: BorderStyle.none,
+                                                ),
+                                              ),
+                                              suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                              contentPadding: const EdgeInsets.all(12),
+                                              filled: true,
+                                              fillColor: Constants.WHITE,
+                                            ),
+                                            controller: _toDayText,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 8,),
+                                      Expanded(
+                                        child: Container(
+                                          decoration: const BoxDecoration(
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Color(0x4ca3c4d4),
+                                                spreadRadius: 2,
+                                                blurRadius: 15,
+                                                offset:
+                                                Offset(0, 0), // changes position of shadow
+                                              ),
+                                            ],
+                                          ),
+                                          child: TextField(
+                                            cursorColor: Constants.PRIMARY_COLOR,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              color: Constants.FORM_TEXT,
+                                            ),
+                                            decoration: InputDecoration(
+                                              hintText: "mm",
+                                              hintStyle: const TextStyle(
+                                                  color: Constants.PLACEHOLDER_COLOR),
+                                              border: OutlineInputBorder(
+                                                borderRadius: BorderRadius.circular(12),
+                                                borderSide: const BorderSide(
+                                                  width: 0,
+                                                  style: BorderStyle.none,
+                                                ),
+                                              ),
+                                              suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                              contentPadding: const EdgeInsets.all(12),
+                                              filled: true,
+                                              fillColor: Constants.WHITE,
+                                            ),
+                                            controller: _toMonthText,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 8,),
+                                      Expanded(
+                                        child: Container(
+                                          decoration: const BoxDecoration(
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Color(0x4ca3c4d4),
+                                                spreadRadius: 2,
+                                                blurRadius: 15,
+                                                offset:
+                                                Offset(0, 0), // changes position of shadow
+                                              ),
+                                            ],
+                                          ),
+                                          child: TextField(
+                                            cursorColor: Constants.PRIMARY_COLOR,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              color: Constants.FORM_TEXT,
+                                            ),
+                                            decoration: InputDecoration(
+                                              hintText: "aaaa",
+                                              hintStyle: const TextStyle(
+                                                  color: Constants.PLACEHOLDER_COLOR),
+                                              border: OutlineInputBorder(
+                                                borderRadius: BorderRadius.circular(12),
+                                                borderSide: const BorderSide(
+                                                  width: 0,
+                                                  style: BorderStyle.none,
+                                                ),
+                                              ),
+                                              suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                              contentPadding: const EdgeInsets.all(12),
+                                              filled: true,
+                                              fillColor: Constants.WHITE,
+                                            ),
+                                            controller: _toYearText,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 35),
+                              Text(
+                                "Hai un codice sconto?",
+                                style: TextStyle(
+                                    color: Constants.TEXT_COLOR,
+                                    fontSize: 16,
+                                    fontFamily: Constants.FONT
+                                ),
+                              ),
+                              SizedBox(height: 8,),
+                              Container(
+                                decoration: const BoxDecoration(
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Color(0x4ca3c4d4),
+                                      spreadRadius: 8,
+                                      blurRadius: 12,
+                                      offset:
+                                      Offset(0, 0), // changes position of shadow
+                                    ),
+                                  ],
+                                ),
+                                child: TextField(
+                                  keyboardType: TextInputType.text,
+                                  cursorColor: Constants.PRIMARY_COLOR,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Constants.FORM_TEXT,
+                                  ),
+                                  onChanged: (discount) {
+                                    if (_discountDebounce?.isActive ?? false) _discountDebounce!.cancel();
+                                    _discountDebounce = Timer(const Duration(milliseconds: 500), () {
+                                      getTotalPrice();
                                     });
+
                                   },
-                                ),
-                              ]
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 25),
-                      Text(
-                        "Protezione acquisti obbligatoria",
-                        style: TextStyle(
-                            color: Constants.DARK_TEXT_COLOR,
-                            fontSize: 18,
-                            fontFamily: Constants.FONT,
-                            fontWeight: FontWeight.bold
-                        ),
-                      ),
-                      SizedBox(height: 15),
-                      Row(
-                        children: [
-                          GestureDetector(
-                            onTap: () => setState(() {
-                              _insurance = true;
-                            }),
-                            child: Container(
-                              padding: EdgeInsets.fromLTRB(20, 10, 20, 10),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                color: _insurance ? Constants.SECONDARY_COLOR_LIGHT : Constants.LIGHT_GREY_COLOR2
-                              ),
-                              child: Text(Utils.formatCurrency(double.parse(_insurancePrice)),
-                                  style: TextStyle(
-                                    color: _insurance ? Colors.black : Constants.TEXT_COLOR,
-                                    fontSize: 16,
-                                    fontFamily: Constants.FONT,
-                                  )
-                              ),
-                            ),
-                          ),
-                          /*GestureDetector(
-                            onTap: () => setState(() {
-                              _insurance = false;
-                            }),
-                            child: Container(
-                              padding: EdgeInsets.fromLTRB(20, 10, 20, 10),
-                              margin: EdgeInsets.only(left: 15),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                color: !_insurance ? Constants.SECONDARY_COLOR_LIGHT : Constants.LIGHT_GREY_COLOR2
-                              ),
-                              child: Text('No',
-                                  style: TextStyle(
-                                    color: !_insurance ? Colors.black : Constants.TEXT_COLOR,
-                                    fontSize: 16,
-                                    fontFamily: Constants.FONT,
-                                  )
-                              ),
-                            ),
-                          )*/
-                        ]
-                      ),
-                      SizedBox(height: 35),
-                      Text(
-                        "Da",
-                        style: TextStyle(
-                            color: Constants.DARK_TEXT_COLOR,
-                            fontSize: 18,
-                            fontFamily: Constants.FONT,
-                            fontWeight: FontWeight.bold
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: 4,),
-                      InkWell(
-                        onTap: () async {
-                          debugPrint("show date picker");
-                          final DateTime? picked = await showDatePicker(
-                            context: context,
-                            initialDate: _availableFrom,
-                            firstDate: DateTime.now().subtract(Duration(days: 1)),
-                            lastDate: DateTime.now().add(Duration(days: 700)),
-                          );
-
-                          setState(() {
-                            if(picked != null) {
-                              _availableFrom = picked;
-
-                              setFromDate(_availableFrom);
-
-                              if(_availableTo.isBefore(_availableFrom)) {
-                                _availableTo = _availableFrom;
-                                setToDate(_availableTo);
-                              }
-                            }
-                          });
-                        },
-                        child: AbsorbPointer(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Color(0x4ca3c4d4),
-                                        spreadRadius: 2,
-                                        blurRadius: 15,
-                                        offset:
-                                        Offset(0, 0), // changes position of shadow
+                                  decoration: InputDecoration(
+                                    hintText: "Inserisci codice sconto...",
+                                    hintStyle: const TextStyle(
+                                        color: Constants.PLACEHOLDER_COLOR),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                        width: 0,
+                                        style: BorderStyle.none,
                                       ),
-                                    ],
-                                  ),
-                                  child: TextField(
-                                    cursorColor: Constants.PRIMARY_COLOR,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      color: Constants.FORM_TEXT,
                                     ),
-                                    readOnly: true,
-                                    decoration: InputDecoration(
-                                      hintText: "gg",
-                                      hintStyle: const TextStyle(color: Constants.PLACEHOLDER_COLOR),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(
-                                          width: 0,
-                                          style: BorderStyle.none,
+                                    contentPadding: const EdgeInsets.all(16),
+                                    filled: true,
+                                    fillColor: Constants.WHITE,
+                                  ),
+                                  controller: _discountText,
+                                ),
+                              ),
+                              SizedBox(height: 32,),
+                              _isLoadingTotal ? Center(child: CircularProgressIndicator()) : Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "Noleggio",
+                                    style: TextStyle(
+                                        color: Constants.DARK_TEXT_COLOR,
+                                        fontSize: 18,
+                                        fontFamily: Constants.FONT,
+                                        fontWeight: FontWeight.normal
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  Text(
+                                    Utils.formatCurrency(double.parse(_rentPrice)),
+                                    style: TextStyle(
+                                        color: Constants.DARK_TEXT_COLOR,
+                                        fontSize: 18,
+                                        fontFamily: Constants.FONT,
+                                        fontWeight: FontWeight.normal
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 16),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "Protezione acquisti",
+                                    style: TextStyle(
+                                        color: Constants.DARK_TEXT_COLOR,
+                                        fontSize: 18,
+                                        fontFamily: Constants.FONT,
+                                        fontWeight: FontWeight.normal
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  Text(
+                                    Utils.formatCurrency(double.parse(_insurancePrice)),
+                                    style: TextStyle(
+                                        color: Constants.DARK_TEXT_COLOR,
+                                        fontSize: 18,
+                                        fontFamily: Constants.FONT,
+                                        fontWeight: FontWeight.normal
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                              if(_shipping == "shipment") SizedBox(height: 16),
+                              if(_shipping == "shipment") Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "Spedizione",
+                                    style: TextStyle(
+                                        color: Constants.DARK_TEXT_COLOR,
+                                        fontSize: 18,
+                                        fontFamily: Constants.FONT,
+                                        fontWeight: FontWeight.normal
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  Text(
+                                    Utils.formatCurrency(double.parse(_deliveryPrice)),
+                                    style: TextStyle(
+                                        color: Constants.DARK_TEXT_COLOR,
+                                        fontSize: 18,
+                                        fontFamily: Constants.FONT,
+                                        fontWeight: FontWeight.normal
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 16),
+                              if(double.parse(_discountAmount) > 0) Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "Sconto",
+                                    style: TextStyle(
+                                        color: Constants.DARK_TEXT_COLOR,
+                                        fontSize: 18,
+                                        fontFamily: Constants.FONT,
+                                        fontWeight: FontWeight.normal
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  Text(
+                                    Utils.formatCurrency(double.parse(_discountAmount)),
+                                    style: TextStyle(
+                                        color: Constants.DARK_TEXT_COLOR,
+                                        fontSize: 18,
+                                        fontFamily: Constants.FONT,
+                                        fontWeight: FontWeight.normal
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                              if(double.parse(_discountAmount) > 0) SizedBox(height: 16),
+                              if(double.parse(_discountPercent) > 0) Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "Sconto",
+                                    style: TextStyle(
+                                        color: Constants.DARK_TEXT_COLOR,
+                                        fontSize: 18,
+                                        fontFamily: Constants.FONT,
+                                        fontWeight: FontWeight.normal
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  Text(
+                                    ((double.parse(_discountPercent) * 100).round()).toString() + "%",
+                                    style: TextStyle(
+                                        color: Constants.DARK_TEXT_COLOR,
+                                        fontSize: 18,
+                                        fontFamily: Constants.FONT,
+                                        fontWeight: FontWeight.normal
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                              if(double.parse(_discountPercent) > 0) SizedBox(height: 16),
+                              _isLoadingTotal ? Center(child: CircularProgressIndicator()) : Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "Totale da pagare",
+                                    style: TextStyle(
+                                        color: Constants.DARK_TEXT_COLOR,
+                                        fontSize: 18,
+                                        fontFamily: Constants.FONT,
+                                        fontWeight: FontWeight.bold
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  Text(
+                                    Utils.formatCurrency(double.parse(_totalPrice)),
+                                    style: TextStyle(
+                                        color: Constants.DARK_TEXT_COLOR,
+                                        fontSize: 18,
+                                        fontFamily: Constants.FONT,
+                                        fontWeight: FontWeight.bold
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 35),
+                              Center(
+                                child: Opacity(
+                                  opacity: _enableBuy ? 1 : 0.4,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                        primary: Constants.SECONDARY_COLOR,
+                                        textStyle: const TextStyle(
+                                            fontSize: 16
                                         ),
-                                      ),
-                                      suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
-                                      contentPadding: const EdgeInsets.all(12),
-                                      filled: true,
-                                      fillColor: Constants.WHITE,
+                                        padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
                                     ),
-                                    controller: _fromDayText,
+                                    child: Text('Procedi'),
+                                    onPressed: () async {
+                                      if(!_enableBuy) {
+                                        ApiManager.showFreeErrorMessage(context, "Verifica i dati inseriti e riprova");
+                                        return;
+                                      }
+
+                                      if(_discountDebounce != null && _discountDebounce!.isActive) {
+                                        return;
+                                      }
+
+                                      if(_availableTo.difference(_availableFrom).inDays < 2) {
+                                        ApiManager.showFreeErrorMessage(context, "Seleziona un periodo minimo di 3 giorni.");
+                                        return;
+                                      }
+
+                                      if (!_hasAddress || (_saveAddress && _addNewAddress && !_editAddress)) {
+                                        await saveAddress();
+                                        getAddresses(() {
+                                          next();
+                                        });
+                                      } else {
+                                        next();
+                                      }
+                                    },
                                   ),
                                 ),
                               ),
-                              SizedBox(width: 8,),
-                              Expanded(
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Color(0x4ca3c4d4),
-                                        spreadRadius: 2,
-                                        blurRadius: 15,
-                                        offset:
-                                        Offset(0, 0), // changes position of shadow
-                                      ),
-                                    ],
-                                  ),
-                                  child: TextField(
-                                    cursorColor: Constants.PRIMARY_COLOR,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      color: Constants.FORM_TEXT,
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: "mm",
-                                      hintStyle: const TextStyle(
-                                          color: Constants.PLACEHOLDER_COLOR),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(
-                                          width: 0,
-                                          style: BorderStyle.none,
-                                        ),
-                                      ),
-                                      suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
-                                      contentPadding: const EdgeInsets.all(12),
-                                      filled: true,
-                                      fillColor: Constants.WHITE,
-                                    ),
-                                    controller: _fromMonthText,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 8,),
-                              Expanded(
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Color(0x4ca3c4d4),
-                                        spreadRadius: 2,
-                                        blurRadius: 15,
-                                        offset:
-                                        Offset(0, 0), // changes position of shadow
-                                      ),
-                                    ],
-                                  ),
-                                  child: TextField(
-                                    cursorColor: Constants.PRIMARY_COLOR,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      color: Constants.FORM_TEXT,
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: "aaaa",
-                                      hintStyle: const TextStyle(
-                                          color: Constants.PLACEHOLDER_COLOR),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(
-                                          width: 0,
-                                          style: BorderStyle.none,
-                                        ),
-                                      ),
-                                      suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
-                                      contentPadding: const EdgeInsets.all(12),
-                                      filled: true,
-                                      fillColor: Constants.WHITE,
-                                    ),
-                                    controller: _fromYearText,
-                                  ),
-                                ),
-                              ),
+                              SizedBox(height: 35)
                             ],
                           ),
                         ),
-                      ),
-                      SizedBox(height: 24,),
-                      Text(
-                        "A",
-                        style: TextStyle(
-                            color: Constants.DARK_TEXT_COLOR,
-                            fontSize: 18,
-                            fontFamily: Constants.FONT,
-                            fontWeight: FontWeight.bold
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: 4,),
-                      InkWell(
-                        onTap: () async {
-                          debugPrint("show date picker TO");
-                          final DateTime? picked = await showDatePicker(
-                            context: context,
-                            initialDate: _availableTo,
-                            firstDate: DateTime.now(),
-                            lastDate: DateTime.now().add(Duration(days: 700)),
-                          );
-
-                          setState(() {
-                            if(picked != null) {
-                              _availableTo = picked;
-
-                              setToDate(_availableTo);
-
-                              if (_availableFrom.isAfter(
-                                  _availableTo)) {
-                                debugPrint("Correct date");
-                                _availableFrom =
-                                    _availableTo;
-                                setFromDate(_availableFrom);
-                              }
-                            }
-                          });
-                        },
-                        child: AbsorbPointer(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Color(0x4ca3c4d4),
-                                        spreadRadius: 2,
-                                        blurRadius: 15,
-                                        offset:
-                                        Offset(0, 0), // changes position of shadow
-                                      ),
-                                    ],
-                                  ),
-                                  child: TextField(
-                                    cursorColor: Constants.PRIMARY_COLOR,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      color: Constants.FORM_TEXT,
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: "gg",
-                                      hintStyle: const TextStyle(
-                                          color: Constants.PLACEHOLDER_COLOR),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(
-                                          width: 0,
-                                          style: BorderStyle.none,
-                                        ),
-                                      ),
-                                      suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
-                                      contentPadding: const EdgeInsets.all(12),
-                                      filled: true,
-                                      fillColor: Constants.WHITE,
-                                    ),
-                                    controller: _toDayText,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 8,),
-                              Expanded(
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Color(0x4ca3c4d4),
-                                        spreadRadius: 2,
-                                        blurRadius: 15,
-                                        offset:
-                                        Offset(0, 0), // changes position of shadow
-                                      ),
-                                    ],
-                                  ),
-                                  child: TextField(
-                                    cursorColor: Constants.PRIMARY_COLOR,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      color: Constants.FORM_TEXT,
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: "mm",
-                                      hintStyle: const TextStyle(
-                                          color: Constants.PLACEHOLDER_COLOR),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(
-                                          width: 0,
-                                          style: BorderStyle.none,
-                                        ),
-                                      ),
-                                      suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
-                                      contentPadding: const EdgeInsets.all(12),
-                                      filled: true,
-                                      fillColor: Constants.WHITE,
-                                    ),
-                                    controller: _toMonthText,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 8,),
-                              Expanded(
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Color(0x4ca3c4d4),
-                                        spreadRadius: 2,
-                                        blurRadius: 15,
-                                        offset:
-                                        Offset(0, 0), // changes position of shadow
-                                      ),
-                                    ],
-                                  ),
-                                  child: TextField(
-                                    cursorColor: Constants.PRIMARY_COLOR,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      color: Constants.FORM_TEXT,
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: "aaaa",
-                                      hintStyle: const TextStyle(
-                                          color: Constants.PLACEHOLDER_COLOR),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(
-                                          width: 0,
-                                          style: BorderStyle.none,
-                                        ),
-                                      ),
-                                      suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
-                                      contentPadding: const EdgeInsets.all(12),
-                                      filled: true,
-                                      fillColor: Constants.WHITE,
-                                    ),
-                                    controller: _toYearText,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 35),
-                      Text(
-                        "Hai un codice sconto?",
-                        style: TextStyle(
-                            color: Constants.TEXT_COLOR,
-                            fontSize: 16,
-                            fontFamily: Constants.FONT
-                        ),
-                      ),
-                      SizedBox(height: 8,),
-                      Container(
-                        decoration: const BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0x4ca3c4d4),
-                              spreadRadius: 8,
-                              blurRadius: 12,
-                              offset:
-                              Offset(0, 0), // changes position of shadow
-                            ),
-                          ],
-                        ),
-                        child: TextField(
-                          keyboardType: TextInputType.text,
-                          cursorColor: Constants.PRIMARY_COLOR,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Constants.FORM_TEXT,
-                          ),
-                          onChanged: (discount) {
-                            if (_discountDebounce?.isActive ?? false) _discountDebounce!.cancel();
-                            _discountDebounce = Timer(const Duration(milliseconds: 500), () {
-                              getTotalPrice();
-                            });
-
-                          },
-                          decoration: InputDecoration(
-                            hintText: "Inserisci codice sconto...",
-                            hintStyle: const TextStyle(
-                                color: Constants.PLACEHOLDER_COLOR),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                width: 0,
-                                style: BorderStyle.none,
-                              ),
-                            ),
-                            contentPadding: const EdgeInsets.all(16),
-                            filled: true,
-                            fillColor: Constants.WHITE,
-                          ),
-                          controller: _discountText,
-                        ),
-                      ),
-                      SizedBox(height: 32,),
-                      _isLoadingTotal ? Center(child: CircularProgressIndicator()) : Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Noleggio",
-                            style: TextStyle(
-                                color: Constants.DARK_TEXT_COLOR,
-                                fontSize: 18,
-                                fontFamily: Constants.FONT,
-                                fontWeight: FontWeight.normal
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          Text(
-                            Utils.formatCurrency(double.parse(_rentPrice)),
-                            style: TextStyle(
-                                color: Constants.DARK_TEXT_COLOR,
-                                fontSize: 18,
-                                fontFamily: Constants.FONT,
-                                fontWeight: FontWeight.normal
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Protezione acquisti",
-                            style: TextStyle(
-                                color: Constants.DARK_TEXT_COLOR,
-                                fontSize: 18,
-                                fontFamily: Constants.FONT,
-                                fontWeight: FontWeight.normal
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          Text(
-                            Utils.formatCurrency(double.parse(_insurancePrice)),
-                            style: TextStyle(
-                                color: Constants.DARK_TEXT_COLOR,
-                                fontSize: 18,
-                                fontFamily: Constants.FONT,
-                                fontWeight: FontWeight.normal
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                      if(_shipping == "shipment") SizedBox(height: 16),
-                      if(_shipping == "shipment") Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Spedizione",
-                            style: TextStyle(
-                                color: Constants.DARK_TEXT_COLOR,
-                                fontSize: 18,
-                                fontFamily: Constants.FONT,
-                                fontWeight: FontWeight.normal
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          Text(
-                            Utils.formatCurrency(double.parse(_deliveryPrice)),
-                            style: TextStyle(
-                                color: Constants.DARK_TEXT_COLOR,
-                                fontSize: 18,
-                                fontFamily: Constants.FONT,
-                                fontWeight: FontWeight.normal
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 16),
-                      if(double.parse(_discountAmount) > 0) Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Sconto",
-                            style: TextStyle(
-                                color: Constants.DARK_TEXT_COLOR,
-                                fontSize: 18,
-                                fontFamily: Constants.FONT,
-                                fontWeight: FontWeight.normal
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          Text(
-                            Utils.formatCurrency(double.parse(_discountAmount)),
-                            style: TextStyle(
-                                color: Constants.DARK_TEXT_COLOR,
-                                fontSize: 18,
-                                fontFamily: Constants.FONT,
-                                fontWeight: FontWeight.normal
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                      if(double.parse(_discountAmount) > 0) SizedBox(height: 16),
-                      if(double.parse(_discountPercent) > 0) Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Sconto",
-                            style: TextStyle(
-                                color: Constants.DARK_TEXT_COLOR,
-                                fontSize: 18,
-                                fontFamily: Constants.FONT,
-                                fontWeight: FontWeight.normal
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          Text(
-                            ((double.parse(_discountPercent) * 100).round()).toString() + "%",
-                            style: TextStyle(
-                                color: Constants.DARK_TEXT_COLOR,
-                                fontSize: 18,
-                                fontFamily: Constants.FONT,
-                                fontWeight: FontWeight.normal
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                      if(double.parse(_discountPercent) > 0) SizedBox(height: 16),
-                      _isLoadingTotal ? Center(child: CircularProgressIndicator()) : Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Totale da pagare",
-                            style: TextStyle(
-                                color: Constants.DARK_TEXT_COLOR,
-                                fontSize: 18,
-                                fontFamily: Constants.FONT,
-                                fontWeight: FontWeight.bold
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          Text(
-                            Utils.formatCurrency(double.parse(_totalPrice)),
-                            style: TextStyle(
-                                color: Constants.DARK_TEXT_COLOR,
-                                fontSize: 18,
-                                fontFamily: Constants.FONT,
-                                fontWeight: FontWeight.bold
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 35),
-                      Center(
-                        child: Opacity(
-                          opacity: _enableBuy ? 1 : 0.4,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                                primary: Constants.SECONDARY_COLOR,
-                                textStyle: const TextStyle(
-                                    fontSize: 16
-                                ),
-                                padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
-                            ),
-                            child: Text('Invia richiesta'),
-                            onPressed: () async {
-                              if(!_enableBuy) {
-                                ApiManager.showFreeErrorMessage(context, "Verifica i dati inseriti e riprova");
-                                return;
-                              }
-
-                              if(_discountDebounce != null && _discountDebounce!.isActive) {
-                                return;
-                              }
-
-                              if(_availableTo.difference(_availableFrom).inDays < 2) {
-                                ApiManager.showFreeErrorMessage(context, "Seleziona un periodo minimo di 3 giorni.");
-                                return;
-                              }
-
-                              if (!_hasAddress || (_saveAddress && _addNewAddress && !_editAddress)) {
-                                await saveAddress();
-                                getAddresses(() {
-                                  next();
-                                });
-                              } else {
-                                next();
-                              }
-                            },
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 35)
+                      )
                     ],
                   ),
                 ),
@@ -1085,14 +1156,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });*/
 
     var params = {
-      "price": widget.product.priceOffer.toString(),
+      "price": double.tryParse(widget.product.priceOffer.toString()),
       "date_start": DateFormat("yyyy-MM-dd").format(_availableFrom),
       "date_end": DateFormat("yyyy-MM-dd").format(_availableTo),
       "delivery_mode": _shipping == 'shipment' ? 3 : 1
     };
 
     if(_activeAddress != null && _shipping == 'shipment') {
-      params["address_id"] = _activeAddress!.id.toString();
+      params["address_id"] = int.tryParse(_activeAddress!.id.toString());
     }
 
     if(_discountText.text.isNotEmpty) {
@@ -1100,9 +1171,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
 
     ApiManager(context).makePutRequest("/product/" + widget.product.id.toString() + "/offer/make/", params, (res) async {
-
-      Navigator.of(context).push(
-          MaterialPageRoute(builder: (BuildContext context) => OfferSuccessScreen(totalPrice: double.parse(_totalPrice))));
+      getOfferAndRedirect(res["data"]["id"]);
+      /*await Navigator.of(context).push(
+          MaterialPageRoute(builder: (BuildContext context) => OffersContractBuyerScreen(offer: offer)));*/
+      /*Navigator.of(context).push(
+          MaterialPageRoute(builder: (BuildContext context) => OfferSuccessScreen(totalPrice: double.parse(_totalPrice))));*/
     }, (res) {
       ApiManager.showFreeErrorMessage(context, res["errors"].toString());
       /*setState(() {
@@ -1111,6 +1184,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });
 
     //Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChoosePaymentScreen(address: _activeAddress!, shipping: _shipping, insurance: _insurance, product: widget.product)));
+  }
+
+  getOfferAndRedirect(offerId) {
+    ApiManager(context).makeGetRequest("/product/order/" + offerId.toString(), {}, (res) async {
+      var offer = Offer.fromJson(res["data"]);
+      await Navigator.of(context).push(
+          MaterialPageRoute(builder: (BuildContext context) => OffersContractBuyerScreen(offer: offer)));
+    }, (res) {
+    });
   }
 
   void _handleShipmentRadioChange(String? value) {

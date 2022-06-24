@@ -250,7 +250,19 @@ class OrdersScreenState extends State<OrdersScreen>  {
                   ),
                 ),
               ],
-            )
+            ),
+            SizedBox(height: 16),
+            Center(
+              child: Text(
+                getOfferStatusName(offer),
+                style: TextStyle(
+                    color: Constants.TEXT_COLOR,
+                    fontSize: 16,
+                    fontFamily: Constants.FONT,
+                    fontWeight: FontWeight.bold
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -261,6 +273,20 @@ class OrdersScreenState extends State<OrdersScreen>  {
     switch(offer.state.id) {
       case 2: return true;
       default: return false;
+    }
+  }
+
+  String getOfferStatusName(Offer offer) {
+    switch(offer.state.id) {
+      case 1: return "In attesa di accettazione";
+      case 2: return "In attesa di pagamento";
+      case 3: return "Pagamento in corso";
+      case 4: return "Pagato";
+      case 5: return "Preso in prestito";
+      case 6: return "Chiuso";
+      case 7: return "Rifiutato";
+      case 31: return "In attesa di accettazione";
+      default: return "";
     }
   }
 

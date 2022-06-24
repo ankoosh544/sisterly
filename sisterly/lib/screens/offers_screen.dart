@@ -333,6 +333,7 @@ class OffersScreenState extends State<OffersScreen>  {
       case 5: return "Preso in prestito";
       case 6: return "Chiuso";
       case 7: return "Rifiutato";
+      case 31: return "In attesa di accettazione";
       default: return "";
     }
   }
@@ -348,6 +349,7 @@ class OffersScreenState extends State<OffersScreen>  {
   canProcess(Offer offer) {
     switch(offer.state.id) {
       case 1: return true;
+      case 31: return true;
       default: return false;
     }
   }
@@ -365,6 +367,7 @@ class OffersScreenState extends State<OffersScreen>  {
       case 2: return true;
       case 3: return true;
       case 7: return true;
+      case 31: return true;
       default: return false;
     }
   }

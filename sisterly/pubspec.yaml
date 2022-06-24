@@ -15,7 +15,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 1.0.66+66
+version: 1.0.67+67
 
 environment:
   sdk: ">=2.12.0 <3.0.0"
@@ -71,6 +71,7 @@ dependencies:
   flutter_facebook_auth: ^4.1.0
   google_sign_in: ^5.3.0
   uni_links: ^0.5.1
+  safe_device: ^1.1.1
   facebook_app_events:
     git:
       url: git://github.com/Hotdeskapp/flutter_facebook_app_events.git

@@ -32,7 +32,7 @@ class PaymentStatusScreenState extends State<PaymentStatusScreen> {
     super.initState();
 
     Future.delayed(Duration.zero, () async {
-      await FirebaseAnalytics.instance.logPurchase(value: widget.total);
+      await FirebaseAnalytics.instance.logPurchase(value: widget.total, currency: "EUR");
       MyApp.facebookAppEvents.logPurchase(amount: widget.total, currency: "EUR");
     });
   }

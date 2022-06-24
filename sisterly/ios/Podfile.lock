@@ -9,6 +9,7 @@ PODS:
     - AppAuth/Core
   - device_info (0.0.1):
     - Flutter
+  - DTTJailbreakDetection (0.4.0)
   - facebook_app_events (0.0.1):
     - FBAudienceNetwork (~> 6.9.0)
     - FBSDKCoreKit (~> 13.0.0)
@@ -192,6 +193,9 @@ PODS:
   - "permission_handler (5.1.0+2)":
     - Flutter
   - PromisesObjC (2.1.0)
+  - safe_device (1.0.0):
+    - DTTJailbreakDetection
+    - Flutter
   - share (0.0.1):
     - Flutter
   - shared_preferences_ios (0.0.1):
@@ -248,6 +252,7 @@ DEPENDENCIES:
   - package_info (from `.symlinks/plugins/package_info/ios`)
   - path_provider_ios (from `.symlinks/plugins/path_provider_ios/ios`)
   - permission_handler (from `.symlinks/plugins/permission_handler/ios`)
+  - safe_device (from `.symlinks/plugins/safe_device/ios`)
   - share (from `.symlinks/plugins/share/ios`)
   - shared_preferences_ios (from `.symlinks/plugins/shared_preferences_ios/ios`)
   - sign_in_with_apple (from `.symlinks/plugins/sign_in_with_apple/ios`)
@@ -259,6 +264,7 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - AppAuth
+    - DTTJailbreakDetection
     - FBAEMKit
     - FBAudienceNetwork
     - FBSDKCoreKit
@@ -328,6 +334,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/path_provider_ios/ios"
   permission_handler:
     :path: ".symlinks/plugins/permission_handler/ios"
+  safe_device:
+    :path: ".symlinks/plugins/safe_device/ios"
   share:
     :path: ".symlinks/plugins/share/ios"
   shared_preferences_ios:
@@ -347,6 +355,7 @@ SPEC CHECKSUMS:
   app_tracking_transparency: 5b1745ef9ade815f7455cb6a0848349589afb7c5
   AppAuth: 80317d99ac7ff2801a2f18ff86b48cd315ed465d
   device_info: d7d233b645a32c40dfdc212de5cf646ca482f175
+  DTTJailbreakDetection: 5e356c5badc17995f65a83ed9483f787a0057b71
   facebook_app_events: fc2a7c68cb68ae09c89dbe87fe3b06e6cec7d099
   FBAEMKit: 11a0bcdc7a88e26ed764bcf56372afc6cbbbdcd9
   FBAudienceNetwork: 83096d73433759c10f9cf9b3bad5e5cff58694cb
@@ -387,6 +396,7 @@ SPEC CHECKSUMS:
   path_provider_ios: 14f3d2fd28c4fdb42f44e0f751d12861c43cee02
   permission_handler: ccb20a9fad0ee9b1314a52b70b76b473c5f8dab0
   PromisesObjC: 99b6f43f9e1044bd87a95a60beff28c2c44ddb72
+  safe_device: 4539eb6bdbeb4b61a763a51c4e73e6b37dea4e3d
   share: 0b2c3e82132f5888bccca3351c504d0003b3b410
   shared_preferences_ios: 548a61f8053b9b8a49ac19c1ffbc8b92c50d68ad
   sign_in_with_apple: f3bf75217ea4c2c8b91823f225d70230119b8440
