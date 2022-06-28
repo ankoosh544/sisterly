@@ -128,7 +128,7 @@ class Upload2ScreenState extends State<Upload2Screen> {
                       SizedBox(height: 32),
                       if (!_hasAddress || _addNewAddress || _editAddress)
                         Column(children: [
-                          inputField("Nome", _name, false),
+                          inputField("Nome e cognome", _name, false),
                           inputField("Indirizzo", _address, false),
                           inputField("Indirizzo 2", _address2, false),
                           inputField("Città", _city, false),

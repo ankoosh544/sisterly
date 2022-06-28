@@ -374,6 +374,8 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                         ],
                       ),
                       SizedBox(height: 40),
+                      Text("L'importo verrà addebitato solo quando la Lender accetterà la tua richiesta di noleggio"),
+                      SizedBox(height: 40),
                       Center(
                         child: isLoading ? CircularProgressIndicator() : Opacity(
                           opacity: 1,
