@@ -40,6 +40,7 @@ class Product {
   bool useDiscount;
   final LenderKit? lenderKitToSend;
   final ProductLocation? location;
+  final int status;
 
   Product(
       this.id,
@@ -69,7 +70,8 @@ class Product {
       this.useDiscount,
       this.lenderKitToSend,
       this.mediaId,
-      this.location);
+      this.location,
+      this.status);
 
   static getArrayDesc(item) {
     if (item.isNotEmpty && item.length > 1) {
@@ -81,34 +83,35 @@ class Product {
 
   factory Product.fromJson(Map<String, dynamic> json) {
     Product prod = Product(
-        json["id"],
-        json["model"],
-        Account.fromJson(json["owner"]),
-        json["description"],
-        json["brand"]["id"],
-        json["brand"]["name"],
-        [],
-        [],
-        json["color"]["id"],
-        json["color"]["color"],
-        json["color"]["hexadecimal"],
-        json["material"]["id"],
-        json["material"]["material"],
-        json["price_retail"],
-        json["price_offer"],
-        json["selling_price"],
-        getGenericName(json["conditions"]["id"], productConditions),
-        json["conditions"]["id"],
-        getGenericName(json["size"]["id"], bagSizes),
-        json["size"]["id"],
-        getGenericName(json["year"]["id"], bagYears),
-        json["year"]["id"],
-        DeliveryMode.fromJson(json["delivery_type"]),
+      json["id"],
+      json["model"],
+      Account.fromJson(json["owner"]),
+      json["description"],
+      json["brand"]["id"],
+      json["brand"]["name"],
+      [],
+      [],
+      json["color"]["id"],
+      json["color"]["color"],
+      json["color"]["hexadecimal"],
+      json["material"]["id"],
+      json["material"]["material"],
+      json["price_retail"],
+      json["price_offer"],
+      json["selling_price"],
+      getGenericName(json["conditions"]["id"], productConditions),
+      json["conditions"]["id"],
+      getGenericName(json["size"]["id"], bagSizes),
+      json["size"]["id"],
+      getGenericName(json["year"]["id"], bagYears),
+      json["year"]["id"],
+      DeliveryMode.fromJson(json["delivery_type"]),
       json["use_price_algorithm"] ?? false,
       json["use_discount"] ?? false,
       LenderKit.fromJson(json["lender_kit_to_send"]),
       json["media"]["id"],
       ProductLocation.fromJson(json["location"]),
+      json["status"]['id'] ?? 1,
     );
 
     var media = json["media"];

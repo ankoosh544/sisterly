@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:share/share.dart';
@@ -11,13 +12,16 @@ import 'package:sisterly/models/var.dart';
 import 'package:sisterly/screens/checkout_screen.dart';
 import 'package:sisterly/screens/fullscreen_gallery_screen.dart';
 import 'package:sisterly/screens/profile_screen.dart';
+import 'package:sisterly/screens/tab_screen.dart';
 import 'package:sisterly/screens/upload_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
 import 'package:sisterly/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:sisterly/utils/localization/app_localizations.dart';
 import 'package:sisterly/utils/session_data.dart';
 import "package:sisterly/utils/utils.dart";
+import 'package:sisterly/widgets/alert/custom_alert.dart';
 import 'package:sisterly/widgets/stars_widget.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -935,6 +939,42 @@ class ProductScreenState extends State<ProductScreen>  {
                           ),
                         ),
                       ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text('Prodotto Disponibile'),
+                          Switch(
+                            value: widget.product.status == 4 ? true : false,
+                            onChanged: (value) {
+                              var params = {
+                                "active": value
+                              };
+
+                              ApiManager(context).makePostRequest('/product/' + widget.product.id.toString() + "/active", params, (res) {
+                                if(res["errors"] != null) {
+                                  ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+                                }
+                                else {
+                                  Fluttertoast.showToast(
+                                    msg: 'Richiesta prodotto eliminata!',
+                                    toastLength: Toast.LENGTH_LONG,
+                                    timeInSecForIosWeb: 3,
+                                    gravity: ToastGravity.CENTER,
+                                    backgroundColor: Colors.redAccent,
+                                    textColor: Colors.white,
+                                    fontSize: 16.0
+                                  );
+
+                                  Future.delayed(const Duration(seconds: 3), (){
+                                    Navigator.of(context).pushAndRemoveUntil(
+                                      MaterialPageRoute(builder: (BuildContext context) => TabScreen()), (_) => false);
+                                  });
+                                }
+                              }, (res) {});
+                            },
+                          ),
+                        ],
+                      ),
                       if(_documents.isEmpty) SizedBox(height: 15),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1029,22 +1069,89 @@ class ProductScreenState extends State<ProductScreen>  {
                             ),
                           ),
                           if(widget.product.owner.id == SessionData().userId) Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                  primary: Constants.SECONDARY_COLOR,
-                                  textStyle: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                      primary: Constants.SECONDARY_COLOR,
+                                      textStyle: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold
+                                      ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
                                   ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
-                              ),
-                              child: Text('Modifica'),
-                              onPressed: () {
-                                Navigator.of(context).push(
-                                    MaterialPageRoute(builder: (BuildContext context) => UploadScreen(editProduct: widget.product,)));
-                              },
-                            ),
+                                  child: Text('Modifica'),
+                                  onPressed: () {
+                                    Navigator.of(context).push(
+                                        MaterialPageRoute(builder: (BuildContext context) => UploadScreen(editProduct: widget.product,)));
+                                  },
+                                ),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                      primary: Constants.SECONDARY_COLOR,
+                                      textStyle: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold
+                                      ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
+                                  ),
+                                  child: Text('Elimina'),
+                                  onPressed: () {
+                                    CustomAlert.show(context,
+                                      //title: AppLocalizations.of(context).translate("generic_success"),
+                                      confirmButtonColor: Constants.SECONDARY_COLOR,
+                                      subtitle: "Hai uno stato di prestito per questo articolo, eliminandolo devi rimborsare interamente il mutuatario. Vuoi procedere?",
+                                      showCancelButton: true,
+                                      cancelButtonText: "Annulla",
+                                      cancelButtonColor: Colors.white,
+                                      //style: CustomAlertStyle.success,
+                                      onPress: (bool isConfirm) {
+                                        if (!isConfirm) {
+                                          Navigator.of(context).pop();
+                                          return false;
+                                        }
+                                        
+                                        ApiManager(context).makeDeleteRequest("/product/" + widget.product.id.toString() + '/', (res) {
+                                          print(res);
+                                          Fluttertoast.showToast(
+                                            msg: 'Richiesta prodotto eliminata!',
+                                            toastLength: Toast.LENGTH_LONG,
+                                            timeInSecForIosWeb: 3,
+                                            gravity: ToastGravity.CENTER,
+                                            backgroundColor: Colors.redAccent,
+                                            textColor: Colors.white,
+                                            fontSize: 16.0
+                                          );
+
+                                          Future.delayed(const Duration(seconds: 3), (){
+                                            Navigator.of(context).pushAndRemoveUntil(
+                                              MaterialPageRoute(builder: (BuildContext context) => TabScreen()), (_) => false);
+                                          });
+                                        }, (res) {
+                                          setState(() {
+                                            _isLoadingAvailability = false;
+                                          });
+
+                                          Fluttertoast.showToast(
+                                            msg: 'Richiesta prodotto Fallita!',
+                                            toastLength: Toast.LENGTH_LONG,
+                                            timeInSecForIosWeb: 3,
+                                            gravity: ToastGravity.CENTER,
+                                            backgroundColor: Colors.redAccent,
+                                            textColor: Colors.white,
+                                            fontSize: 16.0
+                                          );
+                                        });
+
+                                        return false;
+                                      });
+                                  },
+                                ),
+                              ],
+                            )
                           ),
                         ],
                       ),
