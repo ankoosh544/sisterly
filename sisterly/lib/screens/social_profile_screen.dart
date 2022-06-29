@@ -115,6 +115,8 @@ class SocialProfileScreenState extends State<SocialProfileScreen>  {
     };
 
     ApiManager(context).makePostRequest('/client/update', params, (res) {
+      Utils.updateCrmUser(context);
+
       // print(res);
       Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => TabScreen()), (_) => false);
 

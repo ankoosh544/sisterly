@@ -2,7 +2,9 @@ import 'package:sisterly/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../utils/api_manager.dart';
 import '../utils/constants.dart';
+import '../utils/utils.dart';
 import 'login_screen.dart';
 
 class SignupSuccessScreen extends StatefulWidget {
@@ -17,6 +19,7 @@ class SignupSuccessScreenState extends State<SignupSuccessScreen> {
   void initState() {
     super.initState();
 
+    Utils.updateCrmUser(context);
   }
 
   login() async {

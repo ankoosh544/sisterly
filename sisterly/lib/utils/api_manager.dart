@@ -51,6 +51,16 @@ class ApiManager {
     makePostRequest("/api/users", null, success, failure);
   }
 
+  salesManagoEvent(params, success, failure){
+    debugPrint("salesManagoEvent called");
+    makePostRequest("/salesmanago/event", params, success, failure);
+  }
+
+  salesManagoContact(success, failure){
+    debugPrint("salesManagoContact called");
+    makePostRequest("/salesmanago/contact", null, success, failure);
+  }
+
   refreshToken(refreshToken, success, failure) async {
     debugPrint("refreshToken called");
     var params = {

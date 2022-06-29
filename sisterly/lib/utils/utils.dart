@@ -18,6 +18,26 @@ class Utils {
 
   Utils();
 
+  static trackEvent(BuildContext context, String eventType) {
+    var params = {
+      "event_type": eventType,
+      "timestamp": DateTime.now().millisecondsSinceEpoch
+    };
+    ApiManager(context).salesManagoEvent(params, (response) {
+      debugPrint("salesManagoEvent OK");
+    }, (error) {
+      debugPrint("salesManagoEvent KO");
+    });
+  }
+
+  static updateCrmUser(BuildContext context) {
+    ApiManager(context).salesManagoContact((response) {
+      debugPrint("salesManagoContact OK");
+    }, (error) {
+      debugPrint("salesManagoContact KO");
+    });
+  }
+
   static isSimulator() async {
     return !(await SafeDevice.isRealDevice);
   }

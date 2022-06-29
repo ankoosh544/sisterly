@@ -126,6 +126,8 @@ class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin 
         await FirebaseAnalytics.instance.logLogin();
         MyApp.facebookAppEvents.logEvent(name: "login");
 
+        Utils.trackEvent(context, "LOGIN");
+
         if(account.username!.isEmpty || account.firstName!.isEmpty || account.lastName!.isEmpty || account.phone!.isEmpty) {
           Navigator.of(context).push(
               MaterialPageRoute(

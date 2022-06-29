@@ -120,6 +120,7 @@ class EditProfileScreenState extends State<EditProfileScreen>  {
       ApiManager(context).makeUploadRequest(context, "POST", '/client/update', _profileImage!.path, params, (res) {
         // print(res);
         ApiManager.showFreeSuccessMessage(context, "Profilo salvato");
+        Utils.updateCrmUser(context);
 
         setState(() {
           _isLoading = false;
@@ -133,7 +134,7 @@ class EditProfileScreenState extends State<EditProfileScreen>  {
       ApiManager(context).makePostRequest('/client/update', params, (res) {
         // print(res);
         ApiManager.showFreeSuccessMessage(context, "Profilo salvato");
-
+        Utils.updateCrmUser(context);
         setState(() {
           _isLoading = false;
         });
