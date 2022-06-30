@@ -24,7 +24,8 @@ class PaymentStatusScreen extends StatefulWidget {
 
 class PaymentStatusScreenState extends State<PaymentStatusScreen> {
 
-  String msg = "Pagamento completato";
+  String msgTitle = "Richiesta inviata correttamente";
+  String msgBody = "Il noleggio sarà confermato solo una volta che la Lender avrà accettato la tua richiesta";
   String icon = "assets/images/success.svg";
 
   @override
@@ -63,12 +64,12 @@ class PaymentStatusScreenState extends State<PaymentStatusScreen> {
                 child: SizedBox(),
               ),
               Text(
-                msg,
+                msgTitle,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Constants.PRIMARY_COLOR,
                   fontWeight: FontWeight.bold,
-                  fontSize: 28,
+                  fontSize: 24,
                 ),
               ),
               /*const SizedBox(height: 40),
@@ -86,6 +87,15 @@ class PaymentStatusScreenState extends State<PaymentStatusScreen> {
               SvgPicture.asset(icon),
               const Expanded(
                 child: SizedBox(),
+              ),
+              Text(
+                msgBody,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xff0e5679),
+                  // fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
               ),
               SafeArea(
                 child: Center(
