@@ -939,7 +939,7 @@ class ProductScreenState extends State<ProductScreen>  {
                           ),
                         ),
                       ),
-                      Row(
+                      if(widget.product.owner.id == SessionData().userId) Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           Text('Prodotto Disponibile'),
