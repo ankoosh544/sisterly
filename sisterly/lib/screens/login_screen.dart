@@ -459,6 +459,26 @@ class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin 
                           ),
                         ),
                       ),
+                      if (!Constants.IS_PRODUCTION) const SizedBox(height: 20),
+                      if (!Constants.IS_PRODUCTION) SafeArea(
+                        child: Center(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                                primary: Constants.SECONDARY_COLOR,
+                                textStyle: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 80, vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(50))),
+                            child: Text('Set Server Address'),
+                            onPressed: () {
+                              showAddIPDialog();
+                            },
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 60),
                       Text(
                         "Oppure accedi con",
@@ -537,6 +557,85 @@ class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin 
           ),
         ],
       ),
+    );
+  }
+
+  Future showAddIPDialog() async {
+    final ipController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Do you want to input server ip?'),
+          content: SingleChildScrollView(
+            child: SizedBox(
+              width: 300,
+              height: 150,
+              child: Column(
+                children: [
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  SizedBox(
+                    width: 300,
+                    child: TextFormField(
+                      key: const Key('IP Address'),
+                      keyboardType: TextInputType.text,
+                      onChanged: (result) {
+                        //
+                      },
+                      controller: ipController,
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            primary: Constants.SECONDARY_COLOR,
+                            textStyle: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
+                        ),
+                        child: Text('Ok'),
+                        onPressed: () async {
+                          if (ipController.value.text.isNotEmpty) {
+                            Constants.SERVER_URL = ipController.value.text;
+                          }
+
+                          Navigator.of(context).pop();
+                        }
+                      ),
+                      SizedBox(width: 20),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            primary: Constants.SECONDARY_COLOR,
+                            textStyle: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 46, vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50))
+                        ),
+                        child: Text('Cancel'),
+                        onPressed: () async {
+                          Navigator.of(context).pop();
+                        }
+                      )
+                    ],
+                  )
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
