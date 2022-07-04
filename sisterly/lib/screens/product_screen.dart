@@ -193,7 +193,7 @@ class ProductScreenState extends State<ProductScreen>  {
         ApiManager.showFreeErrorMessage(context, res["errors"].toString());
       } else {
         ApiManager(context).makeGetRequest('/chat/' + res["data"]["code"]  + '/', {}, (chatRes) {
-          String initialMessage = 'Ho alcune domande su questo prodotto - "Marchio: ${widget.product.brandName}".';
+          String initialMessage = 'Ho alcune domande su questo prodotto - "Marchio: ${widget.product.model}".';
           Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChatScreen(chat: Chat.fromJson(chatRes["data"]), code: res["data"]["code"], initialMessage: initialMessage)));
         }, (res) {
 
@@ -942,38 +942,78 @@ class ProductScreenState extends State<ProductScreen>  {
                       if(widget.product.owner.id == SessionData().userId) Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          Text('Prodotto Disponibile'),
+                          Text('Nascondi'),
                           Switch(
                             value: widget.product.status == 4 ? true : false,
                             onChanged: (value) {
-                              var params = {
-                                "active": value
-                              };
+                              CustomAlert.show(context,
+                                //title: AppLocalizations.of(context).translate("generic_success"),
+                                confirmButtonColor: Constants.SECONDARY_COLOR,
+                                subtitle: 'Nascondi temporaneamente questo prodotto, potrai renderlo nuovamente disponibile appena vorrai dalla sezione "i tuoi prodotti"',
+                                showCancelButton: true,
+                                cancelButtonText: "Annulla",
+                                cancelButtonColor: Colors.white,
+                                //style: CustomAlertStyle.success,
+                                onPress: (bool isConfirm) {
+                                  if (!isConfirm) {
+                                    Navigator.of(context).pop();
+                                    return false;
+                                  }
 
-                              ApiManager(context).makePostRequest('/product/' + widget.product.id.toString() + "/active", params, (res) {
-                                if(res["errors"] != null) {
-                                  ApiManager.showFreeErrorMessage(context, res["errors"].toString());
-                                }
-                                else {
-                                  Fluttertoast.showToast(
-                                    msg: 'Richiesta prodotto eliminata!',
-                                    toastLength: Toast.LENGTH_LONG,
-                                    timeInSecForIosWeb: 3,
-                                    gravity: ToastGravity.CENTER,
-                                    backgroundColor: Colors.redAccent,
-                                    textColor: Colors.white,
-                                    fontSize: 16.0
-                                  );
+                                  var params = {
+                                    "active": value
+                                  };
 
-                                  Future.delayed(const Duration(seconds: 3), (){
-                                    Navigator.of(context).pushAndRemoveUntil(
-                                      MaterialPageRoute(builder: (BuildContext context) => TabScreen()), (_) => false);
-                                  });
+                                  ApiManager(context).makePostRequest('/product/' + widget.product.id.toString() + "/active", params, (res) {
+                                    if(res["errors"] != null) {
+                                      ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+                                    }
+                                    else {
+                                      Fluttertoast.showToast(
+                                        msg: !value ? 'Il tuo prodotto è ora non disponibile' : 'Il tuo prodotto è ora disponibile',
+                                        toastLength: Toast.LENGTH_LONG,
+                                        timeInSecForIosWeb: 3,
+                                        gravity: ToastGravity.CENTER,
+                                        backgroundColor: Colors.redAccent,
+                                        textColor: Colors.white,
+                                        fontSize: 16.0
+                                      );
+
+                                      Future.delayed(const Duration(seconds: 3), (){
+                                        Navigator.of(context).pushAndRemoveUntil(
+                                          MaterialPageRoute(builder: (BuildContext context) => TabScreen()), (_) => false);
+                                      });
+                                    }
+                                  }, (res) {});
+
+                                  return false;
                                 }
-                              }, (res) {});
+                              );
                             },
                           ),
                         ],
+                      ),
+                      if(widget.product.owner.id == SessionData().userId) GestureDetector(
+                        onTap: () {
+                          // Navigator.of(context).push(
+                          //   MaterialPageRoute(builder: (BuildContext context) => ProfileScreen(id: widget.product.owner.id)));
+                        },
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: const [
+                              Text(
+                                'Prodotti nascosti',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                  fontFamily: Constants.FONT
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                       if(_documents.isEmpty) SizedBox(height: 15),
                       Row(
@@ -1103,7 +1143,9 @@ class ProductScreenState extends State<ProductScreen>  {
                                     CustomAlert.show(context,
                                       //title: AppLocalizations.of(context).translate("generic_success"),
                                       confirmButtonColor: Constants.SECONDARY_COLOR,
-                                      subtitle: "Hai uno stato di prestito per questo articolo, eliminandolo devi rimborsare interamente il mutuatario. Vuoi procedere?",
+                                      subtitle: widget.product.activeOrder ?
+                                      "Ti ricordiamo che hai un noleggio in programma per questa borsa. Se decidi di eliminarla dovrai avvisare e rimborsare la Borrower. (fai riferimento alle condizioni generali di noleggio)"
+                                      : "Voi veramente eliminare la tua borsa da Sisterly",
                                       showCancelButton: true,
                                       cancelButtonText: "Annulla",
                                       cancelButtonColor: Colors.white,

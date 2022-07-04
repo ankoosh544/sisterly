@@ -41,6 +41,7 @@ class Product {
   final LenderKit? lenderKitToSend;
   final ProductLocation? location;
   final int status;
+  final bool activeOrder;
 
   Product(
       this.id,
@@ -71,7 +72,8 @@ class Product {
       this.lenderKitToSend,
       this.mediaId,
       this.location,
-      this.status);
+      this.status,
+      this.activeOrder);
 
   static getArrayDesc(item) {
     if (item.isNotEmpty && item.length > 1) {
@@ -112,6 +114,7 @@ class Product {
       json["media"]["id"],
       ProductLocation.fromJson(json["location"]),
       json["status"]['id'] ?? 1,
+      json["in_active_order"] ?? false,
     );
 
     var media = json["media"];
