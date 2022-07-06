@@ -31,8 +31,9 @@ import "package:sisterly/utils/utils.dart";
 class ProfileScreen extends StatefulWidget {
 
   final int? id;
+  final bool? unavailableState;
 
-  const ProfileScreen({Key? key, this.id}) : super(key: key);
+  const ProfileScreen({Key? key, this.id, this.unavailableState = false}) : super(key: key);
 
   @override
   ProfileScreenState createState() => ProfileScreenState();
@@ -87,7 +88,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
       _isLoading = true;
     });
 
-    ApiManager(context).makeGetRequest(widget.id != null ? '/product/by_user/' + widget.id.toString() + '/' : '/product/my/', { "status": 4 }, (res) {
+    ApiManager(context).makeGetRequest(widget.id != null ? '/product/by_user/' + widget.id.toString() + '/' : '/product/my/', { "status": widget.unavailableState! ? 5 : 4 }, (res) {
       // print(res);
       setState(() {
         _isLoading = false;
@@ -493,8 +494,8 @@ class ProfileScreenState extends State<ProfileScreen>  {
                               fontFamily: Constants.FONT
                           ),
                         ),
-                        if(widget.id == null) SizedBox(height: 40,),
-                        if(widget.id == null) InkWell(
+                        if(!widget.unavailableState! && widget.id == null) SizedBox(height: 40,),
+                        if(!widget.unavailableState! && widget.id == null) InkWell(
                           onTap: () {
                             Navigator.of(context).push(
                                 MaterialPageRoute(builder: (BuildContext context) => WishlistScreen()));
@@ -532,7 +533,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
                           children: [
                             Expanded(
                               child: Text(
-                                widget.id != null ? "Pubblicati da " + getUsername() : "Pubblicati",
+                                widget.unavailableState! ? 'Prodotti nascosti' : widget.id != null ? "Pubblicati da " + getUsername() : "Pubblicati",
                                 style: TextStyle(
                                     color: Constants.DARK_TEXT_COLOR,
                                     fontSize: 20,
@@ -579,8 +580,8 @@ class ProfileScreenState extends State<ProfileScreen>  {
                             ),
                           ) : Text("Non ci sono prodotti pubblicati da questo utente"),
                         ),
-                        if(widget.id == null)  SizedBox(height: 40,),
-                        if(widget.id == null) Row(
+                        if(!widget.unavailableState! && widget.id == null)  SizedBox(height: 40,),
+                        if(!widget.unavailableState! && widget.id == null) Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
@@ -613,7 +614,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
                             ),
                           ],
                         ),
-                        if(widget.id == null)  Padding(
+                        if(!widget.unavailableState! && widget.id == null)  Padding(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           child: _isLoading ? Center(child: CircularProgressIndicator()) : _reviewProducts.isNotEmpty ? MediaQuery.removePadding(
                             context: context,

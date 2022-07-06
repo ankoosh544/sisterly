@@ -995,8 +995,8 @@ class ProductScreenState extends State<ProductScreen>  {
                       ),
                       if(widget.product.owner.id == SessionData().userId) GestureDetector(
                         onTap: () {
-                          // Navigator.of(context).push(
-                          //   MaterialPageRoute(builder: (BuildContext context) => ProfileScreen(id: widget.product.owner.id)));
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (BuildContext context) => ProfileScreen(id: null, unavailableState: true)));
                         },
                         child: Padding(
                           padding: EdgeInsets.symmetric(horizontal: 10, vertical: 20),
