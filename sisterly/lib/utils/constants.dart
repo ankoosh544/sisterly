@@ -42,4 +42,5 @@ class Constants {
   static const String PREFS_REFRESH_TOKEN = "refreshtoken";
   static const String PREFS_TUTORIAL_COMPLETED = "tutorialCompleted";
   static const String PREFS_EMAIL = "email";
+  static const String PREFS_SERVER_URL = "serverUrl";
 }

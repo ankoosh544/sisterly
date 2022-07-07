@@ -44,6 +44,10 @@ class SplashScreenState extends State<SplashScreen> {
 
   loadConfig() async {
     var preferences = await SharedPreferences.getInstance();
+    
+    if (preferences.getString(Constants.PREFS_SERVER_URL) != null) {
+      Constants.SERVER_URL = preferences.getString(Constants.PREFS_SERVER_URL)!;
+    }
 
     var refreshToken = preferences.getString(Constants.PREFS_REFRESH_TOKEN);
 

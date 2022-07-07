@@ -605,8 +605,11 @@ class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin 
                         ),
                         child: Text('Ok'),
                         onPressed: () async {
+                          var preferences = await SharedPreferences.getInstance();
+
                           if (ipController.value.text.isNotEmpty) {
                             Constants.SERVER_URL = ipController.value.text;
+                            preferences.setString(Constants.PREFS_SERVER_URL, ipController.value.text);
                           }
 
                           Navigator.of(context).pop();
