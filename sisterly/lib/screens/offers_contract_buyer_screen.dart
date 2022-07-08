@@ -293,7 +293,7 @@ class OffersContractBuyerScreenState extends State<OffersContractBuyerScreen>  {
                                           style: TextStyle(color: Constants.PRIMARY_COLOR, fontSize: 16, fontWeight: FontWeight.bold, fontFamily: Constants.FONT),
                                           recognizer: TapGestureRecognizer()
                                             ..onTap = () {
-                                              String url = "https://sisterly-assets.s3.eu-central-1.amazonaws.com/T%26C+Sisterly+rev1.pdf";
+                                              String url = "https://sisterly-api-bucket.s3.eu-central-1.amazonaws.com/media/orders/unsigned_contract.pdf";
                                               launch(url);
                                             },
                                         ),

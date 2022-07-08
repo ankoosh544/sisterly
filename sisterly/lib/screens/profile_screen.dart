@@ -354,15 +354,15 @@ class ProfileScreenState extends State<ProfileScreen>  {
                                         fontFamily: Constants.FONT
                                     ),
                                   ),
-                                  /*SizedBox(height: 6,),
-                                  Text(
-                                    "Milano",
+                                  if(_profile!.residencyCity != null) SizedBox(height: 6,),
+                                  if(_profile!.residencyCity != null) Text(
+                                    _profile!.residencyCity!.toString(),
                                     style: TextStyle(
-                                        color: Constants.LIGHT_TEXT_COLOR,
-                                        fontSize: 15,
+                                        color: Constants.DARK_TEXT_COLOR,
+                                        fontSize: 14,
                                         fontFamily: Constants.FONT
                                     ),
-                                  ),*/
+                                  ),
                                   SizedBox(height: 6,),
                                   Wrap(
                                     spacing: 3,

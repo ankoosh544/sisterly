@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:app_settings/app_settings.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/cupertino.dart';
@@ -82,7 +83,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void initState() {
     super.initState();
 
-    checkPush();
+    checkPush(false);
 
     if(widget.product.deliveryType!.id == 3) {
       _shipping = "shipment";
@@ -107,7 +108,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });
   }
 
-  checkPush() async {
+  checkPush(openAppIfFailed) async {
     final status = await OneSignal.shared.getDeviceState();
     bool isSimulator = await Utils.isSimulator();
 
@@ -118,6 +119,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if((status.hasNotificationPermission && status.subscribed) || isSimulator) {
       _pushEnabled = true;
     } else {
+      debugPrint("openNotificationSettings");
+      if(openAppIfFailed) AppSettings.openNotificationSettings();
       _pushEnabled = false;
     }
 
@@ -270,7 +273,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       if(!_pushEnabled) InkWell(
                         onTap: () async {
                           await Utils.enablePush(context, true);
-                          checkPush();
+                          checkPush(true);
                         },
                         child: Card(
                           color: Color(0x88FF8A80),

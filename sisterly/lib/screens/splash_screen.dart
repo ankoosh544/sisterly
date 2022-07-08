@@ -119,7 +119,7 @@ class SplashScreenState extends State<SplashScreen> {
       preferences.setInt(Constants.PREFS_USERID, account.id!);
       SessionData().userId = account.id;
 
-      if(account.username!.isEmpty || account.firstName!.isEmpty || account.lastName!.isEmpty || account.phone!.isEmpty) {
+      if(account.username!.isEmpty || account.firstName!.isEmpty || account.lastName!.isEmpty || account.phone!.isEmpty || account.residencyCity!.isEmpty) {
 
         setState(() async {
           Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => SocialProfileScreen()), (_) => false);

@@ -42,6 +42,7 @@ class EditProfileScreenState extends State<EditProfileScreen>  {
   final TextEditingController _firstNameText = TextEditingController();
   final TextEditingController _lastNameText = TextEditingController();
   final TextEditingController _descriptionText = TextEditingController();
+  final TextEditingController _cityController = TextEditingController();
   final ImagePicker picker = ImagePicker();
   
   XFile? _profileImage;
@@ -77,6 +78,7 @@ class EditProfileScreenState extends State<EditProfileScreen>  {
         _firstNameText.text = _profile!.firstName.toString();
         _lastNameText.text = _profile!.lastName.toString();
         _descriptionText.text = _profile!.description.toString();
+        _cityController.text = _profile!.residencyCity.toString();
       });
     }, (res) {
       setState(() {
@@ -113,7 +115,8 @@ class EditProfileScreenState extends State<EditProfileScreen>  {
       "username": _usernameText.text,
       "first_name": _firstNameText.text,
       "last_name": _lastNameText.text,
-      "description": _descriptionText.text
+      "description": _descriptionText.text,
+      "residency_city": _cityController.text
     };
 
     if(_profileImage != null) {
@@ -446,6 +449,53 @@ class EditProfileScreenState extends State<EditProfileScreen>  {
                               fillColor: Constants.WHITE,
                             ),
                             controller: _descriptionText,
+                          ),
+                        ),
+                        SizedBox(height: 32),
+                        Text(
+                          "Città di residenza",
+                          style: TextStyle(
+                              color: Constants.TEXT_COLOR,
+                              fontSize: 16,
+                              fontFamily: Constants.FONT
+                          ),
+                        ),
+                        SizedBox(height: 8,),
+                        Container(
+                          decoration: const BoxDecoration(
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0x4ca3c4d4),
+                                spreadRadius: 8,
+                                blurRadius: 12,
+                                offset:
+                                Offset(0, 0), // changes position of shadow
+                              ),
+                            ],
+                          ),
+                          child: TextField(
+                            keyboardType: TextInputType.text,
+                            cursorColor: Constants.PRIMARY_COLOR,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Constants.FORM_TEXT,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: "Città di residenza...",
+                              hintStyle: const TextStyle(
+                                  color: Constants.PLACEHOLDER_COLOR),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  width: 0,
+                                  style: BorderStyle.none,
+                                ),
+                              ),
+                              contentPadding: const EdgeInsets.all(16),
+                              filled: true,
+                              fillColor: Constants.WHITE,
+                            ),
+                            controller: _cityController,
                           ),
                         ),
                         SafeArea(

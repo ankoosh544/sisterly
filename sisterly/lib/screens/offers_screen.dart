@@ -1,3 +1,4 @@
+import 'package:add_2_calendar/add_2_calendar.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:sisterly/models/account.dart';
@@ -121,7 +122,7 @@ class OffersScreenState extends State<OffersScreen>  {
                     delete(offer);
                   },
                     child: SvgPicture.asset("assets/images/cancel.svg", width: 40, height: 40,)
-                )
+                ),
               ],
             ),
             SizedBox(height: 4,),

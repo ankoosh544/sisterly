@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:app_settings/app_settings.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
@@ -87,7 +88,7 @@ class UploadScreenState extends State<UploadScreen>  {
       debugPrint("deliveryTypes: "+jsonEncode(deliveryTypes));
 
       //_getDocuments();
-      _checkPush();
+      _checkPush(false);
       _getOnboarding();
       _getMediaId();
       _getBrands();
@@ -105,7 +106,7 @@ class UploadScreenState extends State<UploadScreen>  {
     super.dispose();
   }
 
-  _checkPush() async {
+  _checkPush(openAppIfFailed) async {
     final status = await OneSignal.shared.getDeviceState();
     bool isSimulator = await Utils.isSimulator();
 
@@ -113,10 +114,12 @@ class UploadScreenState extends State<UploadScreen>  {
     debugPrint("Push status subscribed: "+status.subscribed.toString());
     debugPrint("Push status Utils.isSimulator(): "+isSimulator.toString());
 
-    if((status.hasNotificationPermission && status.subscribed) || isSimulator) {
+    if((status.hasNotificationPermission && status.subscribed)) {
       _pushEnabled = true;
     } else {
       _pushEnabled = false;
+      debugPrint("openNotificationSettings");
+      if(openAppIfFailed) AppSettings.openNotificationSettings();
     }
 
     setState(() {
@@ -305,7 +308,7 @@ class UploadScreenState extends State<UploadScreen>  {
                       if(!_pushEnabled) InkWell(
                         onTap: () async {
                           await Utils.enablePush(context, true);
-                          _checkPush();
+                          _checkPush(true);
                         },
                         child: Card(
                           color: Color(0x88FF8A80),

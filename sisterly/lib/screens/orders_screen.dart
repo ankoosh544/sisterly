@@ -1,3 +1,4 @@
+import 'package:add_2_calendar/add_2_calendar.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:sisterly/models/account.dart';
@@ -105,14 +106,34 @@ class OrdersScreenState extends State<OrdersScreen>  {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Ordine #" + offer.id.toString(),
-              style: TextStyle(
-                color: Constants.PRIMARY_COLOR,
-                fontSize: 18,
-                fontFamily: Constants.FONT,
-                fontWeight: FontWeight.bold
-              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Text(
+                    "Ordine #" + offer.id.toString(),
+                    style: TextStyle(
+                        color: Constants.PRIMARY_COLOR,
+                        fontSize: 18,
+                        fontFamily: Constants.FONT,
+                        fontWeight: FontWeight.bold
+                    ),
+                  ),
+                ),
+                InkWell(
+                    onTap: () async {
+                      final Event event = Event(
+                          title: 'Sisterly: prenotazione #' + offer.id.toString() + " per "+ offer.product.model.toString(),
+                          description: 'Ordine #' + offer.id.toString() + " per il prodotto "+ offer.product.model.toString(),
+                          startDate: offer.dateStart,
+                          endDate: offer.dateEnd
+                      );
+                      await Add2Calendar.addEvent2Cal(event);
+                      ApiManager.showFreeSuccessMessage(context, "Evento aggiunto al calendario");
+                    },
+                    child: Icon(Icons.calendar_today, color: Constants.SECONDARY_COLOR,)
+                )
+              ],
             ),
             SizedBox(height: 4,),
             Text(

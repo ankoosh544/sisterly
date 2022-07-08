@@ -128,7 +128,7 @@ class LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin 
 
         Utils.trackEvent(context, "LOGIN");
 
-        if(account.username!.isEmpty || account.firstName!.isEmpty || account.lastName!.isEmpty || account.phone!.isEmpty) {
+        if(account.username!.isEmpty || account.firstName!.isEmpty || account.lastName!.isEmpty || account.phone!.isEmpty || account.residencyCity!.isEmpty) {
           Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (BuildContext context) => SocialProfileScreen(),

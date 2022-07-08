@@ -14,12 +14,13 @@ class Account {
   final double? reviewsMedia;
   final bool? holidayMode;
   final String? identityCode;
+  final String? residencyCity;
 
-  Account(this.id, this.email, this.description, this.firstName, this.lastName, this.phone, this.username, this.image, this.emailConfirmed, this.reviewsMedia, this.holidayMode, this.identityCode);
+  Account(this.id, this.email, this.description, this.firstName, this.lastName, this.phone, this.username, this.image, this.emailConfirmed, this.reviewsMedia, this.holidayMode, this.identityCode, this.residencyCity);
 
   factory Account.fromJson(Map<String, dynamic> json) {
     //debugPrint("Account.fromJson " + json.toString());
-    return Account(json["id"], json["email"], json["description"], json["first_name"], json["last_name"], json["phone"], json["username"], json["image"], json["email_confirmed"], json["reviews_media"] + .0, json["holiday_mode"], json["identity_code"]);
+    return Account(json["id"], json["email"], json["description"], json["first_name"], json["last_name"], json["phone"], json["username"], json["image"], json["email_confirmed"], json["reviews_media"] + .0, json["holiday_mode"], json["identity_code"], json["residency_city"]);
   }
 
   Map<String, dynamic> toJson() {
@@ -35,7 +36,8 @@ class Account {
       "email_confirmed": emailConfirmed,
       "reviews_media": reviewsMedia,
       "holiday_mode": holidayMode,
-      "identity_code": identityCode
+      "identity_code": identityCode,
+      "residency_city": residencyCity
     };
   }
 }
