@@ -76,7 +76,7 @@ dependencies:
   app_settings: ^4.1.8
   facebook_app_events:
     git:
-      url: git://github.com/Hotdeskapp/flutter_facebook_app_events.git
+      url: https://github.com/Hotdeskapp/flutter_facebook_app_events.git
       ref: develop
 
 dev_dependencies:

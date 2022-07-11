@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="default_web_client_id" translatable="false">911784672095-je7ghu89ci0kg8rvtjhstivc09pan9lu.apps.googleusercontent.com</string>
+    <string name="gcm_defaultSenderId" translatable="false">911784672095</string>
+    <string name="google_api_key" translatable="false">AIzaSyA1kaBB6L-_0eHV1yMk0W1C27gq-9h_UeY</string>
+    <string name="google_app_id" translatable="false">1:911784672095:android:5d4b8a024a6b81a47fd4ea</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyA1kaBB6L-_0eHV1yMk0W1C27gq-9h_UeY</string>
+    <string name="google_storage_bucket" translatable="false">sisterly-840df.appspot.com</string>
+    <string name="project_id" translatable="false">sisterly-840df</string>
+</resources>

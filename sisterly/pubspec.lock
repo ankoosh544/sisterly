@@ -154,7 +154,7 @@ packages:
       path: "."
       ref: develop
       resolved-ref: e68baf4f516c36473374cd927f29ae346f894e42
-      url: "git://github.com/Hotdeskapp/flutter_facebook_app_events.git"
+      url: "https://github.com/Hotdeskapp/flutter_facebook_app_events.git"
     source: git
     version: "0.16.0"
   fake_async:
