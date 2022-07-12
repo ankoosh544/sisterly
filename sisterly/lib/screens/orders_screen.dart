@@ -250,7 +250,7 @@ class OrdersScreenState extends State<OrdersScreen>  {
                 )
               ],
             ),
-            if(_mode == OrdersScreenMode.sent && canPay(offer)) Divider(),
+            /*if(_mode == OrdersScreenMode.sent && canPay(offer)) Divider(),
             if(_mode == OrdersScreenMode.sent && canPay(offer)) Row(
               children: [
                 Expanded(
@@ -271,7 +271,7 @@ class OrdersScreenState extends State<OrdersScreen>  {
                   ),
                 ),
               ],
-            ),
+            ),*/
             SizedBox(height: 16),
             Center(
               child: Text(
