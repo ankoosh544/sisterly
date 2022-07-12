@@ -43,6 +43,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
 
   bool _isLoading = false;
   List<Product> _products = [];
+  List<Product> _nonAvailableProducts = [];
   List<Product> _reviewProducts = [];
   List<Product> _productsFavorite = [];
   Account? _profile;
@@ -56,6 +57,7 @@ class ProfileScreenState extends State<ProfileScreen>  {
     Future.delayed(Duration.zero, () {
       getUser();
       getProducts();
+      getNonAvailableProducts();
       getReviewProducts();
       getProductsFavorite();
     });
@@ -100,6 +102,32 @@ class ProfileScreenState extends State<ProfileScreen>  {
       if (data != null) {
         for (var prod in data) {
           _products.add(Product.fromJson(prod));
+        }
+      }
+    }, (res) {
+      setState(() {
+        _isLoading = false;
+      });
+    });
+  }
+
+  getNonAvailableProducts() {
+    setState(() {
+      _isLoading = true;
+    });
+
+    ApiManager(context).makeGetRequest(widget.id != null ? '/product/by_user/' + widget.id.toString() + '/' : '/product/my/', { "status": 5 }, (res) {
+      // print(res);
+      setState(() {
+        _isLoading = false;
+      });
+
+      _nonAvailableProducts = [];
+
+      var data = res["data"];
+      if (data != null) {
+        for (var prod in data) {
+          _nonAvailableProducts.add(Product.fromJson(prod));
         }
       }
     }, (res) {
@@ -581,6 +609,59 @@ class ProfileScreenState extends State<ProfileScreen>  {
                           ) : Text("Non ci sono prodotti pubblicati da questo utente"),
                         ),
                         if(!widget.unavailableState! && widget.id == null)  SizedBox(height: 40,),
+                        // if(!widget.unavailableState! && widget.id == null) Row(
+                        //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        //   children: [
+                        //     Expanded(
+                        //       child: Text(
+                        //         "Prodotti nascosti",
+                        //         style: TextStyle(
+                        //             color: Constants.DARK_TEXT_COLOR,
+                        //             fontSize: 20,
+                        //             fontWeight: FontWeight.bold,
+                        //             fontFamily: Constants.FONT
+                        //         ),
+                        //       ),
+                        //     ),
+                        //     if(_nonAvailableProducts.isNotEmpty) InkWell(
+                        //       child: Text(
+                        //         _viewReviewAll ? "Vedi meno" : "Vedi tutti",
+                        //         style: TextStyle(
+                        //             color: Constants.SECONDARY_COLOR,
+                        //             fontSize: 16,
+                        //             fontWeight: FontWeight.bold,
+                        //             fontFamily: Constants.FONT,
+                        //             decoration: TextDecoration.underline
+                        //         ),
+                        //       ),
+                        //       onTap: () {
+                        //         setState(() {
+                        //           _viewReviewAll = !_viewReviewAll;
+                        //         });
+                        //       },
+                        //     ),
+                        //   ],
+                        // ),
+                        // if(!widget.unavailableState! && widget.id == null)  Padding(
+                        //   padding: const EdgeInsets.symmetric(vertical: 12),
+                        //   child: _isLoading ? Center(child: CircularProgressIndicator()) : _nonAvailableProducts.isNotEmpty ? MediaQuery.removePadding(
+                        //     context: context,
+                        //     removeTop: true,
+                        //     child: GridView.builder(
+                        //         shrinkWrap: true,
+                        //         physics: const NeverScrollableScrollPhysics(),
+                        //         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        //           childAspectRatio: 0.62 / 1,
+                        //           crossAxisCount: 2,
+                        //         ),
+                        //         itemCount: _viewReviewAll ? _nonAvailableProducts.length : (_nonAvailableProducts.length > 4 ? 4 : _nonAvailableProducts.length),
+                        //         itemBuilder: (BuildContext context, int index) {
+                        //           return productCell(_nonAvailableProducts[index], true);
+                        //         }
+                        //     ),
+                        //   ) : Text("Non ci sono prodotti pubblicati da questo utente"),
+                        // ),                        
+                        // if(!widget.unavailableState! && widget.id == null)  SizedBox(height: 40,),
                         if(!widget.unavailableState! && widget.id == null) Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
