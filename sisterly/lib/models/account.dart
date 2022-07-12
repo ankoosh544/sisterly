@@ -20,7 +20,20 @@ class Account {
 
   factory Account.fromJson(Map<String, dynamic> json) {
     //debugPrint("Account.fromJson " + json.toString());
-    return Account(json["id"], json["email"], json["description"], json["first_name"], json["last_name"], json["phone"], json["username"], json["image"], json["email_confirmed"], json["reviews_media"] + .0, json["holiday_mode"], json["identity_code"], json["residency_city"]);
+    return Account(
+      json["id"], 
+      json["email"], 
+      json["description"], 
+      json["first_name"], 
+      json["last_name"], 
+      json["phone"], 
+      json["username"], 
+      json["image"], 
+      json["email_confirmed"], 
+      json["reviews_media"] is String ? double.parse(json["reviews_media"]) : (json["reviews_media"] as int).toDouble(), 
+      json["holiday_mode"], 
+      json["identity_code"], 
+      json["residency_city"]);
   }
 
   Map<String, dynamic> toJson() {
