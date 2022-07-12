@@ -33,6 +33,8 @@ class HomeScreenState extends State<HomeScreen>  {
   List<Product> _products = [];
   List<Product> _productsFavorite = [];
   bool _isLoading = false;
+  bool _isLoadingNext = false;
+  bool _canAskNext = true;
   final int _pageSize = 100;
   StreamSubscription? _sub;
 
@@ -219,7 +221,8 @@ class HomeScreenState extends State<HomeScreen>  {
 
   getProducts(nextPage) {
     setState(() {
-      _isLoading = true;
+      if(!nextPage) _isLoading = true;
+      if(nextPage) _isLoadingNext = true;
     });
     var params = {
       "start": nextPage ? _products.length : 0,
@@ -227,9 +230,6 @@ class HomeScreenState extends State<HomeScreen>  {
     };
     ApiManager(context).makeGetRequest('/product/', params, (res) {
       // print(res);
-      setState(() {
-        _isLoading = false;
-      });
 
       if(!nextPage) {
         _products = [];
@@ -237,13 +237,25 @@ class HomeScreenState extends State<HomeScreen>  {
 
       var data = res["data"];
       if (data != null) {
-        for (var prod in data) {
-          _products.add(Product.fromJson(prod));
+        if(data.length == 0) {
+          _canAskNext = false;
+        } else {
+          _canAskNext = true;
+
+          for (var prod in data) {
+            _products.add(Product.fromJson(prod));
+          }
         }
       }
+
+      setState(() {
+        _isLoading = false;
+        _isLoadingNext = false;
+      });
     }, (res) {
       setState(() {
         _isLoading = false;
+        _isLoadingNext = false;
       });
     });
   }
@@ -346,7 +358,7 @@ class HomeScreenState extends State<HomeScreen>  {
                   },
                   child: ListView.builder(
                     padding: const EdgeInsets.all(0),
-                    itemCount: _products.length + 1,
+                    itemCount: _products.length + (_canAskNext ? 1 : 0),
                     itemBuilder: (BuildContext context, int index) {
                       if(index < _products.length) return productCell(_products[index]);
 

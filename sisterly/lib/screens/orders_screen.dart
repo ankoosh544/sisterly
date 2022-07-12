@@ -129,7 +129,7 @@ class OrdersScreenState extends State<OrdersScreen>  {
                           endDate: offer.dateEnd
                       );
                       await Add2Calendar.addEvent2Cal(event);
-                      ApiManager.showFreeSuccessMessage(context, "Evento aggiunto al calendario");
+                      ApiManager.showFreeSuccessMessage(context, "Noleggio aggiunto al tuo calendario");
                     },
                     child: Icon(Icons.calendar_today, color: Constants.SECONDARY_COLOR,)
                 )

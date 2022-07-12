@@ -33,14 +33,15 @@ class ApiManager {
     makePostRequest("/client/token", params, success, failure);
   }
 
-  signup(email, username, password, firstName, lastName, phone, success, failure) async {
+  signup(email, username, password, firstName, lastName, phone, birthday, success, failure) async {
     var params = {
       "email": email,
       "password": password,
       "first_name": firstName,
       "last_name": lastName,
       "phone": phone,
-      "username": username
+      "username": username,
+      "birthday": birthday
     };
 
     makePostRequest("/client/register", params, success, failure);

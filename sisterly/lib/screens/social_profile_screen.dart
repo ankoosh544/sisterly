@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
@@ -43,6 +44,11 @@ class SocialProfileScreenState extends State<SocialProfileScreen>  {
   final TextEditingController _lastNameText = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _cityController = TextEditingController();
+
+  final TextEditingController _birthDayText = TextEditingController();
+  final TextEditingController _birthMonthText = TextEditingController();
+  final TextEditingController _birthYearText = TextEditingController();
+
   PhoneNumber number = PhoneNumber(isoCode: 'IT');
 
   bool _isLoading = false;
@@ -78,6 +84,10 @@ class SocialProfileScreenState extends State<SocialProfileScreen>  {
         _lastNameText.text = _profile!.lastName.toString();
         _phoneController.text = _profile!.phone.toString();
         _cityController.text = _profile!.residencyCity.toString();
+
+        if(_profile!.birthday != null) {
+          setBirthDate(_profile!.birthday!);
+        }
       });
     }, (res) {
       setState(() {
@@ -85,6 +95,13 @@ class SocialProfileScreenState extends State<SocialProfileScreen>  {
       });
     });
   }
+
+  setBirthDate(DateTime date) {
+    _birthDayText.text = date.day.toString();
+    _birthMonthText.text = date.month.toString();
+    _birthYearText.text = date.year.toString();
+  }
+
 
   save() async {
     if (ApiManager.isEmpty(_usernameText.text.trim())) {
@@ -112,6 +129,11 @@ class SocialProfileScreenState extends State<SocialProfileScreen>  {
       return;
     }
 
+    if (_profile!.birthday == null) {
+      ApiManager.showErrorToast(context, "signup_birthday_mandatory");
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -120,7 +142,8 @@ class SocialProfileScreenState extends State<SocialProfileScreen>  {
       "first_name": _firstNameText.text,
       "last_name": _lastNameText.text,
       "phone": _phoneController.text,
-      "residency_city": _cityController.text
+      "residency_city": _cityController.text,
+      "birthday": DateFormat("yyyy-MM-dd").format(_profile!.birthday!)
     };
 
     ApiManager(context).makePostRequest('/client/update', params, (res) {
@@ -422,6 +445,163 @@ class SocialProfileScreenState extends State<SocialProfileScreen>  {
                             controller: _cityController,
                           ),
                         ),
+                        SizedBox(height: 32),
+                        Text(
+                          "Data di nascita",
+                          style: TextStyle(
+                              color: Constants.TEXT_COLOR,
+                              fontSize: 16,
+                              fontFamily: Constants.FONT
+                          ),
+                        ),
+                        SizedBox(height: 8,),
+                        InkWell(
+                          onTap: () async {
+                            debugPrint("show date picker");
+                            final DateTime? picked = await showDatePicker(
+                              context: context,
+                              initialDate: _profile!.birthday != null ? _profile!.birthday! : DateTime.now(),
+                              firstDate: DateTime.now().subtract(Duration(days: 150 * 365)),
+                              lastDate: DateTime.now(),
+                            );
+
+                            setState(() {
+                              if(picked != null) {
+                                _profile!.birthday = picked;
+
+                                setBirthDate(picked);
+                              }
+                            });
+                          },
+                          child: AbsorbPointer(
+                            absorbing: true,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Color(0x4ca3c4d4),
+                                          spreadRadius: 2,
+                                          blurRadius: 15,
+                                          offset:
+                                          Offset(0, 0), // changes position of shadow
+                                        ),
+                                      ],
+                                    ),
+                                    child: TextField(
+                                      cursorColor: Constants.PRIMARY_COLOR,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        color: Constants.FORM_TEXT,
+                                      ),
+                                      readOnly: true,
+                                      decoration: InputDecoration(
+                                        hintText: "gg",
+                                        hintStyle: const TextStyle(color: Constants.PLACEHOLDER_COLOR),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: const BorderSide(
+                                            width: 0,
+                                            style: BorderStyle.none,
+                                          ),
+                                        ),
+                                        suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                        contentPadding: const EdgeInsets.all(12),
+                                        filled: true,
+                                        fillColor: Constants.WHITE,
+                                      ),
+                                      controller: _birthDayText,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 8,),
+                                Expanded(
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Color(0x4ca3c4d4),
+                                          spreadRadius: 2,
+                                          blurRadius: 15,
+                                          offset:
+                                          Offset(0, 0), // changes position of shadow
+                                        ),
+                                      ],
+                                    ),
+                                    child: TextField(
+                                      cursorColor: Constants.PRIMARY_COLOR,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        color: Constants.FORM_TEXT,
+                                      ),
+                                      decoration: InputDecoration(
+                                        hintText: "mm",
+                                        hintStyle: const TextStyle(
+                                            color: Constants.PLACEHOLDER_COLOR),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: const BorderSide(
+                                            width: 0,
+                                            style: BorderStyle.none,
+                                          ),
+                                        ),
+                                        suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                        contentPadding: const EdgeInsets.all(12),
+                                        filled: true,
+                                        fillColor: Constants.WHITE,
+                                      ),
+                                      controller: _birthMonthText,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 8,),
+                                Expanded(
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Color(0x4ca3c4d4),
+                                          spreadRadius: 2,
+                                          blurRadius: 15,
+                                          offset:
+                                          Offset(0, 0), // changes position of shadow
+                                        ),
+                                      ],
+                                    ),
+                                    child: TextField(
+                                      cursorColor: Constants.PRIMARY_COLOR,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        color: Constants.FORM_TEXT,
+                                      ),
+                                      decoration: InputDecoration(
+                                        hintText: "aaaa",
+                                        hintStyle: const TextStyle(
+                                            color: Constants.PLACEHOLDER_COLOR),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: const BorderSide(
+                                            width: 0,
+                                            style: BorderStyle.none,
+                                          ),
+                                        ),
+                                        suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                        contentPadding: const EdgeInsets.all(12),
+                                        filled: true,
+                                        fillColor: Constants.WHITE,
+                                      ),
+                                      controller: _birthYearText,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 32),
                         SafeArea(
                           child: Center(
                             child: _isLoading ? CircularProgressIndicator() : ElevatedButton(
