@@ -131,7 +131,7 @@ class OrdersScreenState extends State<OrdersScreen>  {
                           endDate: offer.dateEnd
                       );
                       await Add2Calendar.addEvent2Cal(event);
-                      ApiManager.showFreeSuccessMessage(context, "Evento aggiunto al calendario");
+                      ApiManager.showFreeSuccessMessage(context, "Noleggio aggiunto al tuo calendario");
                     },
                     child: Icon(Icons.calendar_today, color: Constants.SECONDARY_COLOR,)
                 )
@@ -252,7 +252,7 @@ class OrdersScreenState extends State<OrdersScreen>  {
                 )
               ],
             ),
-            if(_mode == OrdersScreenMode.sent && canPay(offer)) Divider(),
+            /*if(_mode == OrdersScreenMode.sent && canPay(offer)) Divider(),
             if(_mode == OrdersScreenMode.sent && canPay(offer)) Row(
               children: [
                 Expanded(
@@ -273,7 +273,7 @@ class OrdersScreenState extends State<OrdersScreen>  {
                   ),
                 ),
               ],
-            ),
+            ),*/
             SizedBox(height: 16),
             Center(
               child: Text(

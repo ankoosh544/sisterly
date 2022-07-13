@@ -310,6 +310,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         child: Opacity(
                           opacity: !_pushEnabled ? 0.4 : 1,
                           child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               CheckoutProductCard(product: widget.product),
                               SizedBox(height: 25),
@@ -317,58 +318,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                               SizedBox(height: 25),
                               Text(
-                                "Come vuoi ricevere il prodotto?",
+                                _shipping == "shipment" ? "Hai deciso di ricevere la borsa tramite corriere" : "Hai deciso di ritirare di persona la borsa",
                                 style: TextStyle(
                                     color: Constants.DARK_TEXT_COLOR,
                                     fontSize: 18,
                                     fontFamily: Constants.FONT,
                                     fontWeight: FontWeight.bold
-                                ),
-                              ),
-                              IgnorePointer(
-                                child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      if(widget.product.deliveryType!.id == 3 || widget.product.deliveryType!.id == 13) Expanded(
-                                        child: ListTile(
-                                          horizontalTitleGap: 0,
-                                          contentPadding: EdgeInsets.all(0),
-                                          title: Text(
-                                            'Spedizione',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle1!
-                                                .copyWith(color: _shipping == 'shipment' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
-                                          ),
-                                          leading: Radio(
-                                              value: 'shipment',
-                                              groupValue: _shipping,
-                                              activeColor: Constants.SECONDARY_COLOR,
-                                              fillColor: MaterialStateColor.resolveWith((states) => _shipping == 'shipment' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
-                                              onChanged: _handleShipmentRadioChange
-                                          ),
-                                        ),
-                                      ),
-                                      if(widget.product.deliveryType!.id == 1 || widget.product.deliveryType!.id == 13) Expanded(
-                                        child: ListTile(
-                                          contentPadding: EdgeInsets.all(0),
-                                          horizontalTitleGap: 0,
-                                          title: Text(
-                                            'Di persona',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle1!
-                                                .copyWith(color: _shipping == 'withdraw' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
-                                          ),
-                                          leading: Radio(
-                                              value: 'withdraw',
-                                              groupValue: _shipping,
-                                              fillColor: MaterialStateColor.resolveWith((states) => _shipping == 'withdraw' ? Constants.SECONDARY_COLOR : Constants.DARK_TEXT_COLOR),
-                                              onChanged: _handleShipmentRadioChange
-                                          ),
-                                        ),
-                                      ),
-                                    ]
                                 ),
                               ),
                               if(_shipping == "shipment") Card(
@@ -512,8 +467,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     color: Constants.DARK_TEXT_COLOR,
                                     fontSize: 18,
                                     fontFamily: Constants.FONT,
-                                    fontWeight: FontWeight.bold
+                                    fontWeight: FontWeight.bold,
                                 ),
+                                textAlign: TextAlign.start,
                               ),
                               SizedBox(height: 15),
                               Row(

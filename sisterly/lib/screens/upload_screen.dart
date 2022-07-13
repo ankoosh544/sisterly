@@ -114,7 +114,7 @@ class UploadScreenState extends State<UploadScreen>  {
     debugPrint("Push status subscribed: "+status.subscribed.toString());
     debugPrint("Push status Utils.isSimulator(): "+isSimulator.toString());
 
-    if((status.hasNotificationPermission && status.subscribed)) {
+    if((status.hasNotificationPermission && status.subscribed) || isSimulator) {
       _pushEnabled = true;
     } else {
       _pushEnabled = false;

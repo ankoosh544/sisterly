@@ -1,5 +1,6 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/gestures.dart';
+import 'package:intl/intl.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sisterly/main.dart';
@@ -27,7 +28,11 @@ class SignupScreenState extends State<SignupScreen>  {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _birthDayText = TextEditingController();
+  final TextEditingController _birthMonthText = TextEditingController();
+  final TextEditingController _birthYearText = TextEditingController();
   PhoneNumber number = PhoneNumber(isoCode: 'IT');
+  DateTime? birthday;
 
   //final FocusNode _passwordFocus = new FocusNode();
   final _formKey = GlobalKey<FormState>(debugLabel: '_signupFormKey');
@@ -73,6 +78,11 @@ class SignupScreenState extends State<SignupScreen>  {
       return;
     }
 
+    if (birthday == null) {
+      ApiManager.showErrorToast(context, "signup_birthday_mandatory");
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -80,7 +90,7 @@ class SignupScreenState extends State<SignupScreen>  {
     _usernameController.text = _usernameController.text.toLowerCase().trim();
     _emailController.text = _emailController.text.toLowerCase().trim();
 
-    ApiManager(context).signup(_emailController.text.trim(), _usernameController.text.trim(), _passwordController.text, _firstNameController.text, _lastNameController.text, _phoneController.text.trim(),
+    ApiManager(context).signup(_emailController.text.trim(), _usernameController.text.trim(), _passwordController.text, _firstNameController.text, _lastNameController.text, _phoneController.text.trim(), DateFormat("yyyy-MM-dd").format(birthday!),
       (response) async {
         setState(() {
           _isLoading = false;
@@ -94,7 +104,7 @@ class SignupScreenState extends State<SignupScreen>  {
 
           signupSuccess();
         } else {
-          ApiManager.showFreeErrorToast(context, response["errors"]);
+          ApiManager.showFreeErrorToast(context, response["errors"].toString());
         }
       }, (statusCode) {
           setState(() {
@@ -111,6 +121,13 @@ class SignupScreenState extends State<SignupScreen>  {
     MyApp.facebookAppEvents.logCompletedRegistration(registrationMethod: "email");
 
     Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => SignupSuccessScreen()), (_) => false);
+  }
+
+
+  setBirthDate(DateTime date) {
+    _birthDayText.text = date.day.toString();
+    _birthMonthText.text = date.month.toString();
+    _birthYearText.text = date.year.toString();
   }
 
   @override
@@ -391,6 +408,162 @@ class SignupScreenState extends State<SignupScreen>  {
                           ),
                         ),
                         const SizedBox(height: 32),
+                        Text(
+                          "Data di nascita",
+                          style: TextStyle(
+                              color: Constants.TEXT_COLOR,
+                              fontSize: 16,
+                              fontFamily: Constants.FONT
+                          ),
+                        ),
+                        SizedBox(height: 8,),
+                        InkWell(
+                          onTap: () async {
+                            debugPrint("show date picker");
+                            final DateTime? picked = await showDatePicker(
+                              context: context,
+                              initialDate: birthday != null ? birthday! : DateTime.now(),
+                              firstDate: DateTime.now().subtract(Duration(days: 150*365)),
+                              lastDate: DateTime.now(),
+                            );
+
+                            setState(() {
+                              if(picked != null) {
+                                birthday = picked;
+
+                                setBirthDate(picked);
+                              }
+                            });
+                          },
+                          child: AbsorbPointer(
+                            absorbing: true,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Color(0x4ca3c4d4),
+                                          spreadRadius: 2,
+                                          blurRadius: 15,
+                                          offset:
+                                          Offset(0, 0), // changes position of shadow
+                                        ),
+                                      ],
+                                    ),
+                                    child: TextField(
+                                      cursorColor: Constants.PRIMARY_COLOR,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        color: Constants.FORM_TEXT,
+                                      ),
+                                      readOnly: true,
+                                      decoration: InputDecoration(
+                                        hintText: "gg",
+                                        hintStyle: const TextStyle(color: Constants.PLACEHOLDER_COLOR),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: const BorderSide(
+                                            width: 0,
+                                            style: BorderStyle.none,
+                                          ),
+                                        ),
+                                        suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                        contentPadding: const EdgeInsets.all(12),
+                                        filled: true,
+                                        fillColor: Constants.WHITE,
+                                      ),
+                                      controller: _birthDayText,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 8,),
+                                Expanded(
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Color(0x4ca3c4d4),
+                                          spreadRadius: 2,
+                                          blurRadius: 15,
+                                          offset:
+                                          Offset(0, 0), // changes position of shadow
+                                        ),
+                                      ],
+                                    ),
+                                    child: TextField(
+                                      cursorColor: Constants.PRIMARY_COLOR,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        color: Constants.FORM_TEXT,
+                                      ),
+                                      decoration: InputDecoration(
+                                        hintText: "mm",
+                                        hintStyle: const TextStyle(
+                                            color: Constants.PLACEHOLDER_COLOR),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: const BorderSide(
+                                            width: 0,
+                                            style: BorderStyle.none,
+                                          ),
+                                        ),
+                                        suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                        contentPadding: const EdgeInsets.all(12),
+                                        filled: true,
+                                        fillColor: Constants.WHITE,
+                                      ),
+                                      controller: _birthMonthText,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 8,),
+                                Expanded(
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Color(0x4ca3c4d4),
+                                          spreadRadius: 2,
+                                          blurRadius: 15,
+                                          offset:
+                                          Offset(0, 0), // changes position of shadow
+                                        ),
+                                      ],
+                                    ),
+                                    child: TextField(
+                                      cursorColor: Constants.PRIMARY_COLOR,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        color: Constants.FORM_TEXT,
+                                      ),
+                                      decoration: InputDecoration(
+                                        hintText: "aaaa",
+                                        hintStyle: const TextStyle(
+                                            color: Constants.PLACEHOLDER_COLOR),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: const BorderSide(
+                                            width: 0,
+                                            style: BorderStyle.none,
+                                          ),
+                                        ),
+                                        suffixIcon: SvgPicture.asset("assets/images/arrow_down.svg", width: 10, height: 6, fit: BoxFit.scaleDown),
+                                        contentPadding: const EdgeInsets.all(12),
+                                        filled: true,
+                                        fillColor: Constants.WHITE,
+                                      ),
+                                      controller: _birthYearText,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 32,),
                         const Text("Email",
                             style: TextStyle(
                               color: Constants.TEXT_COLOR,

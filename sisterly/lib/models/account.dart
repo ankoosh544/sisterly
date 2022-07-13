@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:intl/intl.dart';
 
 class Account {
   
@@ -15,8 +16,9 @@ class Account {
   final bool? holidayMode;
   final String? identityCode;
   final String? residencyCity;
+  DateTime? birthday;
 
-  Account(this.id, this.email, this.description, this.firstName, this.lastName, this.phone, this.username, this.image, this.emailConfirmed, this.reviewsMedia, this.holidayMode, this.identityCode, this.residencyCity);
+  Account(this.id, this.email, this.description, this.firstName, this.lastName, this.phone, this.username, this.image, this.emailConfirmed, this.reviewsMedia, this.holidayMode, this.identityCode, this.residencyCity, this.birthday);
 
   factory Account.fromJson(Map<String, dynamic> json) {
     //debugPrint("Account.fromJson " + json.toString());
@@ -33,7 +35,9 @@ class Account {
       json["reviews_media"] is String ? double.parse(json["reviews_media"]) : (json["reviews_media"] as int).toDouble(), 
       json["holiday_mode"], 
       json["identity_code"], 
-      json["residency_city"]);
+      json["residency_city"],
+        json["birthday"] != null ? DateFormat("yyyy-MM-dd").parse(json["birthday"]) : null
+    );
   }
 
   Map<String, dynamic> toJson() {
@@ -50,7 +54,8 @@ class Account {
       "reviews_media": reviewsMedia,
       "holiday_mode": holidayMode,
       "identity_code": identityCode,
-      "residency_city": residencyCity
+      "residency_city": residencyCity,
+      "birthday": birthday
     };
   }
 }
