@@ -67,8 +67,6 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
     });
 
     ApiManager(context).makeGetRequest('/client/reviews/' + widget.userId.toString(), {}, (res) {
-      print("heeeee");
-      print(_profile!.id.toString());
       var data = res["data"];
       if (data != null) {
         for (var prod in data["reviews"]) {
