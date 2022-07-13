@@ -8,7 +8,7 @@ class Review {
 
   Review(this.user, this.stars, this.description);
 
-  factory Review.fromJson(Map<String, dynamic> json) {
+ factory Review.fromJson(Map<String, dynamic> json) {
     Review prod = Review(Account.fromJson(json["user"]), json["stars"], json["description"]);
 
     return prod;

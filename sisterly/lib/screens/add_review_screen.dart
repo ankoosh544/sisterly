@@ -201,7 +201,7 @@ class AddReviewScreenState extends State<AddReviewScreen> {
 
     var params = {"stars": _stars, "description": _descriptionText.text.toString()};
 
-    ApiManager(context).makePutRequest('/product/order/' + widget.offer!.id.toString() + "/reviews", params, (res) {
+    ApiManager(context).makePutRequest('/product/' + widget.product!.id.toString() + '/order/'+ widget.offer!.id.toString() + '/reviews', params, (res) {
       if (res["errors"] != null) {
         ApiManager.showFreeErrorMessage(context, res["errors"].toString());
       } else {
@@ -210,6 +210,10 @@ class AddReviewScreenState extends State<AddReviewScreen> {
                 builder: (BuildContext context) => ReviewSuccessScreen()),
             (_) => false);
       }
-    }, (res) {});
+    }, (res) {
+      if (res["errors"] != null) {
+        ApiManager.showFreeErrorMessage(context, res["errors"].toString());
+      }
+    });
   }
 }

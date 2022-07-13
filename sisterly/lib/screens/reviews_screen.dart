@@ -50,7 +50,6 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
       _isLoading = true;
     });
     ApiManager(context).makeGetRequest('/client/' + widget.userId.toString(), {}, (res) {
-      // print(res);
       setState(() {
         _isLoading = false;
         _profile = Account.fromJson(res["data"]);
@@ -68,19 +67,19 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
     });
 
     ApiManager(context).makeGetRequest('/client/reviews/' + widget.userId.toString(), {}, (res) {
-      // print(res);
+      print("heeeee");
+      print(_profile!.id.toString());
+      var data = res["data"];
+      if (data != null) {
+        for (var prod in data["reviews"]) {
+          _reviews.add(Review(Account.fromJson(prod["user"]),double.parse(prod["stars"]).toInt(), prod["description"]));
+        }
+
+      }
       setState(() {
         _isLoading = false;
       });
 
-      _reviews = [];
-
-      var data = res["data"];
-      if (data != null) {
-        for (var prod in data) {
-          _reviews.add(Review.fromJson(prod));
-        }
-      }
     }, (res) {
       setState(() {
         _isLoading = false;
@@ -121,7 +120,7 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
                     width: 48,
                     height: 48,
                     fit: BoxFit.cover,
-                    imageUrl: review.user.image!,
+                    imageUrl: review.user.image ?? "",
                     placeholder: (context, url) => Center(child: CircularProgressIndicator()),
                     errorWidget: (context, url, error) => SvgPicture.asset("assets/images/placeholder.svg",),
                   ),
@@ -143,7 +142,7 @@ class ReviewsScreenState extends State<ReviewsScreen>  {
                       Wrap(
                         spacing: 3,
                         children: [
-                          StarsWidget(stars: review.user.reviewsMedia!.toInt()),
+                          StarsWidget(stars: review.stars),
                           Text(
                             review.stars.toString(),
                             style: TextStyle(

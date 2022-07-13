@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:sisterly/models/account.dart';
 import 'package:sisterly/models/offer.dart';
 import 'package:sisterly/models/product.dart';
+import 'package:sisterly/screens/add_review_screen.dart';
 import 'package:sisterly/screens/order_details_screen.dart';
 import 'package:sisterly/screens/profile_screen.dart';
 import 'package:sisterly/utils/api_manager.dart';
@@ -283,6 +284,26 @@ class OrdersScreenState extends State<OrdersScreen>  {
                     fontFamily: Constants.FONT,
                     fontWeight: FontWeight.bold
                 ),
+              ),
+            ),
+            SizedBox(height: 16),
+            Center(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                    primary: Constants.PRIMARY_COLOR,
+                    textStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 80, vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(50))),
+                child: Text('Lascia recensione'),
+                onPressed: () {
+                  Navigator.of(context).push(
+                      MaterialPageRoute(builder: (BuildContext context) => AddReviewScreen(offer: offer,product: offer.product,)));
+                //  launch("https://www.sisterly.it/faq.html");
+                },
               ),
             ),
           ],
