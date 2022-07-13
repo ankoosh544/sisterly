@@ -36,7 +36,7 @@ class Account {
       json["holiday_mode"], 
       json["identity_code"], 
       json["residency_city"],
-      DateFormat("yyyy-MM-dd").parse(json["birthday"])
+        json["birthday"] != null ? DateFormat("yyyy-MM-dd").parse(json["birthday"]) : null
     );
   }
 

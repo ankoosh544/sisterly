@@ -20,6 +20,5 @@
   "signup_city_mandatory": "Inserisci la città",
   "signup_email_mandatory": "Inserisci la mail",
   "signup_username_mandatory": "Inserisci lo username",
-  "signup_password_mandatory": "Inserisci la password",
-  "signup_birthday_mandatory": "Inserisci la data di nascita"
+  "signup_password_mandatory": "Inserisci la password"
 }
