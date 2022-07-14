@@ -193,7 +193,7 @@ class ProductScreenState extends State<ProductScreen>  {
         ApiManager.showFreeErrorMessage(context, res["errors"].toString());
       } else {
         ApiManager(context).makeGetRequest('/chat/' + res["data"]["code"]  + '/', {}, (chatRes) {
-          String initialMessage = 'Ho alcune domande su questo prodotto - Marchio: {' + widget.product.brandName + '} Modello: {' + widget.product.model + '}';
+          String initialMessage = 'Hey sister, ho alcune domande sulla borsa ' + widget.product.model + ' di ' + widget.product.brandName;
           Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => ChatScreen(chat: Chat.fromJson(chatRes["data"]), code: res["data"]["code"], initialMessage: initialMessage)));
         }, (res) {
 
